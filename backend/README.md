@@ -1,6 +1,6 @@
 # Backend
 
-Backend Kotlin + Ktor do Deadlines. A Fase 1 adiciona o CRUD local de usuários; autenticação e autorização entram nas próximas fases.
+Backend Kotlin + Ktor do Deadlines. A Fase 2 adiciona autenticação com JWT, refresh token rotativo e logout.
 
 ## Stack da Fase 0
 
@@ -55,6 +55,11 @@ Com Docker disponível, o build também valida as migrations em um PostgreSQL de
 
 ```text
 GET /health
+POST   /api/v1/auth/register
+POST   /api/v1/auth/login
+POST   /api/v1/auth/refresh
+POST   /api/v1/auth/logout
+GET    /api/v1/auth/me
 POST   /api/v1/users
 GET    /api/v1/users?page=1&limit=20
 GET    /api/v1/users/{id}
@@ -62,7 +67,7 @@ PATCH  /api/v1/users/{id}
 DELETE /api/v1/users/{id}
 ```
 
-As rotas de usuários estão sem autenticação durante o desenvolvimento local da Identity. O Compose publica o backend somente em `127.0.0.1`; não faça deploy desta fase.
+`/api/v1/auth/me` exige um access token Bearer. As rotas de usuários continuam sem autenticação durante o desenvolvimento local da Identity. O Compose publica o backend somente em `127.0.0.1`; não faça deploy desta fase.
 
 Exemplo de criação:
 

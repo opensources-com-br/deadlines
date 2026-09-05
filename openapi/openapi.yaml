@@ -1,14 +1,15 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.2.0
-  description: API local do Deadlines. As rotas de usuários ainda não possuem autenticação.
+  version: 0.3.0
+  description: API local do Deadlines. A autenticação está disponível; as rotas administrativas de usuários permanecem locais e abertas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
     description: Desenvolvimento local
 tags:
   - name: Operations
   - name: Users
+  - name: Authentication
 paths:
   /health:
     get:
@@ -22,6 +23,98 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+  /api/v1/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Registra um usuário e inicia uma sessão
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Usuário registrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Autentica um usuário
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Sessão iniciada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Rotaciona o refresh token e emite novos tokens
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Tokens renovados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Revoga o refresh token informado
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "204":
+          description: Sessão encerrada
+  /api/v1/auth/me:
+    get:
+      tags: [Authentication]
+      summary: Retorna o usuário autenticado
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Usuário autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /api/v1/users:
     post:
       tags: [Users]
@@ -132,6 +225,11 @@ paths:
         "422":
           $ref: "#/components/responses/ValidationError"
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   parameters:
     UserId:
       name: id
@@ -161,6 +259,12 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
     NotFound:
       description: Usuário não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Credenciais ou token inválidos
       content:
         application/json:
           schema:
@@ -196,6 +300,63 @@ components:
         phone:
           type: [string, "null"]
           maxLength: 32
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password, firstName, lastName]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+        password:
+          type: string
+          minLength: 12
+          maxLength: 72
+          writeOnly: true
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 100
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+    RefreshTokenRequest:
+      type: object
+      additionalProperties: false
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          writeOnly: true
+    AuthResponse:
+      type: object
+      required: [accessToken, refreshToken, tokenType, expiresIn, user]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+          const: Bearer
+        expiresIn:
+          type: integer
+          format: int64
+        user:
+          $ref: "#/components/schemas/User"
     UpdateUserRequest:
       type: object
       additionalProperties: false
