@@ -1,6 +1,8 @@
 package deadlines.integration
 
 import deadlines.config.DatabaseConfig
+import deadlines.identity.auth.ExposedSessionRepository
+import deadlines.identity.auth.Session
 import deadlines.identity.users.ExposedUserRepository
 import deadlines.identity.users.ExposedUserCredentialsRepository
 import deadlines.identity.users.User
@@ -20,6 +22,7 @@ import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 
 @Testcontainers(disabledWithoutDocker = true)
 class DatabaseMigrationTest {
@@ -127,6 +130,38 @@ class DatabaseMigrationTest {
 
                 assertEquals(user, credentials?.user)
                 assertEquals("a-password-hash", credentials?.passwordHash)
+            }
+        }
+
+    @Test
+    fun `session repository rotates a refresh token atomically`() =
+        runTest {
+            DatabaseFactory.open(databaseConfig()).use { database ->
+                val query = DatabaseQuery(database.database)
+                val users = ExposedUserRepository(query)
+                val sessions = ExposedSessionRepository(query)
+                val now = Instant.now()
+                val user =
+                    User(
+                        id = UUID.randomUUID(),
+                        email = "session-${UUID.randomUUID()}@example.com",
+                        status = UserStatus.ACTIVE,
+                        profile = UserProfile("Session", "Test", null, null),
+                        createdAt = now,
+                        updatedAt = now,
+                    )
+                val first = Session(UUID.randomUUID(), user.id, "a".repeat(64), null, null, now.plusSeconds(60), now)
+                val replacement =
+                    Session(UUID.randomUUID(), user.id, "b".repeat(64), null, null, now.plusSeconds(120), now)
+
+                users.create(user)
+                sessions.create(first)
+
+                assertEquals(first, sessions.findActive(first.refreshTokenHash, now))
+                assertEquals(true, sessions.rotate(first.refreshTokenHash, replacement, now))
+                assertNull(sessions.findActive(first.refreshTokenHash, now))
+                assertEquals(replacement, sessions.findActive(replacement.refreshTokenHash, now))
+                assertEquals(false, sessions.rotate(first.refreshTokenHash, replacement, now))
             }
         }
 
