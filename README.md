@@ -1,28 +1,45 @@
 # Deadlines
 
-Multi-tenant SaaS combining CRM and ERP: commercial pipeline, orders, inventory, purchasing, production, logistics and finance.
+O Deadlines será um SaaS multi-tenant para reunir CRM e ERP em uma única plataforma. O produto será construído incrementalmente; neste momento, somente a aplicação web já está implementada.
 
-## Layout
+## Estrutura
 
-```
+```text
 deadlines/
-├── api/    Kotlin + Ktor backend (Gradle multi-module)
-├── web/    Next.js frontend
-└── docs/   architecture and design notes
+├── web/         aplicação web existente
+├── mobile/      aplicação mobile futura
+├── backend/     backend futuro
+├── database/    migrations e seeds
+├── openapi/     contrato da API
+└── tests/       testes de integração e ponta a ponta
 ```
 
-Each part has its own README with setup instructions.
+Cada diretório contém seu próprio README com o limite de responsabilidade correspondente.
 
-## Local development
+## Estado atual
+
+- `web/`: aplicação Next.js existente.
+- `mobile/`: estrutura reservada, sem implementação.
+- `backend/`: estrutura reservada, sem implementação.
+- `database/`: estrutura preparada para migrations e seeds futuros.
+- `openapi/`: estrutura preparada para o contrato OpenAPI 3.1.
+- `tests/`: estrutura preparada para testes entre aplicações.
+
+## Desenvolvimento local
+
+Crie o arquivo local de ambiente e inicie o PostgreSQL:
 
 ```bash
 cp .env.example .env
 docker compose up -d postgres
 ```
 
-Then run the API with `cd api && ./gradlew :app:run` and the web app with `cd web && npm run dev`.
+Para executar a aplicação web:
 
-## Deployment
+```bash
+cd web
+npm ci
+npm run dev
+```
 
-- `web/` is deployed to Vercel with the root directory set to `web`.
-- `api/` and PostgreSQL run as Docker containers (see `docker-compose.yml`).
+As instruções de backend e mobile serão adicionadas quando essas aplicações forem iniciadas.
