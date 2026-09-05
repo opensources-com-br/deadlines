@@ -1,0 +1,163 @@
+{
+  "info": {
+    "_postman_id": "6aee26e6-8f56-4f29-94ea-72448c23e7ad",
+    "name": "Deadlines API",
+    "description": "Collection local para Health, autenticação e usuários. Execute as pastas na ordem apresentada.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "userEmail", "value": "" },
+    { "key": "userPassword", "value": "postman-password-123" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "managedUserId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Operations",
+      "item": [
+        {
+          "name": "Health",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/health" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 200', () => pm.response.to.have.status(200));",
+            "pm.test('service is healthy', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+              "const id = pm.variables.replaceIn('{{$randomUUID}}');",
+              "pm.collectionVariables.set('userEmail', `postman.${id}@example.com`);"
+            ] } },
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('status is 201', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('accessToken', body.accessToken);",
+              "pm.collectionVariables.set('refreshToken', body.refreshToken);",
+              "pm.collectionVariables.set('userId', body.user.id);",
+              "pm.test('tokens were returned', () => { pm.expect(body.accessToken).not.empty; pm.expect(body.refreshToken).not.empty; });"
+            ] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\",\n  \"firstName\": \"Postman\",\n  \"lastName\": \"User\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.collectionVariables.set('accessToken', body.accessToken);",
+            "pm.collectionVariables.set('refreshToken', body.refreshToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          }
+        },
+        {
+          "name": "Me",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 200', () => pm.response.to.have.status(200));",
+            "pm.test('returns authenticated user', () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('userId')));"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/auth/me"
+          }
+        },
+        {
+          "name": "Refresh",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.collectionVariables.set('accessToken', body.accessToken);",
+            "pm.collectionVariables.set('refreshToken', body.refreshToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/refresh"
+          }
+        },
+        {
+          "name": "Logout",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 204', () => pm.response.to.have.status(204));"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users (local only)",
+      "item": [
+        {
+          "name": "Create user",
+          "event": [
+            { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+              "pm.collectionVariables.set('managedUserEmail', `managed.${pm.variables.replaceIn('{{$randomUUID}}')}@example.com`);"
+            ] } },
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('status is 201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('managedUserId', pm.response.json().id);"
+            ] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{managedUserEmail}}\",\n  \"firstName\": \"Managed\",\n  \"lastName\": \"User\"\n}" },
+            "url": "{{baseUrl}}/api/v1/users"
+          }
+        },
+        {
+          "name": "List users",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/users?page=1&limit=20" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Get user",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/users/{{managedUserId}}" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Update user",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Updated\"\n}" },
+            "url": "{{baseUrl}}/api/v1/users/{{managedUserId}}"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Disable user",
+          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/users/{{managedUserId}}" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('status is 204', () => pm.response.to.have.status(204));"] } }]
+        }
+      ]
+    }
+  ]
+}
