@@ -1,6 +1,25 @@
 .DS_Store
+
+# Environment
 .env
 .env.*
 !.env.example
+
+# Editors
 .idea/
+.vscode/
 *.iml
+
+# Logs and local output
+*.log
+coverage/
+dist/
+
+# Node.js
+node_modules/
+.next/
+
+# Kotlin and Gradle
+.gradle/
+.kotlin/
+build/
