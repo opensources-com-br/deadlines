@@ -28,6 +28,17 @@ interface UserRepository {
     suspend fun update(user: User): User
 }
 
+data class UserCredentials(
+    val user: User,
+    val passwordHash: String,
+)
+
+interface UserCredentialsRepository {
+    suspend fun create(user: User, passwordHash: String): User
+
+    suspend fun findByEmail(email: String): UserCredentials?
+}
+
 class ExposedUserRepository(
     private val query: DatabaseQuery,
 ) : UserRepository {
@@ -101,6 +112,46 @@ class ExposedUserRepository(
         }
 }
 
+class ExposedUserCredentialsRepository(
+    private val query: DatabaseQuery,
+) : UserCredentialsRepository {
+    override suspend fun create(user: User, passwordHash: String): User =
+        mapDuplicateEmail {
+            query {
+                UsersTable.insert {
+                    it[id] = user.id
+                    it[email] = user.email
+                    it[status] = user.status.name.lowercase()
+                    it[UsersTable.passwordHash] = passwordHash
+                    it[createdAt] = user.createdAt.atOffset(ZoneOffset.UTC)
+                    it[updatedAt] = user.updatedAt.atOffset(ZoneOffset.UTC)
+                }
+                UserProfilesTable.insert {
+                    it[userId] = user.id
+                    it[firstName] = user.profile.firstName
+                    it[lastName] = user.profile.lastName
+                    it[avatarUrl] = user.profile.avatarUrl
+                    it[phone] = user.profile.phone
+                    it[createdAt] = user.createdAt.atOffset(ZoneOffset.UTC)
+                    it[updatedAt] = user.updatedAt.atOffset(ZoneOffset.UTC)
+                }
+                user
+            }
+        }
+
+    override suspend fun findByEmail(email: String): UserCredentials? =
+        query {
+            userQuery()
+                .where { UsersTable.email.lowerCase() eq email.lowercase() }
+                .singleOrNull()
+                ?.let { row ->
+                    row[UsersTable.passwordHash]?.let { hash ->
+                        UserCredentials(row.toUser(), hash)
+                    }
+                }
+        }
+}
+
 private suspend fun <T> mapDuplicateEmail(block: suspend () -> T): T =
     try {
         block()
@@ -122,6 +173,7 @@ private object UsersTable : Table("users") {
     val id = javaUUID("id")
     val email = varchar("email", 320)
     val status = varchar("status", 32)
+    val passwordHash = varchar("password_hash", 100).nullable()
     val createdAt = timestampWithTimeZone("created_at")
     val updatedAt = timestampWithTimeZone("updated_at")
 

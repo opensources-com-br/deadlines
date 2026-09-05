@@ -2,6 +2,7 @@ package deadlines.integration
 
 import deadlines.config.DatabaseConfig
 import deadlines.identity.users.ExposedUserRepository
+import deadlines.identity.users.ExposedUserCredentialsRepository
 import deadlines.identity.users.User
 import deadlines.identity.users.UserAlreadyExistsException
 import deadlines.identity.users.UserProfile
@@ -102,6 +103,30 @@ class DatabaseMigrationTest {
                 assertFailsWith<UserAlreadyExistsException> {
                     repository.create(duplicate)
                 }
+            }
+        }
+
+    @Test
+    fun `credentials repository persists a password hash without exposing it on the user`() =
+        runTest {
+            DatabaseFactory.open(databaseConfig()).use { database ->
+                val repository = ExposedUserCredentialsRepository(DatabaseQuery(database.database))
+                val now = Instant.parse("2026-09-05T12:00:00Z")
+                val user =
+                    User(
+                        id = UUID.randomUUID(),
+                        email = "credentials@example.com",
+                        status = UserStatus.ACTIVE,
+                        profile = UserProfile("Credential", "Test", null, null),
+                        createdAt = now,
+                        updatedAt = now,
+                    )
+
+                repository.create(user, "a-password-hash")
+                val credentials = repository.findByEmail("CREDENTIALS@EXAMPLE.COM")
+
+                assertEquals(user, credentials?.user)
+                assertEquals("a-password-hash", credentials?.passwordHash)
             }
         }
 
