@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.logback.classic)
 
     testImplementation(kotlin("test-junit5"))
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.testcontainers.junit.jupiter)
     testImplementation(libs.testcontainers.postgresql)
