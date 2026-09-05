@@ -1,5 +1,7 @@
 package deadlines.application
 
+import deadlines.identity.users.UserService
+import deadlines.identity.users.userRoutes
 import io.ktor.server.application.Application
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -11,10 +13,14 @@ data class HealthResponse(
     val status: String,
 )
 
-fun Application.configureRoutes() {
+fun Application.configureRoutes(userService: UserService?) {
     routing {
         get("/health") {
             call.respond(HealthResponse(status = "ok"))
+        }
+
+        if (userService != null) {
+            userRoutes(userService)
         }
     }
 }

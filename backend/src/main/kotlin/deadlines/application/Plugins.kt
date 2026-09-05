@@ -9,6 +9,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.application.log
 import io.ktor.server.plugins.calllogging.CallLogging
+import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.httpMethod
@@ -42,6 +43,18 @@ fun Application.configurePlugins() {
                     error = ApiErrorBody(
                         code = "NOT_FOUND",
                         message = "Resource not found",
+                    ),
+                ),
+            )
+        }
+
+        exception<BadRequestException> { call, _ ->
+            call.respond(
+                HttpStatusCode.BadRequest,
+                ApiErrorResponse(
+                    error = ApiErrorBody(
+                        code = "INVALID_REQUEST",
+                        message = "Request body is invalid",
                     ),
                 ),
             )

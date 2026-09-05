@@ -83,6 +83,16 @@ class UserServiceTest {
         }
 
     @Test
+    fun `rejects an empty update`() =
+        runTest {
+            val created = service.create(validRequest)
+
+            assertFailsWith<UserValidationException> {
+                service.update(created.id, UpdateUserRequest())
+            }
+        }
+
+    @Test
     fun `delete behavior disables the user`() =
         runTest {
             val created = service.create(validRequest)
@@ -110,7 +120,7 @@ class UserServiceTest {
     }
 }
 
-private class InMemoryUserRepository : UserRepository {
+internal class InMemoryUserRepository : UserRepository {
     private val users = mutableListOf<User>()
 
     override suspend fun create(user: User): User = user.also(users::add)

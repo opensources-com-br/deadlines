@@ -57,6 +57,10 @@ class UserService(
     }
 
     suspend fun update(id: UUID, request: UpdateUserRequest): User {
+        if (request.isEmpty()) {
+            throw UserValidationException(mapOf("request" to "must contain at least one field"))
+        }
+
         val current = get(id)
         val email = request.email?.normalizeEmail() ?: current.email
         val status = request.status?.parseStatus() ?: current.status
@@ -151,6 +155,14 @@ class UserService(
             .getOrNull()
             ?.let { it.scheme in setOf("http", "https") && !it.host.isNullOrBlank() }
             ?: false
+
+    private fun UpdateUserRequest.isEmpty() =
+        email == null &&
+            firstName == null &&
+            lastName == null &&
+            avatarUrl == null &&
+            phone == null &&
+            status == null
 
     companion object {
         private val EMAIL_PATTERN = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
