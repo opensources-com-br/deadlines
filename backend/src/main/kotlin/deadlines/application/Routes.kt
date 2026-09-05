@@ -1,5 +1,7 @@
 package deadlines.application
 
+import deadlines.identity.auth.AuthOperations
+import deadlines.identity.auth.authRoutes
 import deadlines.identity.users.UserService
 import deadlines.identity.users.userRoutes
 import io.ktor.server.application.Application
@@ -13,7 +15,7 @@ data class HealthResponse(
     val status: String,
 )
 
-fun Application.configureRoutes(userService: UserService?) {
+fun Application.configureRoutes(userService: UserService?, authService: AuthOperations?) {
     routing {
         get("/health") {
             call.respond(HealthResponse(status = "ok"))
@@ -21,6 +23,9 @@ fun Application.configureRoutes(userService: UserService?) {
 
         if (userService != null) {
             userRoutes(userService)
+        }
+        if (authService != null) {
+            authRoutes(authService)
         }
     }
 }

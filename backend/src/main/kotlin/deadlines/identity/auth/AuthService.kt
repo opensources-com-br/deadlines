@@ -15,6 +15,14 @@ data class SessionContext(
     val ipAddress: String?,
 )
 
+interface AuthOperations {
+    suspend fun register(request: RegisterRequest, context: SessionContext): AuthResponse
+    suspend fun login(request: LoginRequest, context: SessionContext): AuthResponse
+    suspend fun refresh(refreshToken: String, context: SessionContext): AuthResponse
+    suspend fun logout(refreshToken: String)
+    suspend fun me(userId: UUID): deadlines.identity.users.UserResponse
+}
+
 class AuthService(
     private val credentials: UserCredentialsRepository,
     private val users: UserRepository,
@@ -22,8 +30,8 @@ class AuthService(
     private val passwordHasher: PasswordHasher,
     private val tokens: TokenService,
     private val clock: Clock = Clock.systemUTC(),
-) {
-    suspend fun register(request: RegisterRequest, context: SessionContext): AuthResponse {
+) : AuthOperations {
+    override suspend fun register(request: RegisterRequest, context: SessionContext): AuthResponse {
         val email = request.email.trim().lowercase()
         val firstName = request.firstName.trim()
         val lastName = request.lastName.trim()
@@ -47,7 +55,7 @@ class AuthService(
         return createSession(user, context)
     }
 
-    suspend fun login(request: LoginRequest, context: SessionContext): AuthResponse {
+    override suspend fun login(request: LoginRequest, context: SessionContext): AuthResponse {
         val credentials = credentials.findByEmail(request.email.trim().lowercase())
         if (credentials == null || !passwordHasher.verify(request.password, credentials.passwordHash)) {
             throw InvalidCredentialsException()
@@ -57,7 +65,7 @@ class AuthService(
         return createSession(credentials.user, context)
     }
 
-    suspend fun refresh(refreshToken: String, context: SessionContext): AuthResponse {
+    override suspend fun refresh(refreshToken: String, context: SessionContext): AuthResponse {
         val now = clock.instant()
         val currentHash = tokens.hashRefreshToken(refreshToken)
         val current = sessions.findActive(currentHash, now) ?: throw InvalidRefreshTokenException()
@@ -70,9 +78,15 @@ class AuthService(
         return issued.toResponse(user)
     }
 
-    suspend fun logout(refreshToken: String) {
+    override suspend fun logout(refreshToken: String) {
         sessions.revoke(tokens.hashRefreshToken(refreshToken), clock.instant())
     }
+
+    override suspend fun me(userId: UUID) =
+        users.findById(userId)
+            ?.takeIf { it.status == UserStatus.ACTIVE }
+            ?.toResponse()
+            ?: throw InvalidCredentialsException()
 
     private suspend fun createSession(user: User, context: SessionContext): AuthResponse {
         val now = clock.instant()
