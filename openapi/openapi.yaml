@@ -1,19 +1,18 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.1.0
-  description: API do Deadlines. Endpoints de negócio serão adicionados sob `/api/v1`.
+  version: 0.2.0
+  description: API local do Deadlines. As rotas de usuários ainda não possuem autenticação.
 servers:
   - url: http://localhost:8080
     description: Desenvolvimento local
 tags:
   - name: Operations
-    description: Estado operacional do serviço
+  - name: Users
 paths:
   /health:
     get:
-      tags:
-        - Operations
+      tags: [Operations]
       summary: Verifica se o backend está em execução
       operationId: getHealth
       responses:
@@ -23,13 +22,276 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+  /api/v1/users:
+    post:
+      tags: [Users]
+      summary: Cria um usuário
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: Usuário criado
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    get:
+      tags: [Users]
+      summary: Lista usuários
+      operationId: listUsers
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Página de usuários
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserList"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/users/{id}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    get:
+      tags: [Users]
+      summary: Busca um usuário
+      operationId: getUser
+      responses:
+        "200":
+          description: Usuário encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    patch:
+      tags: [Users]
+      summary: Atualiza parcialmente um usuário
+      operationId: updateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Usuário atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags: [Users]
+      summary: Desativa um usuário
+      operationId: disableUser
+      responses:
+        "204":
+          description: Usuário desativado
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
 components:
+  parameters:
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    InvalidRequest:
+      description: Corpo da requisição inválido
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ValidationError:
+      description: Dados inválidos
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: E-mail já utilizado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Usuário não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
   schemas:
     HealthResponse:
       type: object
-      required:
-        - status
+      required: [status]
       properties:
         status:
           type: string
           const: ok
+    CreateUserRequest:
+      type: object
+      additionalProperties: false
+      required: [email, firstName, lastName]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        avatarUrl:
+          type: [string, "null"]
+          format: uri
+        phone:
+          type: [string, "null"]
+          maxLength: 32
+    UpdateUserRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        avatarUrl:
+          type: string
+          format: uri
+        phone:
+          type: string
+          maxLength: 32
+        status:
+          type: string
+          enum: [pending, active, disabled]
+    User:
+      type: object
+      required: [id, email, status, profile, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        status:
+          type: string
+          enum: [pending, active, disabled]
+        profile:
+          $ref: "#/components/schemas/UserProfile"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    UserProfile:
+      type: object
+      required: [firstName, lastName]
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        avatarUrl:
+          type: [string, "null"]
+          format: uri
+        phone:
+          type: [string, "null"]
+    UserList:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    Pagination:
+      type: object
+      required: [page, limit, total, totalPages]
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties:
+                type: string

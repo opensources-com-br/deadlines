@@ -1,6 +1,6 @@
 # Backend
 
-Backend Kotlin + Ktor do Deadlines. A Fase 0 contém apenas a fundação técnica; Identity e módulos de negócio ainda não foram implementados.
+Backend Kotlin + Ktor do Deadlines. A Fase 1 adiciona o CRUD local de usuários; autenticação e autorização entram nas próximas fases.
 
 ## Stack da Fase 0
 
@@ -18,6 +18,7 @@ Backend Kotlin + Ktor do Deadlines. A Fase 0 contém apenas a fundação técnic
 src/main/kotlin/deadlines/
 ├── application/  bootstrap, plugins e rotas
 ├── config/       configuração tipada por ambiente
+├── identity/     identidade, começando por usuários
 └── shared/       infraestrutura compartilhada
 ```
 
@@ -50,8 +51,23 @@ O backend estará disponível em `http://localhost:8080`.
 
 Com Docker disponível, o build também valida as migrations em um PostgreSQL descartável via Testcontainers.
 
-## Endpoint atual
+## Endpoints atuais
 
 ```text
 GET /health
+POST   /api/v1/users
+GET    /api/v1/users?page=1&limit=20
+GET    /api/v1/users/{id}
+PATCH  /api/v1/users/{id}
+DELETE /api/v1/users/{id}
+```
+
+As rotas de usuários estão sem autenticação durante o desenvolvimento local da Identity. O Compose publica o backend somente em `127.0.0.1`; não faça deploy desta fase.
+
+Exemplo de criação:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/users \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"tarik@example.com","firstName":"Tarik","lastName":"Villalobos"}'
 ```
