@@ -2,4 +2,6 @@
 
 O contrato OpenAPI 3.1 da API será mantido neste diretório.
 
-O arquivo `openapi.yaml` será criado junto com o primeiro endpoint, para que o contrato não antecipe uma implementação ainda não aprovada.
+- `openapi.yaml` descreve somente endpoints implementados.
+- `/health` é operacional e não recebe versionamento.
+- Endpoints de negócio serão adicionados sob `/api/v1` nas próximas fases.

@@ -1,0 +1,35 @@
+openapi: 3.1.0
+info:
+  title: Deadlines API
+  version: 0.1.0
+  description: API do Deadlines. Endpoints de negócio serão adicionados sob `/api/v1`.
+servers:
+  - url: http://localhost:8080
+    description: Desenvolvimento local
+tags:
+  - name: Operations
+    description: Estado operacional do serviço
+paths:
+  /health:
+    get:
+      tags:
+        - Operations
+      summary: Verifica se o backend está em execução
+      operationId: getHealth
+      responses:
+        "200":
+          description: Backend em execução
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          const: ok

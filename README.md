@@ -1,6 +1,6 @@
 # Deadlines
 
-O Deadlines será um SaaS multi-tenant para reunir CRM e ERP em uma única plataforma. O produto será construído incrementalmente; neste momento, somente a aplicação web já está implementada.
+O Deadlines será um SaaS multi-tenant para reunir CRM e ERP em uma única plataforma. O produto é construído incrementalmente, com cada fase validada antes da próxima.
 
 ## Estrutura
 
@@ -8,7 +8,7 @@ O Deadlines será um SaaS multi-tenant para reunir CRM e ERP em uma única plata
 deadlines/
 ├── web/         aplicação web existente
 ├── mobile/      aplicação mobile futura
-├── backend/     backend futuro
+├── backend/     aplicação Kotlin + Ktor
 ├── database/    migrations e seeds
 ├── openapi/     contrato da API
 └── tests/       testes de integração e ponta a ponta
@@ -20,18 +20,24 @@ Cada diretório contém seu próprio README com o limite de responsabilidade cor
 
 - `web/`: aplicação Next.js existente.
 - `mobile/`: estrutura reservada, sem implementação.
-- `backend/`: estrutura reservada, sem implementação.
-- `database/`: estrutura preparada para migrations e seeds futuros.
-- `openapi/`: estrutura preparada para o contrato OpenAPI 3.1.
-- `tests/`: estrutura preparada para testes entre aplicações.
+- `backend/`: Fase 0 concluída, sem funcionalidades de Identity.
+- `database/`: baseline do Flyway, ainda sem tabelas de domínio.
+- `openapi/`: contrato OpenAPI 3.1 do endpoint operacional.
+- `tests/`: testes HTTP e de integração com PostgreSQL.
 
 ## Desenvolvimento local
 
-Crie o arquivo local de ambiente e inicie o PostgreSQL:
+Crie o arquivo local de ambiente e inicie PostgreSQL e backend:
 
 ```bash
 cp .env.example .env
-docker compose up -d postgres
+docker compose up -d --build backend
+```
+
+Verifique o backend:
+
+```bash
+curl http://localhost:8080/health
 ```
 
 Para executar a aplicação web:
@@ -42,4 +48,4 @@ npm ci
 npm run dev
 ```
 
-As instruções de backend e mobile serão adicionadas quando essas aplicações forem iniciadas.
+Consulte os READMEs de cada aplicação para instruções específicas.
