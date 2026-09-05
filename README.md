@@ -50,4 +50,4 @@ npm ci
 npm run dev
 ```
 
-Consulte os READMEs de cada aplicação para instruções específicas.
+Consulte os READMEs de cada aplicação para instruções específicas e `openapi/openapi.yaml` para o contrato completo da API.
