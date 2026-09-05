@@ -22,6 +22,7 @@ application {
 dependencies {
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.database)
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.logback.classic)
 
     testImplementation(kotlin("test-junit5"))
