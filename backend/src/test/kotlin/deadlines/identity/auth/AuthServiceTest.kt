@@ -83,9 +83,9 @@ class AuthServiceTest {
 }
 
 private class FakePasswordHasher : PasswordHasher {
-    override fun hash(password: String) = "hash:$password"
+    override suspend fun hash(password: String) = "hash:$password"
 
-    override fun verify(password: String, hash: String) = hash == "hash:$password"
+    override suspend fun verify(password: String, hash: String) = hash == "hash:$password"
 }
 
 private class MemoryUsers : UserRepository {
