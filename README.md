@@ -27,6 +27,8 @@ Cada diretório contém seu próprio README com o limite de responsabilidade cor
 
 ## Desenvolvimento local
 
+O backend e o banco de dados são publicados somente em `127.0.0.1` durante o desenvolvimento da Identity.
+
 Crie o arquivo local de ambiente e inicie PostgreSQL e backend:
 
 ```bash
