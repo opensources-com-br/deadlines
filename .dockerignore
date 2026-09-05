@@ -1,0 +1,9 @@
+.git
+.github
+.env
+**/.DS_Store
+**/.gradle
+**/.kotlin
+**/build
+web/.next
+web/node_modules
