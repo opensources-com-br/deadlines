@@ -1,0 +1,140 @@
+package deadlines.identity.auth
+
+import deadlines.config.AuthConfig
+import deadlines.identity.users.User
+import deadlines.identity.users.UserAlreadyExistsException
+import deadlines.identity.users.UserCredentials
+import deadlines.identity.users.UserCredentialsRepository
+import deadlines.identity.users.UserRepository
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import java.util.UUID
+import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
+
+class AuthServiceTest {
+    private val now = Instant.now()
+    private val users = MemoryUsers()
+    private val credentials = MemoryCredentials(users)
+    private val sessions = MemorySessions()
+    private val tokenService =
+        TokenService(
+            AuthConfig("a-local-test-secret-with-32-characters", "issuer", "audience", 900, 3600),
+            Clock.fixed(now, ZoneOffset.UTC),
+        )
+    private val service =
+        AuthService(credentials, users, sessions, FakePasswordHasher(), tokenService, Clock.fixed(now, ZoneOffset.UTC))
+    private val context = SessionContext("test-agent", "127.0.0.1")
+
+    @Test
+    fun `register creates credentials and an authenticated session`() =
+        runTest {
+            val response = service.register(RegisterRequest(" USER@Example.com ", "password-123", " User ", " Name "), context)
+
+            assertEquals("user@example.com", response.user.email)
+            assertEquals("hash:password-123", credentials.values["user@example.com"]?.passwordHash)
+            assertEquals(1, sessions.values.size)
+            assertEquals("test-agent", sessions.values.single().userAgent)
+            assertTrue(tokenService.verifier().verify(response.accessToken).subject == response.user.id)
+        }
+
+    @Test
+    fun `register rejects an existing email`() =
+        runTest {
+            val request = RegisterRequest("user@example.com", "password-123", "User", "Name")
+            service.register(request, context)
+
+            assertFailsWith<UserAlreadyExistsException> { service.register(request, context) }
+        }
+
+    @Test
+    fun `login rejects invalid credentials`() =
+        runTest {
+            service.register(RegisterRequest("user@example.com", "password-123", "User", "Name"), context)
+
+            assertFailsWith<InvalidCredentialsException> {
+                service.login(LoginRequest("user@example.com", "wrong-password"), context)
+            }
+        }
+
+    @Test
+    fun `refresh rotates the token and prevents reuse`() =
+        runTest {
+            val registered = service.register(RegisterRequest("user@example.com", "password-123", "User", "Name"), context)
+            val refreshed = service.refresh(registered.refreshToken, context)
+
+            assertNotEquals(registered.refreshToken, refreshed.refreshToken)
+            assertFailsWith<InvalidRefreshTokenException> { service.refresh(registered.refreshToken, context) }
+        }
+
+    @Test
+    fun `logout revokes the refresh token`() =
+        runTest {
+            val registered = service.register(RegisterRequest("user@example.com", "password-123", "User", "Name"), context)
+            service.logout(registered.refreshToken)
+
+            assertFailsWith<InvalidRefreshTokenException> { service.refresh(registered.refreshToken, context) }
+        }
+}
+
+private class FakePasswordHasher : PasswordHasher {
+    override fun hash(password: String) = "hash:$password"
+
+    override fun verify(password: String, hash: String) = hash == "hash:$password"
+}
+
+private class MemoryUsers : UserRepository {
+    val values = linkedMapOf<String, User>()
+
+    override suspend fun create(user: User): User = user.also { values[it.email] = it }
+
+    override suspend fun findById(id: UUID) = values.values.firstOrNull { it.id == id }
+
+    override suspend fun findByEmail(email: String) = values[email.lowercase()]
+
+    override suspend fun list(offset: Long, limit: Int) = values.values.drop(offset.toInt()).take(limit)
+
+    override suspend fun count() = values.size.toLong()
+
+    override suspend fun update(user: User): User = user.also { values[it.email] = it }
+}
+
+private class MemoryCredentials(
+    private val users: MemoryUsers,
+) : UserCredentialsRepository {
+    val values = linkedMapOf<String, UserCredentials>()
+
+    override suspend fun create(user: User, passwordHash: String): User {
+        users.create(user)
+        values[user.email] = UserCredentials(user, passwordHash)
+        return user
+    }
+
+    override suspend fun findByEmail(email: String): UserCredentials? = values[email.lowercase()]
+}
+
+private class MemorySessions : SessionRepository {
+    val values = mutableListOf<Session>()
+    private val revoked = mutableSetOf<String>()
+
+    override suspend fun create(session: Session) {
+        values += session
+    }
+
+    override suspend fun findActive(refreshTokenHash: String, now: Instant) =
+        values.firstOrNull { it.refreshTokenHash == refreshTokenHash && it.refreshTokenHash !in revoked && it.expiresAt > now }
+
+    override suspend fun rotate(currentHash: String, replacement: Session, now: Instant): Boolean {
+        if (findActive(currentHash, now) == null) return false
+        revoked += currentHash
+        values += replacement
+        return true
+    }
+
+    override suspend fun revoke(refreshTokenHash: String, now: Instant): Boolean = revoked.add(refreshTokenHash)
+}
