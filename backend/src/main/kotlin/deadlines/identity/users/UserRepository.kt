@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.javatime.timestampWithTimeZone
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import java.sql.SQLException
 import java.time.ZoneOffset
 import java.util.UUID
 
@@ -31,24 +32,26 @@ class ExposedUserRepository(
     private val query: DatabaseQuery,
 ) : UserRepository {
     override suspend fun create(user: User): User =
-        query {
-            UsersTable.insert {
-                it[id] = user.id
-                it[email] = user.email
-                it[status] = user.status.name.lowercase()
-                it[createdAt] = user.createdAt.atOffset(ZoneOffset.UTC)
-                it[updatedAt] = user.updatedAt.atOffset(ZoneOffset.UTC)
+        mapDuplicateEmail {
+            query {
+                UsersTable.insert {
+                    it[id] = user.id
+                    it[email] = user.email
+                    it[status] = user.status.name.lowercase()
+                    it[createdAt] = user.createdAt.atOffset(ZoneOffset.UTC)
+                    it[updatedAt] = user.updatedAt.atOffset(ZoneOffset.UTC)
+                }
+                UserProfilesTable.insert {
+                    it[userId] = user.id
+                    it[firstName] = user.profile.firstName
+                    it[lastName] = user.profile.lastName
+                    it[avatarUrl] = user.profile.avatarUrl
+                    it[phone] = user.profile.phone
+                    it[createdAt] = user.createdAt.atOffset(ZoneOffset.UTC)
+                    it[updatedAt] = user.updatedAt.atOffset(ZoneOffset.UTC)
+                }
+                user
             }
-            UserProfilesTable.insert {
-                it[userId] = user.id
-                it[firstName] = user.profile.firstName
-                it[lastName] = user.profile.lastName
-                it[avatarUrl] = user.profile.avatarUrl
-                it[phone] = user.profile.phone
-                it[createdAt] = user.createdAt.atOffset(ZoneOffset.UTC)
-                it[updatedAt] = user.updatedAt.atOffset(ZoneOffset.UTC)
-            }
-            user
         }
 
     override suspend fun findById(id: UUID): User? =
@@ -79,22 +82,41 @@ class ExposedUserRepository(
     override suspend fun count(): Long = query { UsersTable.selectAll().count() }
 
     override suspend fun update(user: User): User =
-        query {
-            UsersTable.update({ UsersTable.id eq user.id }) {
-                it[email] = user.email
-                it[status] = user.status.name.lowercase()
-                it[updatedAt] = user.updatedAt.atOffset(ZoneOffset.UTC)
+        mapDuplicateEmail {
+            query {
+                UsersTable.update({ UsersTable.id eq user.id }) {
+                    it[email] = user.email
+                    it[status] = user.status.name.lowercase()
+                    it[updatedAt] = user.updatedAt.atOffset(ZoneOffset.UTC)
+                }
+                UserProfilesTable.update({ UserProfilesTable.userId eq user.id }) {
+                    it[firstName] = user.profile.firstName
+                    it[lastName] = user.profile.lastName
+                    it[avatarUrl] = user.profile.avatarUrl
+                    it[phone] = user.profile.phone
+                    it[updatedAt] = user.updatedAt.atOffset(ZoneOffset.UTC)
+                }
+                user
             }
-            UserProfilesTable.update({ UserProfilesTable.userId eq user.id }) {
-                it[firstName] = user.profile.firstName
-                it[lastName] = user.profile.lastName
-                it[avatarUrl] = user.profile.avatarUrl
-                it[phone] = user.profile.phone
-                it[updatedAt] = user.updatedAt.atOffset(ZoneOffset.UTC)
-            }
-            user
         }
 }
+
+private suspend fun <T> mapDuplicateEmail(block: suspend () -> T): T =
+    try {
+        block()
+    } catch (exception: Exception) {
+        if (exception.hasSqlState(UNIQUE_VIOLATION_SQL_STATE)) {
+            throw UserAlreadyExistsException()
+        }
+        throw exception
+    }
+
+private fun Throwable.hasSqlState(sqlState: String): Boolean =
+    generateSequence(this) { it.cause }
+        .filterIsInstance<SQLException>()
+        .any { it.sqlState == sqlState }
+
+private const val UNIQUE_VIOLATION_SQL_STATE = "23505"
 
 private object UsersTable : Table("users") {
     val id = javaUUID("id")

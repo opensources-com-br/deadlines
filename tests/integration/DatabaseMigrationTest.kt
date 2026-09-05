@@ -3,6 +3,7 @@ package deadlines.integration
 import deadlines.config.DatabaseConfig
 import deadlines.identity.users.ExposedUserRepository
 import deadlines.identity.users.User
+import deadlines.identity.users.UserAlreadyExistsException
 import deadlines.identity.users.UserProfile
 import deadlines.identity.users.UserStatus
 import deadlines.shared.database.DatabaseQuery
@@ -17,6 +18,7 @@ import java.time.Instant
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 @Testcontainers(disabledWithoutDocker = true)
 class DatabaseMigrationTest {
@@ -71,6 +73,35 @@ class DatabaseMigrationTest {
                 val updated = user.copy(status = UserStatus.DISABLED, updatedAt = now.plusSeconds(60))
                 repository.update(updated)
                 assertEquals(updated, repository.findById(user.id))
+            }
+        }
+
+    @Test
+    fun `database uniqueness violation is exposed as a user conflict`() =
+        runTest {
+            DatabaseFactory.open(databaseConfig()).use { database ->
+                val repository = ExposedUserRepository(DatabaseQuery(database.database))
+                val now = Instant.parse("2026-09-05T12:00:00Z")
+                val first =
+                    User(
+                        id = UUID.randomUUID(),
+                        email = "unique@example.com",
+                        status = UserStatus.PENDING,
+                        profile = UserProfile("First", "User", null, null),
+                        createdAt = now,
+                        updatedAt = now,
+                    )
+                val duplicate =
+                    first.copy(
+                        id = UUID.randomUUID(),
+                        email = "UNIQUE@EXAMPLE.COM",
+                    )
+
+                repository.create(first)
+
+                assertFailsWith<UserAlreadyExistsException> {
+                    repository.create(duplicate)
+                }
             }
         }
 
