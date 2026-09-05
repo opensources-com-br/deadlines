@@ -1,0 +1,2 @@
+-- Initial Flyway baseline for the Deadlines database.
+-- Domain tables begin in later, feature-specific migrations.
