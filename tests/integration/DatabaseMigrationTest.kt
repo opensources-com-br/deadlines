@@ -1,19 +1,27 @@
 package deadlines.integration
 
 import deadlines.config.DatabaseConfig
+import deadlines.identity.users.ExposedUserRepository
+import deadlines.identity.users.User
+import deadlines.identity.users.UserProfile
+import deadlines.identity.users.UserStatus
+import deadlines.shared.database.DatabaseQuery
 import deadlines.shared.database.DatabaseFactory
+import kotlinx.coroutines.test.runTest
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 import java.nio.file.Path
 import java.sql.DriverManager
+import java.time.Instant
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @Testcontainers(disabledWithoutDocker = true)
 class DatabaseMigrationTest {
     @Test
-    fun `startup applies the baseline migration`() {
+    fun `startup applies every migration`() {
         val config =
             DatabaseConfig(
                 url = postgres.jdbcUrl,
@@ -26,16 +34,54 @@ class DatabaseMigrationTest {
         DatabaseFactory.open(config).use {
             DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password).use { connection ->
                 connection.prepareStatement(
-                    "SELECT COUNT(*) FROM flyway_schema_history WHERE version = '001' AND success",
+                    "SELECT COUNT(*) FROM flyway_schema_history WHERE success",
                 ).use { statement ->
                     statement.executeQuery().use { result ->
                         result.next()
-                        assertEquals(1, result.getInt(1))
+                        assertEquals(2, result.getInt(1))
                     }
                 }
             }
         }
     }
+
+    @Test
+    fun `user repository persists and reads a complete user`() =
+        runTest {
+            DatabaseFactory.open(databaseConfig()).use { database ->
+                val repository = ExposedUserRepository(DatabaseQuery(database.database))
+                val now = Instant.parse("2026-09-05T12:00:00Z")
+                val user =
+                    User(
+                        id = UUID.randomUUID(),
+                        email = "repository@example.com",
+                        status = UserStatus.ACTIVE,
+                        profile = UserProfile("Repo", "Test", null, "+5511999999999"),
+                        createdAt = now,
+                        updatedAt = now,
+                    )
+
+                repository.create(user)
+                val found = repository.findByEmail("REPOSITORY@EXAMPLE.COM")
+
+                assertEquals(user, found)
+                assertEquals(1, repository.count())
+                assertEquals(listOf(user), repository.list(offset = 0, limit = 20))
+
+                val updated = user.copy(status = UserStatus.DISABLED, updatedAt = now.plusSeconds(60))
+                repository.update(updated)
+                assertEquals(updated, repository.findById(user.id))
+            }
+        }
+
+    private fun databaseConfig() =
+        DatabaseConfig(
+            url = postgres.jdbcUrl,
+            user = postgres.username,
+            password = postgres.password,
+            maximumPoolSize = 2,
+            migrationsLocation = migrationLocation(),
+        )
 
     private fun migrationLocation(): String {
         val migrations = Path.of("../database/migrations").toAbsolutePath().normalize()
