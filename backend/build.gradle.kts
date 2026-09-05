@@ -9,6 +9,10 @@ version = "0.1.0"
 
 kotlin {
     jvmToolchain(21)
+
+    sourceSets.test {
+        kotlin.srcDir("../tests/integration")
+    }
 }
 
 application {
@@ -22,6 +26,8 @@ dependencies {
 
     testImplementation(kotlin("test-junit5"))
     testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.testcontainers.junit.jupiter)
+    testImplementation(libs.testcontainers.postgresql)
 }
 
 tasks.test {
