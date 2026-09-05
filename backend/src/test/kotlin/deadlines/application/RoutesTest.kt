@@ -49,4 +49,18 @@ class RoutesTest {
                 response.bodyAsText(),
             )
         }
+
+    @Test
+    fun `unknown routes use the shared error contract`() =
+        testApplication {
+            application { module() }
+
+            val response = client.get("/missing")
+
+            assertEquals(HttpStatusCode.NotFound, response.status)
+            assertEquals(
+                "{\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"Resource not found\"}}",
+                response.bodyAsText(),
+            )
+        }
 }

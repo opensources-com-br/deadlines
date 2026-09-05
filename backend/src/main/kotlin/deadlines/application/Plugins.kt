@@ -35,6 +35,18 @@ fun Application.configurePlugins() {
     }
 
     install(StatusPages) {
+        status(HttpStatusCode.NotFound) { call, status ->
+            call.respond(
+                status,
+                ApiErrorResponse(
+                    error = ApiErrorBody(
+                        code = "NOT_FOUND",
+                        message = "Resource not found",
+                    ),
+                ),
+            )
+        }
+
         exception<ApiException> { call, cause ->
             call.respond(
                 HttpStatusCode.fromValue(cause.status),
