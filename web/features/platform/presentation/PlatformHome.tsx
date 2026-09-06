@@ -1,5 +1,7 @@
 "use client";
 
+import { AuditsCard } from "@/features/audits/presentation/AuditsCard";
+
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
@@ -271,6 +273,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
             )}
           </CardContent>
         </Card>
+        {organization.role === "owner" && <AuditsCard key={organization.id} members={members} />}
         <SessionsCard initialSessions={sessions} />
         </div>
       </section>
