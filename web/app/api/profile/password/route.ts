@@ -9,7 +9,8 @@ const refreshCookieName = "deadlines_refresh_token";
 export async function PATCH(request: Request) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get(accessCookieName)?.value;
-  if (!accessToken) {
+  const refreshToken = cookieStore.get(refreshCookieName)?.value;
+  if (!accessToken || !refreshToken) {
     return NextResponse.json(
       { error: { code: "UNAUTHORIZED", message: "Authentication is required" } },
       { status: 401 },
@@ -32,7 +33,7 @@ export async function PATCH(request: Request) {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, refreshToken }),
       cache: "no-store",
     });
   } catch {
@@ -42,16 +43,30 @@ export async function PATCH(request: Request) {
     );
   }
 
+  const data = await backendResponse.json().catch(() => null);
   if (!backendResponse.ok) {
-    const data = await backendResponse.json().catch(() => null);
     return NextResponse.json(
       data ?? { error: { code: "PASSWORD_CHANGE_FAILED", message: "Unable to change your password" } },
       { status: backendResponse.status },
     );
   }
 
+  const auth = data as { accessToken: string; refreshToken: string; expiresIn: number };
   const response = new NextResponse(null, { status: 204 });
-  response.cookies.delete(accessCookieName);
-  response.cookies.delete(refreshCookieName);
+  const secure = process.env.NODE_ENV === "production";
+  response.cookies.set(accessCookieName, auth.accessToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure,
+    path: "/",
+    maxAge: auth.expiresIn,
+  });
+  response.cookies.set(refreshCookieName, auth.refreshToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure,
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
   return response;
 }

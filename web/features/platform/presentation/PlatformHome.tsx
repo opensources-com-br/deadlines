@@ -73,9 +73,11 @@ export function PlatformHome({ user }: PlatformHomeProps) {
     setIsSaving(true);
     try {
       await changePassword(currentPassword, newPassword);
-      toast.success("Your password has been changed. Sign in again.");
-      router.replace("/login");
-      router.refresh();
+      setCurrentPassword("");
+      setNewPassword("");
+      setPasswordConfirmation("");
+      setIsChangingPassword(false);
+      toast.success("Your password has been changed.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to change your password.");
     } finally {
