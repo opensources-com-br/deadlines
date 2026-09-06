@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.7.0
+  version: 0.8.0
   description: API local do Deadlines. O cadastro exige confirmação de e-mail antes da ativação e do login; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
@@ -13,6 +13,8 @@ tags:
   - name: Email
   - name: Sessions
   - name: Organizations
+  - name: Permissions
+  - name: Roles
 paths:
   /health:
     get:
@@ -359,6 +361,227 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "422":
           $ref: "#/components/responses/ValidationError"
+  /api/v1/permissions:
+    get:
+      tags: [Permissions]
+      summary: Lista permissões do sistema e da organização atual
+      operationId: listPermissions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Permissões disponíveis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Permissions]
+      summary: Cria uma permissão customizada
+      operationId: createPermission
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePermissionRequest"
+      responses:
+        "201":
+          description: Permissão criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Permission"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Apenas o proprietário pode criar permissões
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/permissions/{permissionId}:
+    parameters:
+      - $ref: "#/components/parameters/PermissionId"
+    get:
+      tags: [Permissions]
+      summary: Busca uma permissão
+      operationId: getPermission
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Permissão encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Permission"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Permissions]
+      summary: Atualiza uma permissão customizada
+      operationId: updatePermission
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePermissionRequest"
+      responses:
+        "200":
+          description: Permissão atualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Permission"
+        "409":
+          description: Permissão do sistema é imutável ou chave já utilizada
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags: [Permissions]
+      summary: Exclui uma permissão customizada
+      operationId: deletePermission
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Permissão excluída
+        "409":
+          description: Permissões do sistema não podem ser excluídas
+  /api/v1/roles:
+    get:
+      tags: [Roles]
+      summary: Lista os papéis da organização atual
+      operationId: listRoles
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Papéis disponíveis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleList"
+    post:
+      tags: [Roles]
+      summary: Cria um papel customizado
+      operationId: createRole
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleRequest"
+      responses:
+        "201":
+          description: Papel criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/roles/{roleId}:
+    parameters:
+      - $ref: "#/components/parameters/RoleId"
+    get:
+      tags: [Roles]
+      summary: Busca um papel
+      operationId: getRole
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Papel encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Roles]
+      summary: Atualiza um papel customizado
+      operationId: updateRole
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoleRequest"
+      responses:
+        "200":
+          description: Papel atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "409":
+          description: Papel do sistema é imutável ou chave já utilizada
+    delete:
+      tags: [Roles]
+      summary: Exclui um papel customizado
+      operationId: deleteRole
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Papel excluído
+        "409":
+          description: Papéis do sistema não podem ser excluídos
+  /api/v1/roles/{roleId}/permissions:
+    parameters:
+      - $ref: "#/components/parameters/RoleId"
+    get:
+      tags: [Roles]
+      summary: Lista permissões atribuídas ao papel
+      operationId: listRolePermissions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Permissões atribuídas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionList"
+    put:
+      tags: [Roles]
+      summary: Substitui todas as permissões atribuídas ao papel
+      operationId: replaceRolePermissions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplaceRolePermissionsRequest"
+      responses:
+        "200":
+          description: Permissões atribuídas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionList"
+        "409":
+          description: As permissões do proprietário não podem ser alteradas
+        "422":
+          $ref: "#/components/responses/ValidationError"
   /api/v1/users:
     post:
       tags: [Users]
@@ -525,6 +748,20 @@ components:
         format: uuid
     SessionId:
       name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PermissionId:
+      name: permissionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RoleId:
+      name: roleId
       in: path
       required: true
       schema:
@@ -897,6 +1134,129 @@ components:
         updatedAt:
           type: string
           format: date-time
+    CreatePermissionRequest:
+      type: object
+      additionalProperties: false
+      required: [key, name]
+      properties:
+        key:
+          type: string
+          minLength: 2
+          maxLength: 100
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        description:
+          type: [string, "null"]
+          maxLength: 500
+    UpdatePermissionRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: [string, "null"]
+    Permission:
+      type: object
+      required: [id, key, name, isSystem, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: [string, "null"]
+        isSystem:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PermissionList:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+    CreateRoleRequest:
+      type: object
+      additionalProperties: false
+      required: [key, name]
+      properties:
+        key:
+          type: string
+          minLength: 2
+          maxLength: 80
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        description:
+          type: [string, "null"]
+          maxLength: 500
+    UpdateRoleRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: [string, "null"]
+    ReplaceRolePermissionsRequest:
+      type: object
+      additionalProperties: false
+      required: [permissionIds]
+      properties:
+        permissionIds:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+    Role:
+      type: object
+      required: [id, key, name, isSystem, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: [string, "null"]
+        isSystem:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    RoleList:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
     ErrorResponse:
       type: object
       required: [error]
