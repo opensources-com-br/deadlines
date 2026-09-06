@@ -116,6 +116,32 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /api/v1/auth/password:
+    patch:
+      tags: [Authentication]
+      summary: Altera a senha do usuário autenticado
+      operationId: changePassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "204":
+          description: Senha alterada e sessões revogadas
+        "400":
+          description: Senha atual inválida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
   /api/v1/auth/email/verify:
     post:
       tags: [Email]
@@ -466,6 +492,19 @@ components:
       properties:
         refreshToken:
           type: string
+          writeOnly: true
+    ChangePasswordRequest:
+      type: object
+      additionalProperties: false
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+          writeOnly: true
+        newPassword:
+          type: string
+          minLength: 12
+          maxLength: 72
           writeOnly: true
     VerifyEmailRequest:
       type: object

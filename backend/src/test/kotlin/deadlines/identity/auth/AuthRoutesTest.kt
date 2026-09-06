@@ -6,6 +6,7 @@ import deadlines.identity.users.UserProfileResponse
 import deadlines.identity.users.UserResponse
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -54,6 +55,23 @@ class AuthRoutesTest {
                 }
             assertEquals(HttpStatusCode.OK, authenticated.status)
         }
+
+    @Test
+    fun `change password requires a valid access token`() =
+        testApplication {
+            val auth = FakeAuthOperations()
+            application { module(authService = auth, tokenService = tokenService) }
+
+            val response =
+                client.patch("/api/v1/auth/password") {
+                    bearerAuth(tokenService.issue(auth.userId).accessToken)
+                    contentType(ContentType.Application.Json)
+                    setBody("""{"currentPassword":"password-123","newPassword":"new-password-123"}""")
+                }
+
+            assertEquals(HttpStatusCode.NoContent, response.status)
+            assertEquals("new-password-123", auth.changedPassword?.newPassword)
+        }
 }
 
 private class FakeAuthOperations : AuthOperations {
@@ -68,10 +86,14 @@ private class FakeAuthOperations : AuthOperations {
             "2026-09-05T12:00:00Z",
         )
     private val response = AuthResponse("access", "refresh", expiresIn = 900, user = user)
+    var changedPassword: ChangePasswordRequest? = null
 
     override suspend fun register(request: RegisterRequest, context: SessionContext) = RegistrationResponse(user)
     override suspend fun login(request: LoginRequest, context: SessionContext) = response
     override suspend fun refresh(refreshToken: String, context: SessionContext) = response
     override suspend fun logout(refreshToken: String) = Unit
     override suspend fun me(userId: UUID) = user
+    override suspend fun changePassword(userId: UUID, request: ChangePasswordRequest) {
+        changedPassword = request
+    }
 }

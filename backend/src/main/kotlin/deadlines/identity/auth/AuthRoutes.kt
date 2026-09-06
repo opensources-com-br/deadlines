@@ -10,6 +10,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
+import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import java.util.UUID
@@ -34,6 +35,11 @@ fun Route.authRoutes(auth: AuthOperations) {
             get("/me") {
                 val subject = call.principal<JWTPrincipal>()!!.payload.subject
                 call.respond(auth.me(UUID.fromString(subject)))
+            }
+            patch("/password") {
+                val subject = call.principal<JWTPrincipal>()!!.payload.subject
+                auth.changePassword(UUID.fromString(subject), call.receive())
+                call.respond(HttpStatusCode.NoContent)
             }
         }
     }

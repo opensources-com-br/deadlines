@@ -103,9 +103,32 @@ class AuthServiceTest {
             assertFailsWith<InvalidRefreshTokenException> { service.refresh(authenticated.refreshToken, context) }
         }
 
-    private suspend fun createActiveUser() {
+    @Test
+    fun `change password verifies the current password and revokes sessions`() =
+        runTest {
+            val user = createActiveUser()
+            val authenticated = service.login(LoginRequest("user@example.com", "password-123"), context)
+
+            service.changePassword(user.id, ChangePasswordRequest("password-123", "new-password-123"))
+
+            assertEquals("hash:new-password-123", credentials.values["user@example.com"]?.passwordHash)
+            assertFailsWith<InvalidRefreshTokenException> { service.refresh(authenticated.refreshToken, context) }
+        }
+
+    @Test
+    fun `change password rejects an invalid current password`() =
+        runTest {
+            val user = createActiveUser()
+
+            assertFailsWith<InvalidCurrentPasswordException> {
+                service.changePassword(user.id, ChangePasswordRequest("wrong-password", "new-password-123"))
+            }
+        }
+
+    private suspend fun createActiveUser(): User {
         val user = User(UUID.randomUUID(), "user@example.com", UserStatus.ACTIVE, UserProfile("User", "Name", null, null), now, now, now)
         credentials.create(user, "hash:password-123")
+        return user
     }
 }
 

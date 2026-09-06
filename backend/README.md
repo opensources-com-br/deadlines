@@ -60,6 +60,7 @@ POST   /api/v1/auth/login
 POST   /api/v1/auth/refresh
 POST   /api/v1/auth/logout
 GET    /api/v1/auth/me
+PATCH  /api/v1/auth/password
 POST   /api/v1/auth/email/verify
 POST   /api/v1/auth/email/resend
 POST   /api/v1/auth/forgot-password

@@ -14,6 +14,12 @@ class InvalidRefreshTokenException : ApiException(
     message = "Refresh token is invalid or expired",
 )
 
+class InvalidCurrentPasswordException : ApiException(
+    status = 400,
+    code = "INVALID_CURRENT_PASSWORD",
+    message = "Current password is invalid",
+)
+
 class AuthValidationException(
     violations: Map<String, String>,
 ) : ApiException(

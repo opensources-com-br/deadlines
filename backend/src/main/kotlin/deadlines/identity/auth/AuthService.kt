@@ -22,6 +22,7 @@ interface AuthOperations {
     suspend fun refresh(refreshToken: String, context: SessionContext): AuthResponse
     suspend fun logout(refreshToken: String)
     suspend fun me(userId: UUID): deadlines.identity.users.UserResponse
+    suspend fun changePassword(userId: UUID, request: ChangePasswordRequest)
 }
 
 class AuthService(
@@ -90,6 +91,25 @@ class AuthService(
             ?.takeIf { it.status == UserStatus.ACTIVE }
             ?.toResponse()
             ?: throw InvalidCredentialsException()
+
+    override suspend fun changePassword(userId: UUID, request: ChangePasswordRequest) {
+        if (request.newPassword.length !in 12..72) {
+            throw AuthValidationException(mapOf("newPassword" to "must contain between 12 and 72 characters"))
+        }
+
+        val user = users.findById(userId)?.takeIf { it.status == UserStatus.ACTIVE }
+            ?: throw InvalidCredentialsException()
+        val current = credentials.findByEmail(user.email) ?: throw InvalidCredentialsException()
+        if (!passwordHasher.verify(request.currentPassword, current.passwordHash)) {
+            throw InvalidCurrentPasswordException()
+        }
+
+        val now = clock.instant()
+        if (!credentials.updatePassword(userId, passwordHasher.hash(request.newPassword), now)) {
+            throw InvalidCredentialsException()
+        }
+        sessions.revokeAll(userId, now)
+    }
 
     private suspend fun createSession(user: User, context: SessionContext): AuthResponse {
         val now = clock.instant()
