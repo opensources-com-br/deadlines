@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.8.0
+  version: 0.9.0
   description: API local do Deadlines. O cadastro exige confirmação de e-mail antes da ativação e do login; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
@@ -15,6 +15,8 @@ tags:
   - name: Organizations
   - name: Permissions
   - name: Roles
+  - name: Members
+  - name: Invitations
 paths:
   /health:
     get:
@@ -582,6 +584,206 @@ paths:
           description: As permissões do proprietário não podem ser alteradas
         "422":
           $ref: "#/components/responses/ValidationError"
+  /api/v1/members:
+    get:
+      tags: [Members]
+      summary: Lista membros ativos da organização atual
+      operationId: listMembers
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Membros ativos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemberList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/members/{memberId}:
+    parameters:
+      - $ref: "#/components/parameters/MemberId"
+    get:
+      tags: [Members]
+      summary: Busca um membro da organização atual
+      operationId: getMember
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Membro encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Members]
+      summary: Altera a role de um membro
+      operationId: updateMemberRole
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMemberRoleRequest"
+      responses:
+        "200":
+          description: Role alterada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "403":
+          description: Apenas o proprietário pode alterar membros
+        "409":
+          description: O proprietário não pode ser reatribuído
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags: [Members]
+      summary: Remove um membro da organização
+      operationId: removeMember
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Membro removido
+        "403":
+          description: Apenas o proprietário pode remover membros
+        "409":
+          description: O proprietário não pode ser removido
+  /api/v1/invitations:
+    get:
+      tags: [Invitations]
+      summary: Lista convites da organização atual
+      operationId: listInvitations
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Convites da organização
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitationList"
+    post:
+      tags: [Invitations]
+      summary: Cria e envia um convite
+      operationId: createInvitation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvitationRequest"
+      responses:
+        "201":
+          description: Convite criado e enviado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invitation"
+        "403":
+          description: Apenas o proprietário pode criar convites
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/invitations/preview:
+    get:
+      tags: [Invitations]
+      summary: Consulta os dados públicos de um convite pelo token
+      operationId: previewInvitation
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dados do convite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitationPreview"
+        "422":
+          description: Convite inválido ou expirado
+  /api/v1/invitations/accept:
+    post:
+      tags: [Invitations]
+      summary: Aceita um convite usando a conta autenticada
+      operationId: acceptInvitation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptInvitationRequest"
+      responses:
+        "200":
+          description: Membership criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "403":
+          description: O convite pertence a outro e-mail
+        "409":
+          description: Usuário já pertence a uma organização
+        "422":
+          description: Convite inválido ou expirado
+  /api/v1/invitations/{invitationId}:
+    parameters:
+      - $ref: "#/components/parameters/InvitationId"
+    get:
+      tags: [Invitations]
+      summary: Busca um convite da organização atual
+      operationId: getInvitation
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Convite encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invitation"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Invitations]
+      summary: Revoga um convite pendente
+      operationId: revokeInvitation
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Convite revogado
+  /api/v1/invitations/{invitationId}/resend:
+    parameters:
+      - $ref: "#/components/parameters/InvitationId"
+    post:
+      tags: [Invitations]
+      summary: Renova o token e reenvia um convite pendente ou expirado
+      operationId: resendInvitation
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Convite renovado e enviado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invitation"
   /api/v1/users:
     post:
       tags: [Users]
@@ -762,6 +964,20 @@ components:
         format: uuid
     RoleId:
       name: roleId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    MemberId:
+      name: memberId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    InvitationId:
+      name: invitationId
       in: path
       required: true
       schema:
@@ -1257,6 +1473,118 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Role"
+    UpdateMemberRoleRequest:
+      type: object
+      additionalProperties: false
+      required: [roleId]
+      properties:
+        roleId:
+          type: string
+          format: uuid
+    Member:
+      type: object
+      required: [id, userId, email, firstName, lastName, role, joinedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+        joinedAt:
+          type: string
+          format: date-time
+    MemberList:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Member"
+    CreateInvitationRequest:
+      type: object
+      additionalProperties: false
+      required: [email, roleId]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+        roleId:
+          type: string
+          format: uuid
+    AcceptInvitationRequest:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token:
+          type: string
+          writeOnly: true
+    Invitation:
+      type: object
+      required: [id, organizationId, organizationName, email, role, status, expiresAt, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        organizationName:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          $ref: "#/components/schemas/Role"
+        status:
+          type: string
+          enum: [pending, accepted, revoked, expired]
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    InvitationList:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Invitation"
+    InvitationPreview:
+      type: object
+      required: [organizationName, email, roleName, status, expiresAt]
+      properties:
+        organizationName:
+          type: string
+        email:
+          type: string
+          format: email
+        roleName:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, revoked, expired]
+        expiresAt:
+          type: string
+          format: date-time
     ErrorResponse:
       type: object
       required: [error]
