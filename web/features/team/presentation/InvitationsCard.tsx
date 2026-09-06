@@ -20,7 +20,7 @@ type InvitationsCardProps = {
 };
 
 export function InvitationsCard({ initialInvitations, roles, canManage }: InvitationsCardProps) {
-  const [invitations, setInvitations] = useState(initialInvitations);
+  const [invitations, setInvitations] = useState(() => initialInvitations.filter((invitation) => invitation.status !== "revoked"));
   const [isCreating, setIsCreating] = useState(false);
   const [email, setEmail] = useState("");
   const [roleId, setRoleId] = useState(roles.find((role) => role.key === "member")?.id ?? "");
@@ -61,7 +61,7 @@ export function InvitationsCard({ initialInvitations, roles, canManage }: Invita
     setBusyId(invitation.id);
     try {
       await teamApi.revokeInvitation(invitation.id);
-      setInvitations((current) => current.map((item) => item.id === invitation.id ? { ...item, status: "revoked" } : item));
+      setInvitations((current) => current.filter((item) => item.id !== invitation.id));
       toast.success("Invitation revoked.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to revoke this invitation.");
