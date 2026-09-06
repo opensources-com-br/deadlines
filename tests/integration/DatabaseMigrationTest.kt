@@ -24,6 +24,10 @@ import deadlines.organizations.access.ExposedRoleRepository
 import deadlines.organizations.access.Permission
 import deadlines.organizations.access.PermissionAlreadyExistsException
 import deadlines.organizations.access.Role
+import deadlines.organizations.invitations.ExposedInvitationRepository
+import deadlines.organizations.invitations.InvitationStatus
+import deadlines.organizations.invitations.OrganizationInvitation
+import deadlines.organizations.members.ExposedMemberRepository
 import deadlines.shared.database.DatabaseQuery
 import deadlines.shared.database.DatabaseFactory
 import kotlinx.coroutines.test.runTest
@@ -308,6 +312,47 @@ class DatabaseMigrationTest {
                 assertEquals(listOf(customPermission), roles.listPermissions(customRole.id))
                 assertEquals(true, roles.delete(context.organization.id, customRole.id))
                 assertEquals(true, permissions.delete(context.organization.id, customPermission.id))
+            }
+        }
+
+    @Test
+    fun `invitation acceptance atomically creates an organization member`() =
+        runTest {
+            DatabaseFactory.open(databaseConfig()).use { database ->
+                val query = DatabaseQuery(database.database)
+                val users = ExposedUserRepository(query)
+                val organizations = ExposedOrganizationRepository(query)
+                val roles = ExposedRoleRepository(query)
+                val invitations = ExposedInvitationRepository(query)
+                val members = ExposedMemberRepository(query)
+                val now = Instant.now()
+                val owner = testUser("invitation-owner", now)
+                val invitee = testUser("invitation-member", now)
+                val context = organizationContext(owner.id, "invitation-${UUID.randomUUID()}", now)
+                users.create(owner)
+                users.create(invitee)
+                organizations.createWithOwner(context)
+                val memberRole = roles.list(context.organization.id).single { it.key == "member" }
+                val invitation =
+                    OrganizationInvitation(
+                        UUID.randomUUID(),
+                        context.organization.id,
+                        context.organization.name,
+                        invitee.email,
+                        memberRole,
+                        owner.id,
+                        "a".repeat(64),
+                        InvitationStatus.PENDING,
+                        now.plusSeconds(3600),
+                        now,
+                        now,
+                    )
+
+                invitations.create(invitation)
+                assertEquals(invitation.id, invitations.findByTokenHash("a".repeat(64), now)?.id)
+                assertEquals(true, invitations.accept(invitation, invitee.id, UUID.randomUUID(), now))
+                assertEquals(invitee.id, members.findByUserId(context.organization.id, invitee.id)?.userId)
+                assertEquals("accepted", invitations.findById(context.organization.id, invitation.id, now)?.status?.name?.lowercase())
             }
         }
 
