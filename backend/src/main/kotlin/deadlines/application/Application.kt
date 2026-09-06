@@ -21,6 +21,9 @@ import deadlines.identity.users.UserService
 import deadlines.organizations.ExposedOrganizationRepository
 import deadlines.organizations.OrganizationOperations
 import deadlines.organizations.OrganizationService
+import deadlines.organizations.access.ExposedPermissionRepository
+import deadlines.organizations.access.PermissionOperations
+import deadlines.organizations.access.PermissionService
 import deadlines.shared.database.DatabaseFactory
 import deadlines.shared.database.DatabaseQuery
 import io.ktor.server.application.Application
@@ -38,7 +41,9 @@ fun main() {
         val credentialsRepository = ExposedUserCredentialsRepository(query)
         val sessionRepository = ExposedSessionRepository(query)
         val sessionService = SessionService(sessionRepository)
-        val organizationService = OrganizationService(ExposedOrganizationRepository(query))
+        val organizationRepository = ExposedOrganizationRepository(query)
+        val organizationService = OrganizationService(organizationRepository)
+        val permissionService = PermissionService(organizationRepository, ExposedPermissionRepository(query))
         val passwordHasher = BcryptPasswordHasher()
         val emailTokens = ExposedEmailTokenRepository(query)
         val emailService =
@@ -68,6 +73,7 @@ fun main() {
                 passwordResetService,
                 sessionService,
                 organizationService,
+                permissionService,
             )
         }.start(wait = true)
     }
@@ -81,7 +87,16 @@ fun Application.module(
     passwordReset: PasswordResetOperations? = null,
     sessionService: SessionService? = null,
     organizationService: OrganizationOperations? = null,
+    permissionService: PermissionOperations? = null,
 ) {
     configurePlugins(tokenService)
-    configureRoutes(userService, authService, emailVerification, passwordReset, sessionService, organizationService)
+    configureRoutes(
+        userService,
+        authService,
+        emailVerification,
+        passwordReset,
+        sessionService,
+        organizationService,
+        permissionService,
+    )
 }
