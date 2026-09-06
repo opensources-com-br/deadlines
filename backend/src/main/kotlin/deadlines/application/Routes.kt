@@ -13,6 +13,8 @@ import deadlines.organizations.OrganizationOperations
 import deadlines.organizations.organizationRoutes
 import deadlines.organizations.access.PermissionOperations
 import deadlines.organizations.access.permissionRoutes
+import deadlines.organizations.access.RoleOperations
+import deadlines.organizations.access.roleRoutes
 import io.ktor.server.application.Application
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -32,6 +34,7 @@ fun Application.configureRoutes(
     sessionService: SessionService? = null,
     organizationService: OrganizationOperations? = null,
     permissionService: PermissionOperations? = null,
+    roleService: RoleOperations? = null,
 ) {
     routing {
         get("/health") {
@@ -55,6 +58,9 @@ fun Application.configureRoutes(
         }
         if (permissionService != null) {
             permissionRoutes(permissionService)
+        }
+        if (roleService != null) {
+            roleRoutes(roleService)
         }
     }
 }

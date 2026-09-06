@@ -24,6 +24,9 @@ import deadlines.organizations.OrganizationService
 import deadlines.organizations.access.ExposedPermissionRepository
 import deadlines.organizations.access.PermissionOperations
 import deadlines.organizations.access.PermissionService
+import deadlines.organizations.access.ExposedRoleRepository
+import deadlines.organizations.access.RoleOperations
+import deadlines.organizations.access.RoleService
 import deadlines.shared.database.DatabaseFactory
 import deadlines.shared.database.DatabaseQuery
 import io.ktor.server.application.Application
@@ -43,7 +46,9 @@ fun main() {
         val sessionService = SessionService(sessionRepository)
         val organizationRepository = ExposedOrganizationRepository(query)
         val organizationService = OrganizationService(organizationRepository)
-        val permissionService = PermissionService(organizationRepository, ExposedPermissionRepository(query))
+        val permissionRepository = ExposedPermissionRepository(query)
+        val permissionService = PermissionService(organizationRepository, permissionRepository)
+        val roleService = RoleService(organizationRepository, ExposedRoleRepository(query), permissionRepository)
         val passwordHasher = BcryptPasswordHasher()
         val emailTokens = ExposedEmailTokenRepository(query)
         val emailService =
@@ -74,6 +79,7 @@ fun main() {
                 sessionService,
                 organizationService,
                 permissionService,
+                roleService,
             )
         }.start(wait = true)
     }
@@ -88,6 +94,7 @@ fun Application.module(
     sessionService: SessionService? = null,
     organizationService: OrganizationOperations? = null,
     permissionService: PermissionOperations? = null,
+    roleService: RoleOperations? = null,
 ) {
     configurePlugins(tokenService)
     configureRoutes(
@@ -98,5 +105,6 @@ fun Application.module(
         sessionService,
         organizationService,
         permissionService,
+        roleService,
     )
 }
