@@ -73,6 +73,16 @@ class AuthServiceTest {
         }
 
     @Test
+    fun `login rejects a pending account even with the correct password`() =
+        runTest {
+            service.register(RegisterRequest("user@example.com", "password-123", "User", "Name"), context)
+
+            assertFailsWith<InvalidCredentialsException> {
+                service.login(LoginRequest("user@example.com", "password-123"), context)
+            }
+        }
+
+    @Test
     fun `refresh rotates the token and prevents reuse`() =
         runTest {
             createActiveUser()
