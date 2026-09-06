@@ -17,7 +17,10 @@
     { "key": "sessionId", "value": "" },
     { "key": "organizationId", "value": "" },
     { "key": "organizationName", "value": "Postman Workspace" },
-    { "key": "organizationSlug", "value": "" }
+    { "key": "organizationSlug", "value": "" },
+    { "key": "permissionId", "value": "" },
+    { "key": "permissionKey", "value": "" },
+    { "key": "roleId", "value": "" }
   ],
   "item": [
     {
@@ -260,6 +263,71 @@
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
             "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Workspace\"\n}" },
             "url": "{{baseUrl}}/api/v1/organizations/current"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Permissions",
+      "item": [
+        {
+          "name": "List permissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/permissions"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Create permission",
+          "event": [
+            { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+              "if (!pm.collectionVariables.get('permissionKey')) {",
+              "  pm.collectionVariables.set('permissionKey', `deadlines.${pm.variables.replaceIn('{{$randomUUID}}')}`);",
+              "}"
+            ] } },
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('status is 201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('permissionId', pm.response.json().id);"
+            ] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"key\": \"{{permissionKey}}\",\n  \"name\": \"Manage deadlines\",\n  \"description\": \"Manage organization deadlines.\"\n}" },
+            "url": "{{baseUrl}}/api/v1/permissions"
+          }
+        },
+        {
+          "name": "Get permission",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/permissions/{{permissionId}}"
+          }
+        },
+        {
+          "name": "Update permission",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Manage all deadlines\"\n}" },
+            "url": "{{baseUrl}}/api/v1/permissions/{{permissionId}}"
+          }
+        },
+        {
+          "name": "Delete permission",
+          "disabled": true,
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/permissions/{{permissionId}}"
           }
         }
       ]
