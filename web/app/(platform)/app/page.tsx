@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import type { Organization } from "@/features/organizations/domain/organization";
-import type { AccessList, Permission } from "@/features/access/domain/access";
+import type { AccessList, Permission, Role } from "@/features/access/domain/access";
 import type { SessionList } from "@/features/platform/domain/session";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { PlatformHome } from "@/features/platform/presentation/PlatformHome";
@@ -19,11 +19,12 @@ export default async function PlatformPage() {
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store" as const,
   };
-  const [response, sessionsResponse, organizationResponse, permissionsResponse] = await Promise.all([
+  const [response, sessionsResponse, organizationResponse, permissionsResponse, rolesResponse] = await Promise.all([
     fetch(backendApiUrl("/api/v1/users/me"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/sessions"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/organizations/current"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/permissions"), authenticatedRequest).catch(() => undefined),
+    fetch(backendApiUrl("/api/v1/roles"), authenticatedRequest).catch(() => undefined),
   ]);
 
   if (!response?.ok) {
@@ -44,5 +45,6 @@ export default async function PlatformPage() {
   const permissions = permissionsResponse?.ok
     ? ((await permissionsResponse.json()) as AccessList<Permission>).data
     : [];
-  return <PlatformHome user={user} organization={organization} sessions={sessions} permissions={permissions} />;
+  const roles = rolesResponse?.ok ? ((await rolesResponse.json()) as AccessList<Role>).data : [];
+  return <PlatformHome user={user} organization={organization} sessions={sessions} permissions={permissions} roles={roles} />;
 }
