@@ -21,7 +21,11 @@
     { "key": "permissionId", "value": "" },
     { "key": "permissionKey", "value": "" },
     { "key": "roleId", "value": "" },
-    { "key": "roleKey", "value": "" }
+    { "key": "roleKey", "value": "" },
+    { "key": "memberId", "value": "" },
+    { "key": "invitationId", "value": "" },
+    { "key": "invitationEmail", "value": "invitee@example.com" },
+    { "key": "invitationToken", "value": "" }
   ],
   "item": [
     {
@@ -413,6 +417,124 @@
             "header": [],
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
             "url": "{{baseUrl}}/api/v1/roles/{{roleId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Members",
+      "item": [
+        {
+          "name": "List members",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 200', () => pm.response.to.have.status(200));",
+            "const member = pm.response.json().data.find((item) => item.role.key !== 'owner');",
+            "if (member) pm.collectionVariables.set('memberId', member.id);"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/members"
+          }
+        },
+        {
+          "name": "Get member",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/members/{{memberId}}"
+          }
+        },
+        {
+          "name": "Update member role",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"roleId\": \"{{roleId}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/members/{{memberId}}"
+          }
+        },
+        {
+          "name": "Remove member",
+          "disabled": true,
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/members/{{memberId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invitations",
+      "item": [
+        {
+          "name": "List invitations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/invitations"
+          }
+        },
+        {
+          "name": "Create invitation",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 201', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('invitationId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{invitationEmail}}\",\n  \"roleId\": \"{{roleId}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/invitations"
+          }
+        },
+        {
+          "name": "Get invitation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/invitations/{{invitationId}}"
+          }
+        },
+        {
+          "name": "Resend invitation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/invitations/{{invitationId}}/resend"
+          }
+        },
+        {
+          "name": "Preview invitation",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/invitations/preview?token={{invitationToken}}" }
+        },
+        {
+          "name": "Accept invitation (use invitee access token)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{invitationToken}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/invitations/accept"
+          }
+        },
+        {
+          "name": "Revoke invitation",
+          "disabled": true,
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/invitations/{{invitationId}}"
           }
         }
       ]
