@@ -1,5 +1,7 @@
 package deadlines.organizations.access
 
+import deadlines.organizations.audits.withAuditActor
+
 import deadlines.organizations.MembershipRole
 import deadlines.organizations.OrganizationAccessDeniedException
 import deadlines.organizations.OrganizationNotFoundException
@@ -42,10 +44,10 @@ class RoleService(
     override suspend fun get(userId: UUID, roleId: UUID): RoleResponse =
         requireRole(currentOrganizationId(userId), roleId).toResponse()
 
-    override suspend fun create(userId: UUID, request: CreateRoleRequest): RoleResponse {
+    override suspend fun create(userId: UUID, request: CreateRoleRequest): RoleResponse = withAuditActor(userId) {
         val organizationId = requireOwner(userId)
         val now = clock.instant()
-        return roles.create(
+        return@withAuditActor roles.create(
             Role(
                 id = idGenerator(),
                 organizationId = organizationId,
@@ -59,7 +61,7 @@ class RoleService(
         ).toResponse()
     }
 
-    override suspend fun update(userId: UUID, roleId: UUID, request: UpdateRoleRequest): RoleResponse {
+    override suspend fun update(userId: UUID, roleId: UUID, request: UpdateRoleRequest): RoleResponse = withAuditActor(userId) {
         val organizationId = requireOwner(userId)
         if (request.key == null && request.name == null && request.description == null) {
             throw AccessValidationException(mapOf("body" to "must contain key, name, or description"))
@@ -73,10 +75,10 @@ class RoleService(
                 description = if (request.description != null) validateDescription(request.description) else current.description,
                 updatedAt = clock.instant(),
             )
-        return roles.update(updated).toResponse()
+        return@withAuditActor roles.update(updated).toResponse()
     }
 
-    override suspend fun delete(userId: UUID, roleId: UUID) {
+    override suspend fun delete(userId: UUID, roleId: UUID) = withAuditActor(userId) {
         val organizationId = requireOwner(userId)
         val current = requireRole(organizationId, roleId)
         if (current.isSystem) throw SystemRoleImmutableException()
@@ -93,7 +95,7 @@ class RoleService(
         userId: UUID,
         roleId: UUID,
         request: ReplaceRolePermissionsRequest,
-    ): PermissionListResponse {
+    ): PermissionListResponse = withAuditActor(userId) {
         val organizationId = requireOwner(userId)
         val role = requireRole(organizationId, roleId)
         if (role.key == "owner") throw OwnerPermissionsImmutableException()
@@ -103,7 +105,7 @@ class RoleService(
             throw AccessValidationException(mapOf("permissionIds" to "contains an unavailable permission"))
         }
         roles.replacePermissions(roleId, permissionIds)
-        return PermissionListResponse(roles.listPermissions(roleId).map(Permission::toResponse))
+        return@withAuditActor PermissionListResponse(roles.listPermissions(roleId).map(Permission::toResponse))
     }
 
     private suspend fun currentOrganizationId(userId: UUID): UUID =

@@ -1,5 +1,7 @@
 package deadlines.organizations.access
 
+import deadlines.organizations.audits.withAuditActor
+
 import deadlines.organizations.MembershipRole
 import deadlines.organizations.OrganizationAccessDeniedException
 import deadlines.organizations.OrganizationNotFoundException
@@ -36,10 +38,10 @@ class PermissionService(
             ?: throw PermissionNotFoundException()
     }
 
-    override suspend fun create(userId: UUID, request: CreatePermissionRequest): PermissionResponse {
+    override suspend fun create(userId: UUID, request: CreatePermissionRequest): PermissionResponse = withAuditActor(userId) {
         val organizationId = requireOwner(userId)
         val now = clock.instant()
-        return permissions.create(
+        return@withAuditActor permissions.create(
             Permission(
                 id = idGenerator(),
                 organizationId = organizationId,
@@ -57,7 +59,7 @@ class PermissionService(
         userId: UUID,
         permissionId: UUID,
         request: UpdatePermissionRequest,
-    ): PermissionResponse {
+    ): PermissionResponse = withAuditActor(userId) {
         val organizationId = requireOwner(userId)
         if (request.key == null && request.name == null && request.description == null) {
             throw AccessValidationException(mapOf("body" to "must contain key, name, or description"))
@@ -71,10 +73,10 @@ class PermissionService(
                 description = if (request.description != null) validateDescription(request.description) else current.description,
                 updatedAt = clock.instant(),
             )
-        return permissions.update(updated).toResponse()
+        return@withAuditActor permissions.update(updated).toResponse()
     }
 
-    override suspend fun delete(userId: UUID, permissionId: UUID) {
+    override suspend fun delete(userId: UUID, permissionId: UUID) = withAuditActor(userId) {
         val organizationId = requireOwner(userId)
         val current = permissions.findById(organizationId, permissionId) ?: throw PermissionNotFoundException()
         if (current.isSystem) throw SystemPermissionImmutableException()

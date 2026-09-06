@@ -1,5 +1,7 @@
 package deadlines.organizations
 
+import deadlines.organizations.audits.withAuditActor
+
 import java.time.Clock
 import java.util.UUID
 
@@ -16,7 +18,7 @@ class OrganizationService(
     private val clock: Clock = Clock.systemUTC(),
     private val idGenerator: () -> UUID = UUID::randomUUID,
 ) : OrganizationOperations {
-    override suspend fun create(userId: UUID, request: CreateOrganizationRequest): OrganizationResponse {
+    override suspend fun create(userId: UUID, request: CreateOrganizationRequest): OrganizationResponse = withAuditActor(userId) {
         if (repository.findCurrentByUser(userId) != null) throw ActiveMembershipAlreadyExistsException()
         val name = validateName(request.name)
         val slug = validateSlug(request.slug)
@@ -44,13 +46,13 @@ class OrganizationService(
                         removedAt = null,
                     ),
             )
-        return repository.createWithOwner(context).toResponse()
+        return@withAuditActor repository.createWithOwner(context).toResponse()
     }
 
     override suspend fun current(userId: UUID): OrganizationResponse =
         repository.findCurrentByUser(userId)?.toResponse() ?: throw OrganizationNotFoundException()
 
-    override suspend fun update(userId: UUID, request: UpdateOrganizationRequest): OrganizationResponse {
+    override suspend fun update(userId: UUID, request: UpdateOrganizationRequest): OrganizationResponse = withAuditActor(userId) {
         if (request.name == null && request.slug == null) {
             throw OrganizationValidationException(mapOf("body" to "must contain name or slug"))
         }
@@ -63,7 +65,7 @@ class OrganizationService(
                 slug = request.slug?.let(::validateSlug) ?: current.organization.slug,
                 updatedAt = clock.instant(),
             )
-        return current.copy(organization = repository.update(updated)).toResponse()
+        return@withAuditActor current.copy(organization = repository.update(updated)).toResponse()
     }
 
     private fun validateName(value: String): String {
