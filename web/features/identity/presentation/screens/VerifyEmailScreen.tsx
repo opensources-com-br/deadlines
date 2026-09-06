@@ -11,9 +11,10 @@ import { identityApi, identityErrorMessage } from "@/features/identity/infrastru
 
 type VerifyEmailScreenProps = {
   token?: string;
+  hasInvitation: boolean;
 };
 
-export function VerifyEmailScreen({ token }: VerifyEmailScreenProps) {
+export function VerifyEmailScreen({ token, hasInvitation }: VerifyEmailScreenProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -25,8 +26,8 @@ export function VerifyEmailScreen({ token }: VerifyEmailScreenProps) {
     setIsSubmitting(true);
     try {
       await identityApi.verifyEmail(token);
-      toast.success("Your email has been confirmed. You can now sign in.");
-      router.push("/invitations/continue");
+      toast.success(hasInvitation ? "Your email has been confirmed. Sign in to join the organization." : "Your email has been confirmed. You can now sign in.");
+      router.push(hasInvitation ? "/invitations/continue" : "/login");
     } catch (error) {
       toast.error(identityErrorMessage(error));
     } finally {
@@ -48,9 +49,9 @@ export function VerifyEmailScreen({ token }: VerifyEmailScreenProps) {
   }
 
   return (
-    <AuthShell title="Confirm your email" description="Confirm your email address to activate your Deadlines account.">
+    <AuthShell title="Confirm your email" description={hasInvitation ? "Confirm your email address to join the organization." : "Confirm your email address to activate your Deadlines account."}>
       <div className="rounded-xl border bg-muted/50 p-5 text-sm leading-6 text-muted-foreground">
-        Your confirmation link is ready. Once confirmed, you can sign in to your account.
+        {hasInvitation ? "Once confirmed, sign in and we will add you to the organization automatically." : "Your confirmation link is ready. Once confirmed, you can sign in to your account."}
       </div>
       <Button className="mt-5 w-full" type="button" onClick={handleVerification} disabled={isSubmitting}>
         {isSubmitting ? "Confirming email..." : "Confirm email"}
