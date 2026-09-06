@@ -14,7 +14,10 @@
     { "key": "userId", "value": "" },
     { "key": "managedUserId", "value": "" },
     { "key": "emailToken", "value": "" },
-    { "key": "sessionId", "value": "" }
+    { "key": "sessionId", "value": "" },
+    { "key": "organizationId", "value": "" },
+    { "key": "organizationName", "value": "Postman Workspace" },
+    { "key": "organizationSlug", "value": "" }
   ],
   "item": [
     {
@@ -202,6 +205,61 @@
             "header": [],
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
             "url": "{{baseUrl}}/api/v1/sessions/revoke-all"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "Create organization",
+          "event": [
+            { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+              "if (!pm.collectionVariables.get('organizationSlug')) {",
+              "  pm.collectionVariables.set('organizationSlug', `postman-${pm.variables.replaceIn('{{$randomUUID}}')}`);",
+              "}"
+            ] } },
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('status is 201', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('organizationId', body.id);",
+              "pm.test('authenticated user is owner', () => pm.expect(body.role).to.eql('owner'));"
+            ] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"{{organizationName}}\",\n  \"slug\": \"{{organizationSlug}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/organizations"
+          }
+        },
+        {
+          "name": "Get current organization",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 200', () => pm.response.to.have.status(200));",
+            "pm.test('returns created organization', () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('organizationId')));"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/organizations/current"
+          }
+        },
+        {
+          "name": "Update current organization",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 200', () => pm.response.to.have.status(200));",
+            "pm.test('updates organization name', () => pm.expect(pm.response.json().name).to.eql('Updated Workspace'));"
+          ] } }],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Workspace\"\n}" },
+            "url": "{{baseUrl}}/api/v1/organizations/current"
           }
         }
       ]
