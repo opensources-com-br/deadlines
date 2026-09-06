@@ -16,4 +16,6 @@ A pasta `Sessions` lista as sessões ativas e guarda uma sessão não atual em `
 
 A pasta `Organizations` executa o onboarding depois do login: cria a organização, consulta o contexto atual e atualiza o nome. O slug de teste é gerado automaticamente na primeira execução e fica salvo em `organizationSlug`.
 
+A pasta `Permissions` lista o catálogo disponível e executa o CRUD de uma permissão customizada. A pasta `Roles` executa o CRUD de uma role customizada e usa `permissionId` para testar a substituição das permissões atribuídas. Execute `Create permission` antes de `Replace role permissions`. As requisições de exclusão ficam desativadas por padrão.
+
 As rotas em `Users (local only)` permanecem abertas somente durante o desenvolvimento local da Identity.

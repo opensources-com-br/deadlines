@@ -1,6 +1,6 @@
 # Backend
 
-Backend Kotlin + Ktor do Deadlines. A Fase 5 adiciona o onboarding e o contexto inicial de organização.
+Backend Kotlin + Ktor do Deadlines. A Fase 6 adiciona roles, permissões do sistema e permissões customizadas por organização.
 
 ## Stack da Fase 0
 
@@ -72,6 +72,18 @@ POST   /api/v1/sessions/revoke-all
 POST   /api/v1/organizations
 GET    /api/v1/organizations/current
 PATCH  /api/v1/organizations/current
+GET    /api/v1/permissions
+POST   /api/v1/permissions
+GET    /api/v1/permissions/{permissionId}
+PATCH  /api/v1/permissions/{permissionId}
+DELETE /api/v1/permissions/{permissionId}
+GET    /api/v1/roles
+POST   /api/v1/roles
+GET    /api/v1/roles/{roleId}
+PATCH  /api/v1/roles/{roleId}
+DELETE /api/v1/roles/{roleId}
+GET    /api/v1/roles/{roleId}/permissions
+PUT    /api/v1/roles/{roleId}/permissions
 GET    /api/v1/users/me
 PATCH  /api/v1/users/me
 POST   /api/v1/users
@@ -86,6 +98,8 @@ DELETE /api/v1/users/{id}
 As rotas de sessões exigem JWT. Cada novo access token contém o identificador da sessão (`sid`), permitindo marcar a sessão atual. Revogar uma sessão invalida imediatamente seu refresh token; um access token já emitido continua válido até expirar.
 
 Depois de confirmar o e-mail e entrar, um usuário sem associação cria sua organização em `POST /api/v1/organizations`. A criação da organização e da associação como `owner` ocorre na mesma transação. O banco impede que um usuário tenha mais de uma associação ativa. Somente o proprietário pode atualizar a organização atual.
+
+Cada organização recebe automaticamente as roles protegidas `Owner` e `Member`. O proprietário pode criar, editar e excluir roles e permissões customizadas, além de substituir as permissões de qualquer role exceto `Owner`. Permissões globais e roles do sistema podem ser consultadas, mas não alteradas ou excluídas. Todas as consultas são limitadas à organização atual.
 
 Por padrão, o ambiente local registra o envio sem incluir o token no log. Ao definir `RESEND_API_KEY`, o backend seleciona o Resend automaticamente. Para o teste inicial, use `MAIL_FROM="Deadlines <onboarding@resend.dev>"`; o Resend só entregará para o e-mail da própria conta. Em produção, use `EMAIL_PROVIDER=resend`, um domínio verificado e `EMAIL_FROM` nesse domínio. As rotas de usuários continuam sem autenticação durante o desenvolvimento local da Identity. O Compose publica o backend somente em `127.0.0.1`; não faça deploy desta fase.
 
