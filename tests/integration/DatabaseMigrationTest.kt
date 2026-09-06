@@ -44,7 +44,7 @@ class DatabaseMigrationTest {
                 ).use { statement ->
                     statement.executeQuery().use { result ->
                         result.next()
-                        assertEquals(3, result.getInt(1))
+                        assertEquals(4, result.getInt(1))
                     }
                 }
             }
