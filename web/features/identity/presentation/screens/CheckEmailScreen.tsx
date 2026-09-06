@@ -10,9 +10,10 @@ import { identityApi, identityErrorMessage } from "@/features/identity/infrastru
 
 type CheckEmailScreenProps = {
   email?: string;
+  nextPath?: string;
 };
 
-export function CheckEmailScreen({ email }: CheckEmailScreenProps) {
+export function CheckEmailScreen({ email, nextPath }: CheckEmailScreenProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleResend() {
@@ -35,14 +36,14 @@ export function CheckEmailScreen({ email }: CheckEmailScreenProps) {
   return (
     <AuthShell title="Check your inbox" description="We sent a confirmation link to your email address.">
       <div className="rounded-xl border bg-muted/50 p-5 text-sm leading-6 text-muted-foreground">
-        Your account will be ready once you confirm your email. The link expires after a limited time for your security.
+        Your account will be ready once you confirm your email. {nextPath ? "Then return here and sign in to accept your invitation." : "The link expires after a limited time for your security."}
       </div>
       <Button className="mt-5 w-full" type="button" onClick={handleResend} disabled={isSubmitting}>
         {isSubmitting ? "Sending confirmation email..." : "Resend confirmation email"}
       </Button>
       <p className="mt-6 text-sm text-muted-foreground">
         Already confirmed your email?{" "}
-        <Link href="/login" className="font-medium text-foreground underline underline-offset-4">
+        <Link href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login"} className="font-medium text-foreground underline underline-offset-4">
           Sign in
         </Link>
       </p>

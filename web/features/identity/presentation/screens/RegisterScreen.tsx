@@ -11,7 +11,12 @@ import { AuthShell } from "@/features/identity/presentation/components/AuthShell
 import { AuthTextField } from "@/features/identity/presentation/components/AuthTextField";
 import { identityApi, identityErrorMessage } from "@/features/identity/infrastructure/identity-api";
 
-export function RegisterScreen() {
+type RegisterScreenProps = {
+  initialEmail?: string;
+  nextPath?: string;
+};
+
+export function RegisterScreen({ initialEmail, nextPath }: RegisterScreenProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,7 +41,8 @@ export function RegisterScreen() {
         lastName: String(formData.get("lastName")),
       });
       toast.success("Confirmation email sent.");
-      router.push(`/check-email?email=${encodeURIComponent(email)}`);
+      const nextQuery = nextPath ? `&next=${encodeURIComponent(nextPath)}` : "";
+      router.push(`/check-email?email=${encodeURIComponent(email)}${nextQuery}`);
     } catch (error) {
       toast.error(identityErrorMessage(error));
     } finally {
@@ -52,7 +58,7 @@ export function RegisterScreen() {
             <AuthTextField id="first-name" name="firstName" label="First name" autoComplete="given-name" placeholder="First name" required />
             <AuthTextField id="last-name" name="lastName" label="Last name" autoComplete="family-name" placeholder="Last name" required />
           </div>
-          <AuthTextField id="email" name="email" label="Email" type="email" autoComplete="email" placeholder="you@example.com" required />
+          <AuthTextField id="email" name="email" label="Email" type="email" autoComplete="email" placeholder="you@example.com" defaultValue={initialEmail} readOnly={Boolean(initialEmail)} required />
           <AuthTextField
             id="password"
             name="password"
@@ -79,7 +85,7 @@ export function RegisterScreen() {
           </Field>
           <FieldDescription className="text-center">
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-foreground underline underline-offset-4">
+            <Link href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login"} className="font-medium text-foreground underline underline-offset-4">
               Sign in
             </Link>
           </FieldDescription>
