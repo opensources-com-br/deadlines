@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
@@ -11,6 +12,7 @@ import { AuthTextField } from "@/features/identity/presentation/components/AuthT
 import { identityApi, identityErrorMessage } from "@/features/identity/infrastructure/identity-api";
 
 export function LoginScreen() {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -24,6 +26,7 @@ export function LoginScreen() {
         password: String(formData.get("password")),
       });
       toast.success("Login successful.");
+      router.push("/app");
     } catch (error) {
       toast.error(identityErrorMessage(error));
     } finally {

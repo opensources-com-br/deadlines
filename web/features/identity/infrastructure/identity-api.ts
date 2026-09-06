@@ -30,11 +30,11 @@ type LoginInput = {
 
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "");
 
-async function post<TResponse>(path: string, body: unknown): Promise<TResponse | undefined> {
+async function post<TResponse>(path: string, body: unknown, baseUrl = apiBaseUrl): Promise<TResponse | undefined> {
   let response: Response;
 
   try {
-    response = await fetch(`${apiBaseUrl}${path}`, {
+    response = await fetch(`${baseUrl}${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -61,7 +61,7 @@ async function post<TResponse>(path: string, body: unknown): Promise<TResponse |
 
 export const identityApi = {
   register: (input: RegisterInput) => post("/api/v1/auth/register", input),
-  login: (input: LoginInput) => post("/api/v1/auth/login", input),
+  login: (input: LoginInput) => post("/api/auth/login", input, ""),
   resendVerification: (email: string) => post("/api/v1/auth/email/resend", { email }),
   requestPasswordReset: (email: string) => post("/api/v1/auth/forgot-password", { email }),
   resetPassword: (token: string, password: string) => post("/api/v1/auth/reset-password", { token, password }),
