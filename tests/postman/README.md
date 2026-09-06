@@ -19,3 +19,10 @@ A pasta `Organizations` executa o onboarding depois do login: cria a organizaç�
 A pasta `Permissions` lista o catálogo disponível e executa o CRUD de uma permissão customizada. A pasta `Roles` executa o CRUD de uma role customizada e usa `permissionId` para testar a substituição das permissões atribuídas. Execute `Create permission` antes de `Replace role permissions`. As requisições de exclusão ficam desativadas por padrão.
 
 As rotas em `Users (local only)` permanecem abertas somente durante o desenvolvimento local da Identity.
+
+## Fase 8 — Audits
+
+A pasta final `Audits (Owner only)` consulta o histórico, filtra alterações da
+organização e verifica a rejeição de limite inválido. Execute com `accessToken`
+de um Owner e `organizationId` da organização atual. Para verificar o bloqueio
+de acesso, repita a consulta com um Member (403) ou sem token (401).

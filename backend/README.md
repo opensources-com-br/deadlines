@@ -1,6 +1,6 @@
 # Backend
 
-Backend Kotlin + Ktor do Deadlines. A Fase 7 adiciona membros, roles por membership e convites de organização por e-mail.
+Backend Kotlin + Ktor do Deadlines. A Fase 8 adiciona histórico imutável por organização, com consulta exclusiva para Owner.
 
 ## Stack da Fase 0
 
@@ -56,6 +56,7 @@ Com Docker disponível, o build também valida as migrations em um PostgreSQL de
 
 ```text
 GET /health
+GET    /api/v1/audits
 POST   /api/v1/auth/register
 POST   /api/v1/auth/login
 POST   /api/v1/auth/refresh
@@ -123,3 +124,34 @@ curl -X POST http://localhost:8080/api/v1/users \
   -H 'Content-Type: application/json' \
   -d '{"email":"tarik@example.com","firstName":"Tarik","lastName":"Villalobos"}'
 ```
+
+## Auditoria (Fase 8)
+
+`GET /api/v1/audits` usa a organização ativa do usuário autenticado e exige Owner.
+Aceita `offset` (0–1.000.000), `limit` (1–100, padrão 20), `action`, `resource`,
+`actorId`, `resourceId`, `from` e `to` (ISO-8601, anos 0001–9999, limites inclusivos). Retorna
+`data`, `offset`, `limit` e `hasMore`, em ordem decrescente por data e ID.
+Parâmetros desconhecidos, repetidos ou inválidos retornam 422.
+
+A migration V011 grava eventos por triggers na mesma transação da alteração.
+Os serviços propagam `AuditActor` pelo contexto de corrotina; `DatabaseQuery`
+configura o autor apenas durante a transação. Escritas diretas de manutenção
+ficam com `actorId` nulo no banco e omitido no JSON. Não existe backfill de ações anteriores à migration.
+
+O histórico inclui alterações de organização, membros, convites, roles,
+permissions e associações role-permission. Metadados guardam somente IDs e
+indicadores de campos alterados; nomes, descrições, e-mails, senhas e tokens
+não são copiados. Recursos removidos mantêm seu histórico. UPDATE, DELETE e
+TRUNCATE do histórico são bloqueados no banco; não há endpoints de escrita.
+Administradores capazes de desabilitar triggers/alterar o schema continuam
+fora dessa garantia: separação de credenciais operacionais fica para produção.
+
+Eventos de convite representam persistência: `created` e `resent` não confirmam
+entrega de e-mail. Uma criação cuja entrega falha registra também a revogação
+automática. Uma renovação com falha de entrega mantém o evento de renovação.
+Na exclusão de uma role, `role.deleted` representa a remoção da role e de suas
+associações. Salvar a mesma seleção de permissões não gera eventos adicionais.
+
+Na web, Owner encontra **Organization history → View history** em `/app`.
+Use **Refresh** para buscar os eventos mais recentes. A paginação por offset
+pode se deslocar se novos eventos forem gravados durante a navegação.
