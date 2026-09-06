@@ -14,13 +14,16 @@ import type { UserSession } from "@/features/platform/domain/session";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { changePassword, updateUserProfile } from "@/features/platform/infrastructure/profile-api";
 import { SessionsCard } from "@/features/platform/presentation/SessionsCard";
+import type { Organization } from "@/features/organizations/domain/organization";
+import { OrganizationCard } from "@/features/organizations/presentation/OrganizationCard";
 
 type PlatformHomeProps = {
   user: UserProfile;
+  organization: Organization;
   sessions: UserSession[];
 };
 
-export function PlatformHome({ user, sessions }: PlatformHomeProps) {
+export function PlatformHome({ user, organization, sessions }: PlatformHomeProps) {
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -119,6 +122,7 @@ export function PlatformHome({ user, sessions }: PlatformHomeProps) {
         </div>
 
         <div className="space-y-6">
+        <OrganizationCard organization={organization} />
         <Card>
           <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
             <div>

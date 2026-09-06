@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
+import type { Organization } from "@/features/organizations/domain/organization";
 import type { SessionList } from "@/features/platform/domain/session";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { PlatformHome } from "@/features/platform/presentation/PlatformHome";
@@ -34,8 +35,9 @@ export default async function PlatformPage() {
   }
 
   const user = (await response.json()) as UserProfile;
+  const organization = (await organizationResponse.json()) as Organization;
   const sessions = sessionsResponse?.ok
     ? ((await sessionsResponse.json()) as SessionList).data
     : [];
-  return <PlatformHome user={user} sessions={sessions} />;
+  return <PlatformHome user={user} organization={organization} sessions={sessions} />;
 }
