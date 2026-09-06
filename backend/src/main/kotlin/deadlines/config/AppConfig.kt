@@ -52,6 +52,8 @@ data class AppConfig(
                         environment.positiveLong("EMAIL_VERIFICATION_EXPIRATION_SECONDS", default = 86_400),
                     passwordResetExpirationSeconds =
                         environment.positiveLong("PASSWORD_RESET_EXPIRATION_SECONDS", default = 3_600),
+                    invitationExpirationSeconds =
+                        environment.positiveLong("INVITATION_EXPIRATION_SECONDS", default = 604_800),
                 ),
             )
     }
@@ -82,6 +84,7 @@ data class EmailConfig(
     val appBaseUrl: String,
     val verificationExpirationSeconds: Long,
     val passwordResetExpirationSeconds: Long,
+    val invitationExpirationSeconds: Long = 604_800,
     val provider: EmailProvider = EmailProvider.LOGGING,
     val resendApiKey: String? = null,
 ) {

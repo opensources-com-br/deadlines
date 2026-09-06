@@ -24,6 +24,7 @@ class AppConfigTest {
         assertEquals(2_592_000, config.auth.refreshTokenExpirationSeconds)
         assertEquals(EmailProvider.LOGGING, config.email.provider)
         assertEquals("http://localhost:3000", config.email.appBaseUrl)
+        assertEquals(604_800, config.email.invitationExpirationSeconds)
     }
 
     @Test
@@ -45,6 +46,7 @@ class AppConfigTest {
                         "APP_BASE_URL" to "https://app.example.com",
                         "EMAIL_VERIFICATION_EXPIRATION_SECONDS" to "1200",
                         "PASSWORD_RESET_EXPIRATION_SECONDS" to "300",
+                        "INVITATION_EXPIRATION_SECONDS" to "600",
                     ),
             )
 
@@ -61,6 +63,7 @@ class AppConfigTest {
         assertEquals("https://app.example.com", config.email.appBaseUrl)
         assertEquals(1200, config.email.verificationExpirationSeconds)
         assertEquals(300, config.email.passwordResetExpirationSeconds)
+        assertEquals(600, config.email.invitationExpirationSeconds)
     }
 
     @Test
