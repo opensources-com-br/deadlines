@@ -80,6 +80,13 @@ class AppConfigTest {
     }
 
     @Test
+    fun `treats a blank provider as absent`() {
+        val config = AppConfig.fromEnvironment(requiredEnvironment + ("EMAIL_PROVIDER" to " "))
+
+        assertEquals(EmailProvider.LOGGING, config.email.provider)
+    }
+
+    @Test
     fun `rejects missing database credentials`() {
         val error =
             assertFailsWith<IllegalArgumentException> {

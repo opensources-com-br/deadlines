@@ -99,7 +99,7 @@ enum class EmailProvider {
 
     companion object {
         fun fromEnvironment(value: String?, resendApiKeyPresent: Boolean): EmailProvider =
-            when (value?.trim()?.uppercase() ?: if (resendApiKeyPresent) "RESEND" else "LOGGING") {
+            when (value?.trim()?.uppercase()?.takeIf(String::isNotBlank) ?: if (resendApiKeyPresent) "RESEND" else "LOGGING") {
                 "LOGGING" -> LOGGING
                 "RESEND" -> RESEND
                 else -> throw IllegalArgumentException("EMAIL_PROVIDER must be logging or resend")
