@@ -540,6 +540,32 @@
       ]
     },
     {
+      "name": "Subscriptions",
+      "item": [
+        {
+          "name": "Get current subscription",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/subscriptions/current"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has an active Free subscription', () => { const body = pm.response.json(); pm.expect(body.status).to.eql('active'); pm.expect(body.plan.key).to.eql('free'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Plans (public)",
       "item": [
         {

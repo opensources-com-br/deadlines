@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.11.0
+  version: 0.12.0
   description: API local do Deadlines. O cadastro exige confirmação de e-mail antes da ativação e do login; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
@@ -19,7 +19,26 @@ tags:
   - name: Audits
   - name: Invitations
   - name: Plans
+  - name: Subscriptions
 paths:
+  /api/v1/subscriptions/current:
+    get:
+      tags: [Subscriptions]
+      summary: Gets the active subscription for the current organization
+      operationId: getCurrentSubscription
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Active organization subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: User has no active organization or subscription
   /api/v1/plans:
     get:
       tags: [Plans]
@@ -1716,6 +1735,27 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Plan"
+    Subscription:
+      type: object
+      required: [id, organizationId, status, startedAt, endedAt, plan]
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, canceled]
+        startedAt:
+          type: string
+          format: date-time
+        endedAt:
+          type: [string, "null"]
+          format: date-time
+        plan:
+          $ref: "#/components/schemas/Plan"
     ErrorResponse:
       type: object
       required: [error]

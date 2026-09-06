@@ -57,6 +57,7 @@ Com Docker disponível, o build também valida as migrations em um PostgreSQL de
 ```text
 GET /health
 GET    /api/v1/plans
+GET    /api/v1/subscriptions/current
 GET    /api/v1/audits
 POST   /api/v1/auth/register
 POST   /api/v1/auth/login
@@ -169,3 +170,13 @@ retornado pela API; os outros permanecem armazenados para ativação futura.
 Esta fase não associa um plano à organização e ainda não bloqueia uso pelos
 limites. Escolha de plano, assinatura, cobrança e enforcement pertencem às
 próximas fases.
+
+## Assinaturas (Fase 10)
+
+Toda organização possui uma assinatura ativa. A migration V014 associa as
+organizações existentes ao `Free` e um trigger cria essa mesma assinatura na
+transação de toda nova organização. `GET /api/v1/subscriptions/current` exige
+JWT e retorna a assinatura e seu plano para a organização ativa do usuário.
+
+No momento, não existem checkout, cobrança, teste, upgrade, downgrade,
+cancelamento ou bloqueio dos limites. O plano Free é a única opção ativa.

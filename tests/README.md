@@ -26,3 +26,10 @@ Roteiro manual local:
 
 O histórico começa na aplicação da V011; dados antigos não são reconstruídos.
 Testes de convite que enviam e-mail dependem do destinatário autorizado no Resend.
+
+## Fase 10 — Assinaturas
+
+A V014 testa a criação da estrutura de assinatura e o backend cobre a consulta
+autenticada da assinatura atual. No roteiro manual, crie ou use uma organização,
+execute `Subscriptions → Get current subscription` no Postman e confirme o
+status `active` e o plano `free`.
