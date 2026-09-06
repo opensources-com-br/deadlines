@@ -11,6 +11,14 @@ import deadlines.identity.users.User
 import deadlines.identity.users.UserAlreadyExistsException
 import deadlines.identity.users.UserProfile
 import deadlines.identity.users.UserStatus
+import deadlines.organizations.ActiveMembershipAlreadyExistsException
+import deadlines.organizations.ExposedOrganizationRepository
+import deadlines.organizations.MembershipRole
+import deadlines.organizations.MembershipStatus
+import deadlines.organizations.Organization
+import deadlines.organizations.OrganizationAlreadyExistsException
+import deadlines.organizations.OrganizationContext
+import deadlines.organizations.OrganizationMembership
 import deadlines.shared.database.DatabaseQuery
 import deadlines.shared.database.DatabaseFactory
 import kotlinx.coroutines.test.runTest
@@ -197,6 +205,51 @@ class DatabaseMigrationTest {
             }
         }
 
+    @Test
+    fun `organization repository creates owner membership and updates the current organization`() =
+        runTest {
+            DatabaseFactory.open(databaseConfig()).use { database ->
+                val query = DatabaseQuery(database.database)
+                val users = ExposedUserRepository(query)
+                val organizations = ExposedOrganizationRepository(query)
+                val now = Instant.now()
+                val user = testUser("organization-owner", now)
+                val context = organizationContext(user.id, "acme-${UUID.randomUUID()}", now)
+                users.create(user)
+
+                assertEquals(context, organizations.createWithOwner(context))
+                assertEquals(context, organizations.findCurrentByUser(user.id))
+
+                val updated = context.organization.copy(name = "Acme Updated", updatedAt = now.plusSeconds(60))
+                organizations.update(updated)
+                assertEquals(updated, organizations.findCurrentByUser(user.id)?.organization)
+            }
+        }
+
+    @Test
+    fun `organization repository enforces unique slug and one active membership`() =
+        runTest {
+            DatabaseFactory.open(databaseConfig()).use { database ->
+                val query = DatabaseQuery(database.database)
+                val users = ExposedUserRepository(query)
+                val organizations = ExposedOrganizationRepository(query)
+                val now = Instant.now()
+                val firstUser = testUser("organization-first", now)
+                val secondUser = testUser("organization-second", now)
+                val slug = "unique-${UUID.randomUUID()}"
+                users.create(firstUser)
+                users.create(secondUser)
+                organizations.createWithOwner(organizationContext(firstUser.id, slug, now))
+
+                assertFailsWith<ActiveMembershipAlreadyExistsException> {
+                    organizations.createWithOwner(organizationContext(firstUser.id, "another-${UUID.randomUUID()}", now))
+                }
+                assertFailsWith<OrganizationAlreadyExistsException> {
+                    organizations.createWithOwner(organizationContext(secondUser.id, slug.uppercase(), now))
+                }
+            }
+        }
+
     private fun databaseConfig() =
         DatabaseConfig(
             url = postgres.jdbcUrl,
@@ -205,6 +258,33 @@ class DatabaseMigrationTest {
             maximumPoolSize = 2,
             migrationsLocation = migrationLocation(),
         )
+
+    private fun testUser(prefix: String, now: Instant) =
+        User(
+            id = UUID.randomUUID(),
+            email = "$prefix-${UUID.randomUUID()}@example.com",
+            status = UserStatus.ACTIVE,
+            profile = UserProfile("Organization", "Owner", null, null),
+            createdAt = now,
+            updatedAt = now,
+        )
+
+    private fun organizationContext(userId: UUID, slug: String, now: Instant): OrganizationContext {
+        val organizationId = UUID.randomUUID()
+        return OrganizationContext(
+            organization = Organization(organizationId, "Acme", slug, userId, now, now),
+            membership =
+                OrganizationMembership(
+                    UUID.randomUUID(),
+                    organizationId,
+                    userId,
+                    MembershipRole.OWNER,
+                    MembershipStatus.ACTIVE,
+                    now,
+                    null,
+                ),
+        )
+    }
 
     private fun migrationLocation(): String {
         val migrations = Path.of("../database/migrations").toAbsolutePath().normalize()
