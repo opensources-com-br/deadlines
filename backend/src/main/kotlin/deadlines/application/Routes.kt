@@ -23,6 +23,8 @@ import deadlines.organizations.invitations.InvitationOperations
 import deadlines.organizations.invitations.invitationRoutes
 import deadlines.organizations.members.MemberOperations
 import deadlines.organizations.members.memberRoutes
+import deadlines.plans.PlanOperations
+import deadlines.plans.planRoutes
 import io.ktor.server.application.Application
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -46,8 +48,10 @@ fun Application.configureRoutes(
     memberService: MemberOperations? = null,
     invitationService: InvitationOperations? = null,
     auditService: AuditService? = null,
+    planService: PlanOperations? = null,
 ) {
     routing {
+        if (planService != null) planRoutes(planService)
         if (auditService != null) auditRoutes(auditService)
         get("/health") {
             call.respond(HealthResponse(status = "ok"))
