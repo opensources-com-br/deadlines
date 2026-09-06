@@ -4,6 +4,7 @@ data class AppConfig(
     val http: HttpConfig,
     val database: DatabaseConfig,
     val auth: AuthConfig,
+    val email: EmailConfig,
 ) {
     companion object {
         fun fromEnvironment(environment: Map<String, String> = System.getenv()): AppConfig =
@@ -31,6 +32,14 @@ data class AppConfig(
                     refreshTokenExpirationSeconds =
                         environment.positiveLong("JWT_REFRESH_EXPIRATION_SECONDS", default = 2_592_000),
                 ),
+                email = EmailConfig(
+                    from = environment["EMAIL_FROM"] ?: "no-reply@deadlines.local",
+                    appBaseUrl = environment["APP_BASE_URL"] ?: "http://localhost:3000",
+                    verificationExpirationSeconds =
+                        environment.positiveLong("EMAIL_VERIFICATION_EXPIRATION_SECONDS", default = 86_400),
+                    passwordResetExpirationSeconds =
+                        environment.positiveLong("PASSWORD_RESET_EXPIRATION_SECONDS", default = 3_600),
+                ),
             )
     }
 }
@@ -53,6 +62,13 @@ data class AuthConfig(
     val jwtAudience: String,
     val accessTokenExpirationSeconds: Long,
     val refreshTokenExpirationSeconds: Long,
+)
+
+data class EmailConfig(
+    val from: String,
+    val appBaseUrl: String,
+    val verificationExpirationSeconds: Long,
+    val passwordResetExpirationSeconds: Long,
 )
 
 private fun Map<String, String>.required(name: String): String =
