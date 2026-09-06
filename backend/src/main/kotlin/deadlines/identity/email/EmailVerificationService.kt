@@ -24,6 +24,11 @@ class SecureEmailTokenGenerator : EmailTokenGenerator {
         MessageDigest.getInstance("SHA-256").digest(token.toByteArray()).joinToString("") { "%02x".format(it) }
 }
 
+interface EmailVerificationOperations {
+    suspend fun resend(userId: UUID): Boolean
+    suspend fun verify(rawToken: String)
+}
+
 class EmailVerificationService(
     private val users: UserRepository,
     private val tokens: EmailTokenRepository,
@@ -31,8 +36,8 @@ class EmailVerificationService(
     private val config: EmailConfig,
     private val tokenGenerator: EmailTokenGenerator = SecureEmailTokenGenerator(),
     private val clock: Clock = Clock.systemUTC(),
-) {
-    suspend fun resend(userId: UUID): Boolean {
+) : EmailVerificationOperations {
+    override suspend fun resend(userId: UUID): Boolean {
         val user = users.findById(userId) ?: throw UserNotFoundException()
         if (user.emailVerifiedAt != null) return false
 
@@ -51,7 +56,7 @@ class EmailVerificationService(
         return true
     }
 
-    suspend fun verify(rawToken: String) {
+    override suspend fun verify(rawToken: String) {
         val now = clock.instant()
         val userId = tokens.consumeVerification(tokenGenerator.hash(rawToken), now) ?: throw InvalidEmailVerificationTokenException()
         users.markEmailVerified(userId, now) ?: throw UserNotFoundException()

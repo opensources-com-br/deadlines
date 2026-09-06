@@ -20,6 +20,11 @@ class PasswordResetValidationException : deadlines.shared.errors.ApiException(
     details = mapOf("password" to "must contain between 12 and 72 characters"),
 )
 
+interface PasswordResetOperations {
+    suspend fun request(emailAddress: String)
+    suspend fun reset(rawToken: String, password: String)
+}
+
 class PasswordResetService(
     private val credentials: UserCredentialsRepository,
     private val tokens: EmailTokenRepository,
@@ -29,8 +34,8 @@ class PasswordResetService(
     private val config: EmailConfig,
     private val tokenGenerator: EmailTokenGenerator = SecureEmailTokenGenerator(),
     private val clock: Clock = Clock.systemUTC(),
-) {
-    suspend fun request(emailAddress: String) {
+) : PasswordResetOperations {
+    override suspend fun request(emailAddress: String) {
         val credentials = credentials.findByEmail(emailAddress.trim().lowercase()) ?: return
         val now = clock.instant()
         val rawToken = tokenGenerator.generate()
@@ -46,7 +51,7 @@ class PasswordResetService(
         )
     }
 
-    suspend fun reset(rawToken: String, password: String) {
+    override suspend fun reset(rawToken: String, password: String) {
         if (password.length !in 12..72) throw PasswordResetValidationException()
         val now = clock.instant()
         val userId = tokens.consumePasswordReset(tokenGenerator.hash(rawToken), now) ?: throw InvalidPasswordResetTokenException()

@@ -6,6 +6,12 @@ import deadlines.identity.auth.AuthService
 import deadlines.identity.auth.BcryptPasswordHasher
 import deadlines.identity.auth.ExposedSessionRepository
 import deadlines.identity.auth.TokenService
+import deadlines.identity.email.EmailVerificationOperations
+import deadlines.identity.email.EmailVerificationService
+import deadlines.identity.email.ExposedEmailTokenRepository
+import deadlines.identity.email.LoggingEmailService
+import deadlines.identity.email.PasswordResetOperations
+import deadlines.identity.email.PasswordResetService
 import deadlines.identity.users.ExposedUserCredentialsRepository
 import deadlines.identity.users.ExposedUserRepository
 import deadlines.identity.users.UserService
@@ -23,17 +29,25 @@ fun main() {
         val userRepository = ExposedUserRepository(query)
         val tokenService = TokenService(config.auth)
         val userService = UserService(userRepository)
+        val credentialsRepository = ExposedUserCredentialsRepository(query)
+        val sessionRepository = ExposedSessionRepository(query)
+        val passwordHasher = BcryptPasswordHasher()
         val authService =
             AuthService(
-                ExposedUserCredentialsRepository(query),
+                credentialsRepository,
                 userRepository,
-                ExposedSessionRepository(query),
-                BcryptPasswordHasher(),
+                sessionRepository,
+                passwordHasher,
                 tokenService,
             )
+        val emailTokens = ExposedEmailTokenRepository(query)
+        val emailService = LoggingEmailService()
+        val emailVerificationService = EmailVerificationService(userRepository, emailTokens, emailService, config.email)
+        val passwordResetService =
+            PasswordResetService(credentialsRepository, emailTokens, emailService, passwordHasher, sessionRepository, config.email)
 
         embeddedServer(Netty, port = config.http.port) {
-            module(userService, authService, tokenService)
+            module(userService, authService, tokenService, emailVerificationService, passwordResetService)
         }.start(wait = true)
     }
 }
@@ -42,7 +56,9 @@ fun Application.module(
     userService: UserService? = null,
     authService: AuthOperations? = null,
     tokenService: TokenService? = null,
+    emailVerification: EmailVerificationOperations? = null,
+    passwordReset: PasswordResetOperations? = null,
 ) {
     configurePlugins(tokenService)
-    configureRoutes(userService, authService)
+    configureRoutes(userService, authService, emailVerification, passwordReset)
 }
