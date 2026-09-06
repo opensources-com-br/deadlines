@@ -1,14 +1,16 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { updateUserProfile } from "@/features/platform/infrastructure/profile-api";
 
@@ -20,6 +22,8 @@ export function PlatformHome({ user }: PlatformHomeProps) {
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [profile, setProfile] = useState(user.profile);
   const [firstName, setFirstName] = useState(user.profile.firstName);
   const [lastName, setLastName] = useState(user.profile.lastName);
 
@@ -37,8 +41,10 @@ export function PlatformHome({ user }: PlatformHomeProps) {
 
     try {
       const updated = await updateUserProfile({ firstName, lastName });
+      setProfile(updated.profile);
       setFirstName(updated.profile.firstName);
       setLastName(updated.profile.lastName);
+      setIsEditing(false);
       toast.success("Your profile has been updated.");
       router.refresh();
     } catch (error) {
@@ -46,6 +52,12 @@ export function PlatformHome({ user }: PlatformHomeProps) {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  function handleCancelEditing() {
+    setFirstName(profile.firstName);
+    setLastName(profile.lastName);
+    setIsEditing(false);
   }
 
   return (
@@ -64,7 +76,7 @@ export function PlatformHome({ user }: PlatformHomeProps) {
         <div className="max-w-xl">
           <p className="text-sm font-medium text-muted-foreground">Platform</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-            Welcome, {firstName}.
+            Welcome, {profile.firstName}.
           </h1>
           <p className="mt-5 text-lg leading-8 text-muted-foreground">
             Your account is active. You can review and update your profile here.
@@ -72,46 +84,84 @@ export function PlatformHome({ user }: PlatformHomeProps) {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Your profile</CardTitle>
-            <CardDescription>Update the information associated with your account.</CardDescription>
+          <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
+            <div>
+              <CardTitle>Your account</CardTitle>
+              <CardDescription className="mt-1">Manage your personal information and password.</CardDescription>
+            </div>
+            {!isEditing ? (
+              <Button variant="outline" type="button" onClick={() => setIsEditing(true)}>
+                Edit profile
+              </Button>
+            ) : null}
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleProfileUpdate}>
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="profile-email">Email</FieldLabel>
-                  <Input id="profile-email" type="email" value={user.email} disabled />
-                </Field>
-                <div className="grid gap-6 sm:grid-cols-2">
+            {isEditing ? (
+              <form onSubmit={handleProfileUpdate}>
+                <FieldGroup>
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <Field>
+                      <FieldLabel htmlFor="profile-first-name">First name</FieldLabel>
+                      <Input
+                        id="profile-first-name"
+                        value={firstName}
+                        onChange={(event) => setFirstName(event.target.value)}
+                        maxLength={100}
+                        required
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="profile-last-name">Last name</FieldLabel>
+                      <Input
+                        id="profile-last-name"
+                        value={lastName}
+                        onChange={(event) => setLastName(event.target.value)}
+                        maxLength={100}
+                        required
+                      />
+                    </Field>
+                  </div>
                   <Field>
-                    <FieldLabel htmlFor="profile-first-name">First name</FieldLabel>
-                    <Input
-                      id="profile-first-name"
-                      value={firstName}
-                      onChange={(event) => setFirstName(event.target.value)}
-                      maxLength={100}
-                      required
-                    />
+                    <FieldLabel htmlFor="profile-email">Email</FieldLabel>
+                    <Input id="profile-email" type="email" value={user.email} disabled />
                   </Field>
-                  <Field>
-                    <FieldLabel htmlFor="profile-last-name">Last name</FieldLabel>
-                    <Input
-                      id="profile-last-name"
-                      value={lastName}
-                      onChange={(event) => setLastName(event.target.value)}
-                      maxLength={100}
-                      required
-                    />
+                  <Field orientation="horizontal" className="justify-end">
+                    <Button variant="outline" type="button" onClick={handleCancelEditing} disabled={isSaving}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSaving}>
+                      {isSaving ? "Saving..." : "Save changes"}
+                    </Button>
                   </Field>
+                </FieldGroup>
+              </form>
+            ) : (
+              <div className="space-y-6">
+                <dl className="space-y-5">
+                  <div className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-6">
+                    <dt className="text-sm text-muted-foreground">Full name</dt>
+                    <dd className="text-sm font-medium">{profile.firstName} {profile.lastName}</dd>
+                  </div>
+                  <div className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-6">
+                    <dt className="text-sm text-muted-foreground">Email</dt>
+                    <dd className="text-sm font-medium">{user.email}</dd>
+                  </div>
+                </dl>
+                <Separator />
+                <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                  <div>
+                    <p className="text-sm font-medium">Password</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Receive a secure link by email to choose a new password.</p>
+                  </div>
+                  <Link
+                    href={`/forgot-password?email=${encodeURIComponent(user.email)}`}
+                    className={buttonVariants({ variant: "outline" })}
+                  >
+                    Change password
+                  </Link>
                 </div>
-                <Field orientation="horizontal" className="justify-end">
-                  <Button type="submit" disabled={isSaving}>
-                    {isSaving ? "Saving..." : "Save changes"}
-                  </Button>
-                </Field>
-              </FieldGroup>
-            </form>
+              </div>
+            )}
           </CardContent>
         </Card>
       </section>

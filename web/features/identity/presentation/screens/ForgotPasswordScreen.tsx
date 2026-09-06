@@ -10,7 +10,11 @@ import { AuthShell } from "@/features/identity/presentation/components/AuthShell
 import { AuthTextField } from "@/features/identity/presentation/components/AuthTextField";
 import { identityApi, identityErrorMessage } from "@/features/identity/infrastructure/identity-api";
 
-export function ForgotPasswordScreen() {
+type ForgotPasswordScreenProps = {
+  initialEmail?: string;
+};
+
+export function ForgotPasswordScreen({ initialEmail }: ForgotPasswordScreenProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -32,7 +36,16 @@ export function ForgotPasswordScreen() {
     <AuthShell title="Reset your password" description="Enter your email and we’ll send a reset link if an account exists.">
       <form onSubmit={handleSubmit}>
         <FieldGroup>
-          <AuthTextField id="email" name="email" label="Email" type="email" autoComplete="email" placeholder="you@example.com" required />
+          <AuthTextField
+            id="email"
+            name="email"
+            label="Email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            defaultValue={initialEmail}
+            required
+          />
           <Field>
             <Button className="w-full" type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Sending reset link..." : "Send reset link"}
