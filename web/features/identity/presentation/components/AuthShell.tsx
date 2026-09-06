@@ -24,8 +24,8 @@ export function AuthShell({ title, description, children }: AuthShellProps) {
       <div className="w-full max-w-sm">
         <Card className="w-full">
           <CardHeader>
-            <CardTitle className="text-2xl font-semibold tracking-tight">{title}</CardTitle>
-            <CardDescription className="text-base leading-7">{description}</CardDescription>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
           </CardHeader>
           <CardContent>{children}</CardContent>
         </Card>
