@@ -11,6 +11,11 @@ data class CreateInvitationRequest(
 )
 
 @Serializable
+data class AcceptInvitationRequest(
+    val token: String,
+)
+
+@Serializable
 data class InvitationResponse(
     val id: String,
     val organizationId: String,
