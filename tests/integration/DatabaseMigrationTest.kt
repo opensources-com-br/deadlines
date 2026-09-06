@@ -1,5 +1,13 @@
 package deadlines.integration
 
+import deadlines.organizations.audits.*
+import deadlines.organizations.OrganizationService
+import deadlines.organizations.UpdateOrganizationRequest
+import deadlines.organizations.access.*
+import deadlines.organizations.members.MemberService
+import deadlines.organizations.members.UpdateMemberRoleRequest
+import kotlin.test.assertTrue
+import java.sql.SQLException
 import deadlines.config.DatabaseConfig
 import deadlines.identity.auth.ExposedSessionRepository
 import deadlines.identity.auth.Session
@@ -64,7 +72,7 @@ class DatabaseMigrationTest {
                 ).use { statement ->
                     statement.executeQuery().use { result ->
                         result.next()
-                        assertEquals(10, result.getInt(1))
+                        assertEquals(11, result.getInt(1))
                     }
                 }
             }
@@ -359,6 +367,93 @@ class DatabaseMigrationTest {
                 }
             }
         }
+
+    @Test
+    fun `audits persist safe events atomically and retain deleted resource history`() = runTest {
+        DatabaseFactory.open(databaseConfig()).use { database ->
+            val query = DatabaseQuery(database.database)
+            val users = ExposedUserRepository(query)
+            val organizations = ExposedOrganizationRepository(query)
+            val roles = ExposedRoleRepository(query)
+            val permissions = ExposedPermissionRepository(query)
+            val invitations = ExposedInvitationRepository(query)
+            val members = ExposedMemberRepository(query)
+            val audits = ExposedAuditRepository(query)
+            val now = Instant.now()
+            val owner = testUser("audit-owner", now)
+            val invitee = testUser("audit-invitee", now)
+            users.create(owner)
+            users.create(invitee)
+            val context = organizationContext(owner.id, "audit-${UUID.randomUUID()}", now)
+            organizations.createWithOwner(context)
+            val org = context.organization.id
+            val organizationService = OrganizationService(organizations)
+            organizationService.update(owner.id, UpdateOrganizationRequest(name = "Do not copy this secret into metadata"))
+            val permissionService = PermissionService(organizations, permissions)
+            val permission = permissionService.create(owner.id, CreatePermissionRequest("audit.read", "Audit test", "sensitive description"))
+            val permissionId = UUID.fromString(permission.id)
+            permissionService.update(owner.id, permissionId, UpdatePermissionRequest(name = "Changed permission"))
+            val roleService = RoleService(organizations, roles, permissions)
+            val role = roleService.create(owner.id, CreateRoleRequest("auditor", "Auditor", "sensitive description"))
+            val roleId = UUID.fromString(role.id)
+            roleService.update(owner.id, roleId, UpdateRoleRequest(name = "Changed role"))
+            roleService.replacePermissions(owner.id, roleId, ReplaceRolePermissionsRequest(listOf(permission.id)))
+            roleService.replacePermissions(owner.id, roleId, ReplaceRolePermissionsRequest(emptyList()))
+            val memberRole = roles.list(org).single { it.key == "member" }
+            val invitation = OrganizationInvitation(UUID.randomUUID(), org, context.organization.name,
+                invitee.email, memberRole, owner.id, UUID.randomUUID().toString().replace("-", "").repeat(2),
+                InvitationStatus.PENDING, now.plusSeconds(3600), now, now)
+            withAuditActor(owner.id) {
+                invitations.create(invitation)
+                invitations.renew(org, invitation.id, "r".repeat(64), now.plusSeconds(7200), now)
+            }
+            withAuditActor(invitee.id) { assertTrue(invitations.accept(invitation, invitee.id, UUID.randomUUID(), now)) }
+            val member = members.findByUserId(org, invitee.id)!!
+            val memberService = MemberService(organizations, members, roles)
+            memberService.updateRole(owner.id, member.membershipId, UpdateMemberRoleRequest(role.id))
+            memberService.remove(owner.id, member.membershipId)
+            val revoked = invitation.copy(id = UUID.randomUUID(), tokenHash = "v".repeat(64))
+            withAuditActor(owner.id) { invitations.create(revoked); invitations.revoke(org, revoked.id, now) }
+            val unused = roleService.create(owner.id, CreateRoleRequest("unused", "Unused", null))
+            roleService.delete(owner.id, UUID.fromString(unused.id))
+            permissionService.delete(owner.id, permissionId)
+
+            val events = audits.list(org, AuditFilter(limit = 100)).data
+            val expected = setOf("organization.updated", "permission.created", "permission.updated", "permission.deleted",
+                "role.created", "role.updated", "role.deleted", "role.permission_added", "role.permission_removed",
+                "invitation.created", "invitation.resent", "invitation.accepted", "invitation.revoked", "member.role_updated", "member.removed")
+            assertTrue(events.map { it.action }.containsAll(expected))
+            assertEquals(invitee.id.toString(), events.single { it.action == "invitation.accepted" }.actorId)
+            assertEquals(owner.id.toString(), events.single { it.action == "organization.updated" }.actorId)
+            assertTrue(events.none { it.metadata.toString().contains("sensitive") || it.metadata.toString().contains("secret") || it.metadata.toString().contains(invitee.email) })
+            val safeKeys = setOf("nameChanged", "slugChanged", "keyChanged", "descriptionChanged", "userId", "previousRoleId", "roleId", "acceptedBy", "permissionId")
+            assertTrue(events.all { it.metadata.keys.all { key -> key in safeKeys } })
+            assertTrue(audits.list(UUID.randomUUID(), AuditFilter()).data.isEmpty())
+            val filtered = audits.list(org, AuditFilter(action = "member.removed", actorId = owner.id, resource = "member", resourceId = member.membershipId))
+            assertEquals(1, filtered.data.size)
+            val eventTime = Instant.parse(filtered.data.single().occurredAt)
+            assertEquals(1, audits.list(org, AuditFilter(action = "member.removed", from = eventTime, to = eventTime)).data.size)
+            val first = audits.list(org, AuditFilter(limit = 1))
+            assertTrue(first.hasMore)
+            assertEquals(events[1].id, audits.list(org, AuditFilter(limit = 1, offset = 1)).data.single().id)
+            assertTrue(!audits.list(org, AuditFilter(offset = events.size.toLong())).hasMore)
+
+            DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password).use { connection ->
+                for (sql in listOf("UPDATE organization_audit_logs SET action = 'tampered'", "DELETE FROM organization_audit_logs", "TRUNCATE organization_audit_logs")) {
+                    assertFailsWith<SQLException> { connection.createStatement().use { it.execute(sql) } }
+                }
+                connection.autoCommit = false
+                connection.createStatement().use { statement ->
+                    statement.execute("UPDATE organizations SET name = 'Rolled back' WHERE id = '$org'")
+                }
+                connection.rollback()
+            }
+            assertEquals(events.size, audits.list(org, AuditFilter(limit = 100)).data.size)
+            // Pool reuse must not retain the preceding actor.
+            organizations.update(context.organization.copy(name = "Maintenance"))
+            assertNull(audits.list(org, AuditFilter(limit = 1)).data.single().actorId)
+        }
+    }
 
     private fun databaseConfig() =
         DatabaseConfig(
