@@ -73,7 +73,7 @@ DELETE /api/v1/users/{id}
 
 `/api/v1/auth/me` e `/api/v1/auth/email/resend` exigem um access token Bearer. Tokens de confirmação e redefinição são armazenados somente como hash, expiram e só podem ser usados uma vez; uma redefinição também revoga todas as sessões do usuário.
 
-No ambiente local, o serviço de e-mail apenas registra o envio sem incluir o token no log. Isso preserva o comportamento seguro até a integração com um provedor de e-mail. As rotas de usuários continuam sem autenticação durante o desenvolvimento local da Identity. O Compose publica o backend somente em `127.0.0.1`; não faça deploy desta fase.
+Por padrão, o ambiente local registra o envio sem incluir o token no log. Ao definir `RESEND_API_KEY`, o backend seleciona o Resend automaticamente. Para o teste inicial, use `MAIL_FROM="Deadlines <onboarding@resend.dev>"`; o Resend só entregará para o e-mail da própria conta. Em produção, use `EMAIL_PROVIDER=resend`, um domínio verificado e `EMAIL_FROM` nesse domínio. As rotas de usuários continuam sem autenticação durante o desenvolvimento local da Identity. O Compose publica o backend somente em `127.0.0.1`; não faça deploy desta fase.
 
 Exemplo de criação:
 

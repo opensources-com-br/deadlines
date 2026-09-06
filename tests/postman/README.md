@@ -10,6 +10,6 @@ A collection usa `http://localhost:8080` por padrão e não contém credenciais 
 
 Execute a collection completa ou as pastas na ordem apresentada. Os scripts armazenam automaticamente access token, refresh token e IDs entre as requisições.
 
-A pasta `Email (local)` valida o reenvio autenticado e a solicitação de recuperação. Por segurança, o backend local não expõe nem registra os tokens de confirmação/redefinição; as duas requisições manuais ficam desativadas na collection até um provedor de e-mail ser configurado. Defina `emailToken` e ative a requisição desejada para executá-la.
+A pasta `Email (local)` valida o reenvio autenticado e a solicitação de recuperação. Por segurança, o backend nunca expõe nem registra os tokens de confirmação/redefinição. Com o Resend configurado, copie o token recebido no e-mail para `emailToken` e ative a requisição manual desejada.
 
 As rotas em `Users (local only)` permanecem abertas somente durante o desenvolvimento local da Identity.
