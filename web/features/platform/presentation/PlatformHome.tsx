@@ -1,18 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
-import { updateUserProfile } from "@/features/platform/infrastructure/profile-api";
+import { changePassword, updateUserProfile } from "@/features/platform/infrastructure/profile-api";
 
 type PlatformHomeProps = {
   user: UserProfile;
@@ -23,9 +22,13 @@ export function PlatformHome({ user }: PlatformHomeProps) {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [profile, setProfile] = useState(user.profile);
   const [firstName, setFirstName] = useState(user.profile.firstName);
   const [lastName, setLastName] = useState(user.profile.lastName);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -60,6 +63,33 @@ export function PlatformHome({ user }: PlatformHomeProps) {
     setIsEditing(false);
   }
 
+  async function handlePasswordChange(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (newPassword !== passwordConfirmation) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await changePassword(currentPassword, newPassword);
+      toast.success("Your password has been changed. Sign in again.");
+      router.replace("/login");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to change your password.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function handleCancelPasswordChange() {
+    setCurrentPassword("");
+    setNewPassword("");
+    setPasswordConfirmation("");
+    setIsChangingPassword(false);
+  }
+
   return (
     <main className="min-h-svh bg-background text-foreground">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
@@ -89,7 +119,7 @@ export function PlatformHome({ user }: PlatformHomeProps) {
               <CardTitle>Your account</CardTitle>
               <CardDescription className="mt-1">Manage your personal information and password.</CardDescription>
             </div>
-            {!isEditing ? (
+            {!isEditing && !isChangingPassword ? (
               <Button variant="outline" type="button" onClick={() => setIsEditing(true)}>
                 Edit profile
               </Button>
@@ -135,6 +165,57 @@ export function PlatformHome({ user }: PlatformHomeProps) {
                   </Field>
                 </FieldGroup>
               </form>
+            ) : isChangingPassword ? (
+              <form onSubmit={handlePasswordChange}>
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel htmlFor="current-password">Current password</FieldLabel>
+                    <Input
+                      id="current-password"
+                      type="password"
+                      autoComplete="current-password"
+                      value={currentPassword}
+                      onChange={(event) => setCurrentPassword(event.target.value)}
+                      required
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="new-password">New password</FieldLabel>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      autoComplete="new-password"
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                      minLength={12}
+                      maxLength={72}
+                      required
+                    />
+                    <p className="text-sm text-muted-foreground">Use between 12 and 72 characters.</p>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="password-confirmation">Confirm new password</FieldLabel>
+                    <Input
+                      id="password-confirmation"
+                      type="password"
+                      autoComplete="new-password"
+                      value={passwordConfirmation}
+                      onChange={(event) => setPasswordConfirmation(event.target.value)}
+                      minLength={12}
+                      maxLength={72}
+                      required
+                    />
+                  </Field>
+                  <Field orientation="horizontal" className="justify-end">
+                    <Button variant="outline" type="button" onClick={handleCancelPasswordChange} disabled={isSaving}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSaving}>
+                      {isSaving ? "Changing..." : "Change password"}
+                    </Button>
+                  </Field>
+                </FieldGroup>
+              </form>
             ) : (
               <div className="space-y-6">
                 <dl className="space-y-5">
@@ -153,12 +234,9 @@ export function PlatformHome({ user }: PlatformHomeProps) {
                     <p className="text-sm font-medium">Password</p>
                     <p className="mt-1 text-sm text-muted-foreground">Receive a secure link by email to choose a new password.</p>
                   </div>
-                  <Link
-                    href={`/forgot-password?email=${encodeURIComponent(user.email)}`}
-                    className={buttonVariants({ variant: "outline" })}
-                  >
+                  <Button variant="outline" type="button" onClick={() => setIsChangingPassword(true)}>
                     Change password
-                  </Link>
+                  </Button>
                 </div>
               </div>
             )}

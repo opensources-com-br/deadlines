@@ -10,11 +10,7 @@ import { AuthShell } from "@/features/identity/presentation/components/AuthShell
 import { AuthTextField } from "@/features/identity/presentation/components/AuthTextField";
 import { identityApi, identityErrorMessage } from "@/features/identity/infrastructure/identity-api";
 
-type ForgotPasswordScreenProps = {
-  initialEmail?: string;
-};
-
-export function ForgotPasswordScreen({ initialEmail }: ForgotPasswordScreenProps) {
+export function ForgotPasswordScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -43,7 +39,6 @@ export function ForgotPasswordScreen({ initialEmail }: ForgotPasswordScreenProps
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
-            defaultValue={initialEmail}
             required
           />
           <Field>

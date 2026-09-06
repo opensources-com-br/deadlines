@@ -20,3 +20,16 @@ export async function updateUserProfile(input: UpdateUserProfileInput): Promise<
 
   return data;
 }
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const response = await fetch("/api/profile/password", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+
+  if (!response.ok) {
+    const data = (await response.json().catch(() => ({}))) as ErrorPayload;
+    throw new Error(data.error?.message ?? "Unable to change your password.");
+  }
+}
