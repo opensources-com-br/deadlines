@@ -38,10 +38,8 @@
             { "listen": "test", "script": { "type": "text/javascript", "exec": [
               "pm.test('status is 201', () => pm.response.to.have.status(201));",
               "const body = pm.response.json();",
-              "pm.collectionVariables.set('accessToken', body.accessToken);",
-              "pm.collectionVariables.set('refreshToken', body.refreshToken);",
               "pm.collectionVariables.set('userId', body.user.id);",
-              "pm.test('tokens were returned', () => { pm.expect(body.accessToken).not.empty; pm.expect(body.refreshToken).not.empty; });"
+              "pm.test('account is pending confirmation', () => pm.expect(body.user.status).to.eql('pending'));"
             ] } }
           ],
           "request": {
@@ -52,7 +50,8 @@
           }
         },
         {
-          "name": "Login",
+          "name": "Login (after verification)",
+          "disabled": true,
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "pm.test('status is 200', () => pm.response.to.have.status(200));",
             "const body = pm.response.json();",
@@ -68,6 +67,7 @@
         },
         {
           "name": "Me",
+          "disabled": true,
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "pm.test('status is 200', () => pm.response.to.have.status(200));",
             "pm.test('returns authenticated user', () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('userId')));"
@@ -81,6 +81,7 @@
         },
         {
           "name": "Refresh",
+          "disabled": true,
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "pm.test('status is 200', () => pm.response.to.have.status(200));",
             "const body = pm.response.json();",
@@ -96,6 +97,7 @@
         },
         {
           "name": "Logout",
+          "disabled": true,
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "pm.test('status is 204', () => pm.response.to.have.status(204));"
           ] } }],
@@ -118,8 +120,8 @@
           ] } }],
           "request": {
             "method": "POST",
-            "header": [],
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{userEmail}}\"\n}" },
             "url": "{{baseUrl}}/api/v1/auth/email/resend"
           }
         },

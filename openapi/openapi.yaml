@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.4.0
-  description: API local do Deadlines. Inclui autenticação, verificação de e-mail e recuperação de senha; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
+  version: 0.5.0
+  description: API local do Deadlines. O cadastro exige confirmação de e-mail antes da ativação e do login; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
     description: Desenvolvimento local
@@ -27,7 +27,7 @@ paths:
   /api/v1/auth/register:
     post:
       tags: [Authentication]
-      summary: Registra um usuário e inicia uma sessão
+      summary: Registra um usuário pendente e envia a confirmação de e-mail
       operationId: register
       requestBody:
         required: true
@@ -37,11 +37,11 @@ paths:
               $ref: "#/components/schemas/RegisterRequest"
       responses:
         "201":
-          description: Usuário registrado
+          description: Usuário pendente de confirmação
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthResponse"
+                $ref: "#/components/schemas/RegistrationResponse"
         "409":
           $ref: "#/components/responses/Conflict"
         "422":
@@ -135,15 +135,17 @@ paths:
   /api/v1/auth/email/resend:
     post:
       tags: [Email]
-      summary: Reenvia a confirmação para o usuário autenticado
+      summary: Reenvia a confirmação sem revelar se a conta existe
       operationId: resendEmailVerification
-      security:
-        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResendVerificationRequest"
       responses:
         "204":
           description: Solicitação aceita
-        "401":
-          $ref: "#/components/responses/Unauthorized"
   /api/v1/auth/forgot-password:
     post:
       tags: [Email]
@@ -396,6 +398,15 @@ components:
           type: string
           minLength: 1
           maxLength: 100
+    RegistrationResponse:
+      type: object
+      required: [user, message]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        message:
+          type: string
+          const: Confirm your email to activate your account
     LoginRequest:
       type: object
       additionalProperties: false
@@ -424,6 +435,14 @@ components:
           type: string
           writeOnly: true
     ForgotPasswordRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+    ResendVerificationRequest:
       type: object
       additionalProperties: false
       required: [email]
