@@ -5,6 +5,8 @@ import deadlines.shared.errors.ApiErrorBody
 import deadlines.shared.errors.ApiErrorResponse
 import deadlines.shared.errors.ApiException
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -15,6 +17,7 @@ import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.httpMethod
 import io.ktor.server.response.respond
@@ -38,6 +41,14 @@ fun Application.configurePlugins(tokenService: TokenService? = null) {
             val status = call.response.status()?.value ?: "pending"
             "${call.request.httpMethod.value} status=$status"
         }
+    }
+
+    install(CORS) {
+        allowHost("localhost:3000", schemes = listOf("http"))
+        allowMethod(HttpMethod.Options)
+        allowMethod(HttpMethod.Post)
+        allowHeader(HttpHeaders.ContentType)
+        allowHeader(HttpHeaders.Authorization)
     }
 
     if (tokenService != null) {
