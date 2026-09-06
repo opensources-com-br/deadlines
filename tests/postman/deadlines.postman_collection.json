@@ -20,7 +20,8 @@
     { "key": "organizationSlug", "value": "" },
     { "key": "permissionId", "value": "" },
     { "key": "permissionKey", "value": "" },
-    { "key": "roleId", "value": "" }
+    { "key": "roleId", "value": "" },
+    { "key": "roleKey", "value": "" }
   ],
   "item": [
     {
@@ -328,6 +329,90 @@
             "header": [],
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
             "url": "{{baseUrl}}/api/v1/permissions/{{permissionId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "List roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/roles"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Create role",
+          "event": [
+            { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+              "if (!pm.collectionVariables.get('roleKey')) {",
+              "  pm.collectionVariables.set('roleKey', `manager-${pm.variables.replaceIn('{{$randomUUID}}')}`);",
+              "}"
+            ] } },
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('status is 201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('roleId', pm.response.json().id);"
+            ] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"key\": \"{{roleKey}}\",\n  \"name\": \"Manager\",\n  \"description\": \"Manages deadlines and team workflows.\"\n}" },
+            "url": "{{baseUrl}}/api/v1/roles"
+          }
+        },
+        {
+          "name": "Get role",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/roles/{{roleId}}"
+          }
+        },
+        {
+          "name": "Update role",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Delivery Manager\"\n}" },
+            "url": "{{baseUrl}}/api/v1/roles/{{roleId}}"
+          }
+        },
+        {
+          "name": "Get role permissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/roles/{{roleId}}/permissions"
+          }
+        },
+        {
+          "name": "Replace role permissions",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"permissionIds\": [\"{{permissionId}}\"]\n}" },
+            "url": "{{baseUrl}}/api/v1/roles/{{roleId}}/permissions"
+          }
+        },
+        {
+          "name": "Delete role",
+          "disabled": true,
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/roles/{{roleId}}"
           }
         }
       ]
