@@ -36,7 +36,7 @@ export function CheckEmailScreen({ email, nextPath }: CheckEmailScreenProps) {
   return (
     <AuthShell title="Check your inbox" description="We sent a confirmation link to your email address.">
       <div className="rounded-xl border bg-muted/50 p-5 text-sm leading-6 text-muted-foreground">
-        Your account will be ready once you confirm your email. {nextPath ? "Then return here and sign in to accept your invitation." : "The link expires after a limited time for your security."}
+        Your account will be ready once you confirm your email. {nextPath ? "Then sign in and we will add you to the organization automatically." : "The link expires after a limited time for your security."}
       </div>
       <Button className="mt-5 w-full" type="button" onClick={handleResend} disabled={isSubmitting}>
         {isSubmitting ? "Sending confirmation email..." : "Resend confirmation email"}

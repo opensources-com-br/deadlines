@@ -68,7 +68,7 @@ export function AcceptInvitationScreen({ token, authenticated }: AcceptInvitatio
   return (
     <AuthShell
       title={`Join ${preview.organizationName}`}
-      description={`You were invited as ${preview.roleName}.`}
+      description={`Create an account to join as ${preview.roleName}.`}
     >
       <div className="rounded-xl border bg-muted/50 p-5 text-sm leading-6 text-muted-foreground">
         This invitation was sent to <span className="font-medium text-foreground">{preview.email}</span>.
@@ -80,13 +80,18 @@ export function AcceptInvitationScreen({ token, authenticated }: AcceptInvitatio
         </Button>
       ) : canAccept ? (
         <div className="mt-5 space-y-3">
-          <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className={buttonVariants() + " w-full"}>Sign in to accept</Link>
           <Link
             href={`/register?email=${encodeURIComponent(preview.email)}&next=${encodeURIComponent(nextPath)}`}
-            className={buttonVariants({ variant: "outline" }) + " w-full"}
+            className={buttonVariants() + " w-full"}
           >
             Create invited account
           </Link>
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="font-medium text-foreground underline underline-offset-4">
+              Sign in
+            </Link>
+          </p>
         </div>
       ) : null}
     </AuthShell>
