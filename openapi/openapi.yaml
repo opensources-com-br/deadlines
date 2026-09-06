@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.10.0
+  version: 0.11.0
   description: API local do Deadlines. O cadastro exige confirmação de e-mail antes da ativação e do login; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
@@ -18,7 +18,20 @@ tags:
   - name: Members
   - name: Audits
   - name: Invitations
+  - name: Plans
 paths:
+  /api/v1/plans:
+    get:
+      tags: [Plans]
+      summary: Lists active plans and their resource limits
+      operationId: listPlans
+      responses:
+        "200":
+          description: Active plan catalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanListResponse"
   /api/v1/audits:
     get:
       tags: [Audits]
@@ -1665,6 +1678,44 @@ components:
         expiresAt:
           type: string
           format: date-time
+    PlanLimit:
+      type: object
+      required: [resource, value]
+      properties:
+        resource:
+          type: string
+        value:
+          type: integer
+          description: "-1 means unlimited"
+    Plan:
+      type: object
+      required: [id, key, name, monthlyPriceCents, currency, limits]
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: [string, "null"]
+        monthlyPriceCents:
+          type: integer
+        currency:
+          type: string
+        limits:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanLimit"
+    PlanListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Plan"
     ErrorResponse:
       type: object
       required: [error]

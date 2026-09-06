@@ -1,6 +1,6 @@
 # Backend
 
-Backend Kotlin + Ktor do Deadlines. A Fase 8 adiciona histórico imutável por organização, com consulta exclusiva para Owner.
+Backend Kotlin + Ktor do Deadlines. A Fase 9 adiciona o catálogo global de planos e seus limites.
 
 ## Stack da Fase 0
 
@@ -56,6 +56,7 @@ Com Docker disponível, o build também valida as migrations em um PostgreSQL de
 
 ```text
 GET /health
+GET    /api/v1/plans
 GET    /api/v1/audits
 POST   /api/v1/auth/register
 POST   /api/v1/auth/login
@@ -155,3 +156,15 @@ associações. Salvar a mesma seleção de permissões não gera eventos adicion
 Na web, Owner encontra **Organization history → View history** em `/app`.
 Use **Refresh** para buscar os eventos mais recentes. A paginação por offset
 pode se deslocar se novos eventos forem gravados durante a navegação.
+
+## Catálogo de planos (Fase 9)
+
+`GET /api/v1/plans` é público e retorna somente planos ativos, ordenados para
+exibição, incluindo preço mensal em centavos, moeda e limites por recurso.
+O valor `-1` em um limite significa ilimitado. A migration V012 inicia o
+catálogo com `Free`, `Pro` e `Business` e limites para `members`, `projects`
+e `deadlines`.
+
+Esta fase não associa um plano à organização e ainda não bloqueia uso pelos
+limites. Escolha de plano, assinatura, cobrança e enforcement pertencem às
+próximas fases.
