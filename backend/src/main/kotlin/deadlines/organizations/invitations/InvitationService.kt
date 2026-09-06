@@ -1,5 +1,7 @@
 package deadlines.organizations.invitations
 
+import deadlines.organizations.audits.withAuditActor
+
 import deadlines.config.EmailConfig
 import deadlines.identity.email.EmailMessage
 import deadlines.identity.email.EmailService
@@ -58,7 +60,7 @@ class InvitationService(
         return requireInvitation(context.organization.id, invitationId).toResponse()
     }
 
-    override suspend fun create(userId: UUID, request: CreateInvitationRequest): InvitationResponse {
+    override suspend fun create(userId: UUID, request: CreateInvitationRequest): InvitationResponse = withAuditActor(userId) {
         val context = requireOwner(userId)
         val normalizedEmail = validateEmail(request.email)
         val role = requireAssignableRole(context.organization.id, request.roleId)
@@ -90,10 +92,10 @@ class InvitationService(
             invitations.revoke(context.organization.id, invitation.id, clock.instant())
             throw exception
         }
-        return invitation.toResponse()
+        return@withAuditActor invitation.toResponse()
     }
 
-    override suspend fun resend(userId: UUID, invitationId: UUID): InvitationResponse {
+    override suspend fun resend(userId: UUID, invitationId: UUID): InvitationResponse = withAuditActor(userId) {
         val context = requireOwner(userId)
         val invitation = requireInvitation(context.organization.id, invitationId)
         if (invitation.status !in setOf(InvitationStatus.PENDING, InvitationStatus.EXPIRED)) {
@@ -113,10 +115,10 @@ class InvitationService(
             throw InvitationNotFoundException()
         }
         sendInvitation(renewed, rawToken)
-        return renewed.toResponse()
+        return@withAuditActor renewed.toResponse()
     }
 
-    override suspend fun revoke(userId: UUID, invitationId: UUID) {
+    override suspend fun revoke(userId: UUID, invitationId: UUID) = withAuditActor(userId) {
         val context = requireOwner(userId)
         requireInvitation(context.organization.id, invitationId)
         if (!invitations.revoke(context.organization.id, invitationId, clock.instant())) throw InvitationInvalidException()
@@ -125,7 +127,7 @@ class InvitationService(
     override suspend fun preview(rawToken: String): InvitationPreviewResponse =
         findByRawToken(rawToken).toPreviewResponse()
 
-    override suspend fun accept(userId: UUID, rawToken: String): MemberResponse {
+    override suspend fun accept(userId: UUID, rawToken: String): MemberResponse = withAuditActor(userId) {
         val invitation = findByRawToken(rawToken)
         if (invitation.status != InvitationStatus.PENDING) throw InvitationInvalidException()
         val user = users.findById(userId)?.takeIf { it.status == UserStatus.ACTIVE } ?: throw InvitationInvalidException()
@@ -138,7 +140,7 @@ class InvitationService(
         }
 
         if (!invitations.accept(invitation, userId, idGenerator(), clock.instant())) throw InvitationInvalidException()
-        return members.findByUserId(invitation.organizationId, userId)?.toResponse() ?: throw InvitationInvalidException()
+        return@withAuditActor members.findByUserId(invitation.organizationId, userId)?.toResponse() ?: throw InvitationInvalidException()
     }
 
     private suspend fun sendInvitation(invitation: OrganizationInvitation, rawToken: String) {

@@ -1,5 +1,7 @@
 package deadlines.organizations.members
 
+import deadlines.organizations.audits.withAuditActor
+
 import deadlines.organizations.MembershipRole
 import deadlines.organizations.OrganizationAccessDeniedException
 import deadlines.organizations.OrganizationNotFoundException
@@ -39,7 +41,7 @@ class MemberService(
         userId: UUID,
         membershipId: UUID,
         request: UpdateMemberRoleRequest,
-    ): MemberResponse {
+    ): MemberResponse = withAuditActor(userId) {
         val context = requireOwner(userId)
         val member = requireMember(context.organization.id, membershipId)
         if (member.role.key == OWNER_ROLE_KEY) throw OwnerMembershipImmutableException()
@@ -48,10 +50,10 @@ class MemberService(
         val role = roles.findById(context.organization.id, roleId) ?: throw RoleNotFoundException()
         if (role.key == OWNER_ROLE_KEY) throw OwnerMembershipImmutableException()
         if (!members.updateRole(context.organization.id, membershipId, role.id)) throw MemberNotFoundException()
-        return requireMember(context.organization.id, membershipId).toResponse()
+        return@withAuditActor requireMember(context.organization.id, membershipId).toResponse()
     }
 
-    override suspend fun remove(userId: UUID, membershipId: UUID) {
+    override suspend fun remove(userId: UUID, membershipId: UUID) = withAuditActor(userId) {
         val context = requireOwner(userId)
         val member = requireMember(context.organization.id, membershipId)
         if (member.role.key == OWNER_ROLE_KEY) throw OwnerMembershipImmutableException()
