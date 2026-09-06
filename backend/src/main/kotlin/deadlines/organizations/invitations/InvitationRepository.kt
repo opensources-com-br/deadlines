@@ -9,6 +9,7 @@ import java.time.ZoneOffset
 import java.util.UUID
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
@@ -225,7 +226,14 @@ private object MembershipsTable : Table("organization_memberships") {
 }
 
 private fun invitationQuery() =
-    ((InvitationsTable innerJoin OrganizationsTable) innerJoin RolesTable).selectAll()
+    (InvitationsTable innerJoin RolesTable)
+        .join(
+            OrganizationsTable,
+            JoinType.INNER,
+            onColumn = InvitationsTable.organizationId,
+            otherColumn = OrganizationsTable.id,
+        )
+        .selectAll()
 
 private fun org.jetbrains.exposed.v1.core.ResultRow.toInvitation(now: Instant): OrganizationInvitation {
     val persistedStatus = InvitationStatus.valueOf(this[InvitationsTable.status].uppercase())
