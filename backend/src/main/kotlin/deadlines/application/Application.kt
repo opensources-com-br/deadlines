@@ -1,6 +1,7 @@
 package deadlines.application
 
 import deadlines.config.AppConfig
+import deadlines.config.EmailProvider
 import deadlines.identity.auth.AuthOperations
 import deadlines.identity.auth.AuthService
 import deadlines.identity.auth.BcryptPasswordHasher
@@ -10,6 +11,7 @@ import deadlines.identity.email.EmailVerificationOperations
 import deadlines.identity.email.EmailVerificationService
 import deadlines.identity.email.ExposedEmailTokenRepository
 import deadlines.identity.email.LoggingEmailService
+import deadlines.identity.email.ResendEmailService
 import deadlines.identity.email.PasswordResetOperations
 import deadlines.identity.email.PasswordResetService
 import deadlines.identity.users.ExposedUserCredentialsRepository
@@ -41,7 +43,11 @@ fun main() {
                 tokenService,
             )
         val emailTokens = ExposedEmailTokenRepository(query)
-        val emailService = LoggingEmailService()
+        val emailService =
+            when (config.email.provider) {
+                EmailProvider.LOGGING -> LoggingEmailService()
+                EmailProvider.RESEND -> ResendEmailService(config.email.resendApiKey!!, config.email.from)
+            }
         val emailVerificationService = EmailVerificationService(userRepository, emailTokens, emailService, config.email)
         val passwordResetService =
             PasswordResetService(credentialsRepository, emailTokens, emailService, passwordHasher, sessionRepository, config.email)

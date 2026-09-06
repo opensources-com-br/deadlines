@@ -32,9 +32,22 @@ data class AppConfig(
                     refreshTokenExpirationSeconds =
                         environment.positiveLong("JWT_REFRESH_EXPIRATION_SECONDS", default = 2_592_000),
                 ),
-                email = EmailConfig(
-                    from = environment["EMAIL_FROM"] ?: "no-reply@deadlines.local",
-                    appBaseUrl = environment["APP_BASE_URL"] ?: "http://localhost:3000",
+                email =
+                    EmailConfig(
+                        provider =
+                            EmailProvider.fromEnvironment(
+                                environment["EMAIL_PROVIDER"],
+                                environment["RESEND_API_KEY"]?.isNotBlank() == true,
+                            ),
+                        from =
+                            environment["EMAIL_FROM"]?.takeIf(String::isNotBlank)
+                                ?: environment["MAIL_FROM"]?.takeIf(String::isNotBlank)
+                                ?: "no-reply@deadlines.local",
+                        resendApiKey = environment["RESEND_API_KEY"]?.takeIf(String::isNotBlank),
+                        appBaseUrl =
+                            environment["APP_BASE_URL"]?.takeIf(String::isNotBlank)
+                                ?: environment["APP_WEB_URL"]?.takeIf(String::isNotBlank)
+                                ?: "http://localhost:3000",
                     verificationExpirationSeconds =
                         environment.positiveLong("EMAIL_VERIFICATION_EXPIRATION_SECONDS", default = 86_400),
                     passwordResetExpirationSeconds =
@@ -69,7 +82,30 @@ data class EmailConfig(
     val appBaseUrl: String,
     val verificationExpirationSeconds: Long,
     val passwordResetExpirationSeconds: Long,
-)
+    val provider: EmailProvider = EmailProvider.LOGGING,
+    val resendApiKey: String? = null,
+) {
+    init {
+        require(provider != EmailProvider.RESEND || !resendApiKey.isNullOrBlank()) {
+            "RESEND_API_KEY is required when EMAIL_PROVIDER is resend"
+        }
+    }
+}
+
+enum class EmailProvider {
+    LOGGING,
+    RESEND,
+    ;
+
+    companion object {
+        fun fromEnvironment(value: String?, resendApiKeyPresent: Boolean): EmailProvider =
+            when (value?.trim()?.uppercase() ?: if (resendApiKeyPresent) "RESEND" else "LOGGING") {
+                "LOGGING" -> LOGGING
+                "RESEND" -> RESEND
+                else -> throw IllegalArgumentException("EMAIL_PROVIDER must be logging or resend")
+            }
+    }
+}
 
 private fun Map<String, String>.required(name: String): String =
     get(name)?.takeIf(String::isNotBlank)
