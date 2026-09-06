@@ -16,14 +16,17 @@ import { changePassword, updateUserProfile } from "@/features/platform/infrastru
 import { SessionsCard } from "@/features/platform/presentation/SessionsCard";
 import type { Organization } from "@/features/organizations/domain/organization";
 import { OrganizationCard } from "@/features/organizations/presentation/OrganizationCard";
+import type { Permission } from "@/features/access/domain/access";
+import { PermissionsCard } from "@/features/access/presentation/PermissionsCard";
 
 type PlatformHomeProps = {
   user: UserProfile;
   organization: Organization;
   sessions: UserSession[];
+  permissions: Permission[];
 };
 
-export function PlatformHome({ user, organization, sessions }: PlatformHomeProps) {
+export function PlatformHome({ user, organization, sessions, permissions }: PlatformHomeProps) {
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -123,6 +126,7 @@ export function PlatformHome({ user, organization, sessions }: PlatformHomeProps
 
         <div className="space-y-6">
         <OrganizationCard organization={organization} />
+        <PermissionsCard initialPermissions={permissions} canManage={organization.role === "owner"} />
         <Card>
           <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
             <div>
