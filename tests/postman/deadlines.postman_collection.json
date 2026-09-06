@@ -13,7 +13,8 @@
     { "key": "refreshToken", "value": "" },
     { "key": "userId", "value": "" },
     { "key": "managedUserId", "value": "" },
-    { "key": "emailToken", "value": "" }
+    { "key": "emailToken", "value": "" },
+    { "key": "sessionId", "value": "" }
   ],
   "item": [
     {
@@ -155,6 +156,52 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{emailToken}}\",\n  \"password\": \"new-postman-password-123\"\n}" },
             "url": "{{baseUrl}}/api/v1/auth/reset-password"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "List sessions",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 200', () => pm.response.to.have.status(200));",
+            "const sessions = pm.response.json().data;",
+            "const revocable = sessions.find((session) => !session.isCurrent);",
+            "pm.collectionVariables.set('sessionId', revocable?.id || '');"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/sessions"
+          }
+        },
+        {
+          "name": "Revoke session",
+          "disabled": true,
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 204', () => pm.response.to.have.status(204));"
+          ] } }],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/sessions/{{sessionId}}"
+          }
+        },
+        {
+          "name": "Revoke all sessions",
+          "disabled": true,
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 204', () => pm.response.to.have.status(204));"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/sessions/revoke-all"
           }
         }
       ]

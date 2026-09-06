@@ -6,6 +6,7 @@ import deadlines.identity.auth.AuthOperations
 import deadlines.identity.auth.AuthService
 import deadlines.identity.auth.BcryptPasswordHasher
 import deadlines.identity.auth.ExposedSessionRepository
+import deadlines.identity.auth.SessionService
 import deadlines.identity.auth.TokenService
 import deadlines.identity.email.EmailVerificationOperations
 import deadlines.identity.email.EmailVerificationService
@@ -33,6 +34,7 @@ fun main() {
         val userService = UserService(userRepository)
         val credentialsRepository = ExposedUserCredentialsRepository(query)
         val sessionRepository = ExposedSessionRepository(query)
+        val sessionService = SessionService(sessionRepository)
         val passwordHasher = BcryptPasswordHasher()
         val emailTokens = ExposedEmailTokenRepository(query)
         val emailService =
@@ -54,7 +56,7 @@ fun main() {
             PasswordResetService(credentialsRepository, emailTokens, emailService, passwordHasher, sessionRepository, config.email)
 
         embeddedServer(Netty, port = config.http.port) {
-            module(userService, authService, tokenService, emailVerificationService, passwordResetService)
+            module(userService, authService, tokenService, emailVerificationService, passwordResetService, sessionService)
         }.start(wait = true)
     }
 }
@@ -65,7 +67,8 @@ fun Application.module(
     tokenService: TokenService? = null,
     emailVerification: EmailVerificationOperations? = null,
     passwordReset: PasswordResetOperations? = null,
+    sessionService: SessionService? = null,
 ) {
     configurePlugins(tokenService)
-    configureRoutes(userService, authService, emailVerification, passwordReset)
+    configureRoutes(userService, authService, emailVerification, passwordReset, sessionService)
 }

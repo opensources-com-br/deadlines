@@ -2,6 +2,8 @@ package deadlines.application
 
 import deadlines.identity.auth.AuthOperations
 import deadlines.identity.auth.authRoutes
+import deadlines.identity.auth.SessionService
+import deadlines.identity.auth.sessionRoutes
 import deadlines.identity.email.EmailVerificationOperations
 import deadlines.identity.email.PasswordResetOperations
 import deadlines.identity.email.emailRoutes
@@ -23,6 +25,7 @@ fun Application.configureRoutes(
     authService: AuthOperations?,
     emailVerification: EmailVerificationOperations? = null,
     passwordReset: PasswordResetOperations? = null,
+    sessionService: SessionService? = null,
 ) {
     routing {
         get("/health") {
@@ -37,6 +40,9 @@ fun Application.configureRoutes(
         }
         if (emailVerification != null && passwordReset != null) {
             emailRoutes(emailVerification, passwordReset)
+        }
+        if (sessionService != null) {
+            sessionRoutes(sessionService)
         }
     }
 }

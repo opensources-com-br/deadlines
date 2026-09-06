@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.5.0
+  version: 0.6.0
   description: API local do Deadlines. O cadastro exige confirmação de e-mail antes da ativação e do login; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
@@ -11,6 +11,7 @@ tags:
   - name: Users
   - name: Authentication
   - name: Email
+  - name: Sessions
 paths:
   /health:
     get:
@@ -209,6 +210,56 @@ paths:
           $ref: "#/components/responses/InvalidPasswordResetToken"
         "422":
           $ref: "#/components/responses/ValidationError"
+  /api/v1/sessions:
+    get:
+      tags: [Sessions]
+      summary: Lista as sessões ativas do usuário autenticado
+      operationId: listSessions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Sessões ativas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/sessions/{sessionId}:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    delete:
+      tags: [Sessions]
+      summary: Revoga uma sessão do usuário autenticado
+      operationId: revokeSession
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Sessão revogada
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Sessão não encontrada para o usuário autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/sessions/revoke-all:
+    post:
+      tags: [Sessions]
+      summary: Revoga todas as sessões do usuário autenticado
+      operationId: revokeAllSessions
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Todas as sessões foram revogadas
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /api/v1/users:
     post:
       tags: [Users]
@@ -368,6 +419,13 @@ components:
   parameters:
     UserId:
       name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SessionId:
+      name: sessionId
       in: path
       required: true
       schema:
@@ -665,6 +723,33 @@ components:
           format: int64
         totalPages:
           type: integer
+    Session:
+      type: object
+      required: [id, expiresAt, createdAt, isCurrent]
+      properties:
+        id:
+          type: string
+          format: uuid
+        userAgent:
+          type: [string, "null"]
+        ipAddress:
+          type: [string, "null"]
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        isCurrent:
+          type: boolean
+    SessionList:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Session"
     ErrorResponse:
       type: object
       required: [error]
