@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.6.0
+  version: 0.7.0
   description: API local do Deadlines. O cadastro exige confirmação de e-mail antes da ativação e do login; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
@@ -12,6 +12,7 @@ tags:
   - name: Authentication
   - name: Email
   - name: Sessions
+  - name: Organizations
 paths:
   /health:
     get:
@@ -260,6 +261,104 @@ paths:
           description: Todas as sessões foram revogadas
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /api/v1/organizations:
+    post:
+      tags: [Organizations]
+      summary: Cria a organização inicial do usuário autenticado
+      operationId: createOrganization
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrganizationRequest"
+      responses:
+        "201":
+          description: Organização criada e usuário associado como proprietário
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Slug já utilizado ou usuário já associado a uma organização
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/organizations/current:
+    get:
+      tags: [Organizations]
+      summary: Busca a organização atual do usuário autenticado
+      operationId: getCurrentOrganization
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Organização e papel atuais
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Usuário ainda não pertence a uma organização
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags: [Organizations]
+      summary: Atualiza a organização atual
+      description: Disponível somente para o proprietário da organização.
+      operationId: updateCurrentOrganization
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrganizationRequest"
+      responses:
+        "200":
+          description: Organização atualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Usuário não é o proprietário
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Usuário ainda não pertence a uma organização
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Slug já utilizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
   /api/v1/users:
     post:
       tags: [Users]
@@ -750,6 +849,54 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Session"
+    CreateOrganizationRequest:
+      type: object
+      additionalProperties: false
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 160
+        slug:
+          type: string
+          minLength: 2
+          maxLength: 80
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    UpdateOrganizationRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 160
+        slug:
+          type: string
+          minLength: 2
+          maxLength: 80
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    Organization:
+      type: object
+      required: [id, name, slug, role, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        role:
+          type: string
+          enum: [owner, member]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     ErrorResponse:
       type: object
       required: [error]
