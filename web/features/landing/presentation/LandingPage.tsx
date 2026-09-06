@@ -1,12 +1,21 @@
 import Link from "next/link";
+import { CalendarCheck2 } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 
 export function LandingPage() {
   return (
     <main className="flex min-h-screen flex-col bg-white px-6 text-zinc-950">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between py-6">
-        <span className="text-lg font-semibold tracking-tight">Deadlines</span>
+      <header className="sticky top-5 z-10 mx-auto mt-5 flex w-full max-w-6xl items-center justify-between rounded-2xl border border-zinc-200 bg-white/90 px-4 py-3 shadow-sm backdrop-blur md:px-5">
+        <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight" aria-label="Deadlines home">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-zinc-950 text-white">
+            <CalendarCheck2 className="size-4" aria-hidden="true" />
+          </span>
+          Deadlines
+        </Link>
+        <Link href="/login" className={buttonVariants({ size: "lg" }) + " h-10 rounded-full px-5 sm:px-7"}>
+          Get started
+        </Link>
       </header>
 
       <section className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center py-20">
