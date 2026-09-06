@@ -59,7 +59,7 @@ class DatabaseMigrationTest {
                 ).use { statement ->
                     statement.executeQuery().use { result ->
                         result.next()
-                        assertEquals(7, result.getInt(1))
+                        assertEquals(8, result.getInt(1))
                     }
                 }
             }
@@ -286,6 +286,8 @@ class DatabaseMigrationTest {
                     )
                 permissions.create(customPermission)
                 assertEquals(customPermission, permissions.findById(context.organization.id, customPermission.id))
+                val ownerRole = roles.list(context.organization.id).single { it.key == "owner" }
+                assertEquals(true, roles.listPermissions(ownerRole.id).contains(customPermission))
                 assertFailsWith<PermissionAlreadyExistsException> {
                     permissions.create(customPermission.copy(id = UUID.randomUUID()))
                 }
