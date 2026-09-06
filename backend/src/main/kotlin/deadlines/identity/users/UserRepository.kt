@@ -39,6 +39,8 @@ interface UserCredentialsRepository {
     suspend fun create(user: User, passwordHash: String): User
 
     suspend fun findByEmail(email: String): UserCredentials?
+
+    suspend fun updatePassword(userId: UUID, passwordHash: String, updatedAt: java.time.Instant): Boolean
 }
 
 class ExposedUserRepository(
@@ -160,6 +162,14 @@ class ExposedUserCredentialsRepository(
                         UserCredentials(row.toUser(), hash)
                     }
                 }
+        }
+
+    override suspend fun updatePassword(userId: UUID, passwordHash: String, updatedAt: java.time.Instant): Boolean =
+        query {
+            UsersTable.update({ UsersTable.id eq userId }) {
+                it[UsersTable.passwordHash] = passwordHash
+                it[UsersTable.updatedAt] = updatedAt.atOffset(ZoneOffset.UTC)
+            } == 1
         }
 }
 

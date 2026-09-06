@@ -123,6 +123,12 @@ private class MemoryCredentials(
     }
 
     override suspend fun findByEmail(email: String): UserCredentials? = values[email.lowercase()]
+
+    override suspend fun updatePassword(userId: UUID, passwordHash: String, updatedAt: Instant): Boolean {
+        val entry = values.entries.firstOrNull { it.value.user.id == userId } ?: return false
+        values[entry.key] = entry.value.copy(passwordHash = passwordHash)
+        return true
+    }
 }
 
 private class MemorySessions : SessionRepository {
@@ -144,4 +150,7 @@ private class MemorySessions : SessionRepository {
     }
 
     override suspend fun revoke(refreshTokenHash: String, now: Instant): Boolean = revoked.add(refreshTokenHash)
+
+    override suspend fun revokeAll(userId: UUID, now: Instant): Int =
+        values.filter { it.userId == userId && revoked.add(it.refreshTokenHash) }.size
 }

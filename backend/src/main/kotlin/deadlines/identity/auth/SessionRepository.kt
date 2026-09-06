@@ -33,6 +33,8 @@ interface SessionRepository {
     suspend fun rotate(currentHash: String, replacement: Session, now: Instant): Boolean
 
     suspend fun revoke(refreshTokenHash: String, now: Instant): Boolean
+
+    suspend fun revokeAll(userId: UUID, now: Instant): Int
 }
 
 class ExposedSessionRepository(
@@ -63,6 +65,13 @@ class ExposedSessionRepository(
 
     override suspend fun revoke(refreshTokenHash: String, now: Instant): Boolean =
         query { revokeActive(refreshTokenHash, now) == 1 }
+
+    override suspend fun revokeAll(userId: UUID, now: Instant): Int =
+        query {
+            SessionsTable.update({ (SessionsTable.userId eq userId) and SessionsTable.revokedAt.isNull() }) {
+                it[revokedAt] = now.atOffset(ZoneOffset.UTC)
+            }
+        }
 
     private fun revokeActive(refreshTokenHash: String, now: Instant): Int =
         SessionsTable.update({
