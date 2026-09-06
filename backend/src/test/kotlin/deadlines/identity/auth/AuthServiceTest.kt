@@ -220,4 +220,12 @@ private class MemorySessions : SessionRepository {
 
     override suspend fun revokeAll(userId: UUID, now: Instant): Int =
         values.filter { it.userId == userId && revoked.add(it.refreshTokenHash) }.size
+
+    override suspend fun listActive(userId: UUID, now: Instant): List<Session> =
+        values.filter { it.userId == userId && it.refreshTokenHash !in revoked && it.expiresAt > now }
+
+    override suspend fun revoke(userId: UUID, sessionId: UUID, now: Instant): Boolean {
+        val session = values.firstOrNull { it.id == sessionId && it.userId == userId } ?: return false
+        return revoked.add(session.refreshTokenHash)
+    }
 }

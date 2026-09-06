@@ -131,7 +131,7 @@ class AuthService(
     }
 
     private fun IssuedTokens.toSession(userId: UUID, context: SessionContext, now: java.time.Instant) =
-        Session(UUID.randomUUID(), userId, refreshTokenHash, context.userAgent, context.ipAddress, refreshExpiresAt, now)
+        Session(sessionId, userId, refreshTokenHash, context.userAgent, context.ipAddress, refreshExpiresAt, now)
 
     private fun IssuedTokens.toResponse(user: User) =
         AuthResponse(accessToken, refreshToken, expiresIn = accessExpiresIn, user = user.toResponse())

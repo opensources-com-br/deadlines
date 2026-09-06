@@ -56,4 +56,6 @@ private class ResetSessions : SessionRepository {
     override suspend fun rotate(currentHash: String, replacement: Session, now: Instant) = false
     override suspend fun revoke(refreshTokenHash: String, now: Instant) = false
     override suspend fun revokeAll(userId: UUID, now: Instant): Int { revokedUserId = userId; return 1 }
+    override suspend fun listActive(userId: UUID, now: Instant) = emptyList<Session>()
+    override suspend fun revoke(userId: UUID, sessionId: UUID, now: Instant) = false
 }

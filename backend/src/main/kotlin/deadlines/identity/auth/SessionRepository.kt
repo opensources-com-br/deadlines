@@ -2,6 +2,7 @@ package deadlines.identity.auth
 
 import deadlines.shared.database.DatabaseQuery
 import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
@@ -35,6 +36,10 @@ interface SessionRepository {
     suspend fun revoke(refreshTokenHash: String, now: Instant): Boolean
 
     suspend fun revokeAll(userId: UUID, now: Instant): Int
+
+    suspend fun listActive(userId: UUID, now: Instant): List<Session>
+
+    suspend fun revoke(userId: UUID, sessionId: UUID, now: Instant): Boolean
 }
 
 class ExposedSessionRepository(
@@ -71,6 +76,29 @@ class ExposedSessionRepository(
             SessionsTable.update({ (SessionsTable.userId eq userId) and SessionsTable.revokedAt.isNull() }) {
                 it[revokedAt] = now.atOffset(ZoneOffset.UTC)
             }
+        }
+
+    override suspend fun listActive(userId: UUID, now: Instant): List<Session> =
+        query {
+            SessionsTable.selectAll()
+                .where {
+                    (SessionsTable.userId eq userId) and
+                        SessionsTable.revokedAt.isNull() and
+                        (SessionsTable.expiresAt greater now.atOffset(ZoneOffset.UTC))
+                }
+                .orderBy(SessionsTable.createdAt to SortOrder.DESC)
+                .map { it.toSession() }
+        }
+
+    override suspend fun revoke(userId: UUID, sessionId: UUID, now: Instant): Boolean =
+        query {
+            SessionsTable.update({
+                (SessionsTable.id eq sessionId) and
+                    (SessionsTable.userId eq userId) and
+                    SessionsTable.revokedAt.isNull()
+            }) {
+                it[revokedAt] = now.atOffset(ZoneOffset.UTC)
+            } == 1
         }
 
     private fun revokeActive(refreshTokenHash: String, now: Instant): Int =

@@ -24,6 +24,7 @@ class TokenServiceTest {
         val decoded = service.verifier().verify(tokens.accessToken)
 
         assertEquals(userId.toString(), decoded.subject)
+        assertEquals(tokens.sessionId.toString(), decoded.getClaim("sid").asString())
         assertEquals(900, tokens.accessExpiresIn)
         assertEquals(now.plusSeconds(3600), tokens.refreshExpiresAt)
         assertEquals(64, tokens.refreshTokenHash.length)

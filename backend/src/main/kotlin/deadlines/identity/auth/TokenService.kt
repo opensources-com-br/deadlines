@@ -12,6 +12,7 @@ import java.util.Date
 import java.util.UUID
 
 data class IssuedTokens(
+    val sessionId: UUID,
     val accessToken: String,
     val refreshToken: String,
     val refreshTokenHash: String,
@@ -28,15 +29,18 @@ class TokenService(
 
     fun issue(userId: UUID): IssuedTokens {
         val now = clock.instant()
+        val sessionId = UUID.randomUUID()
         val accessExpiresAt = now.plusSeconds(config.accessTokenExpirationSeconds)
         val refreshToken = ByteArray(32).also(secureRandom::nextBytes).toBase64Url()
 
         return IssuedTokens(
+            sessionId = sessionId,
             accessToken =
                 JWT.create()
                     .withIssuer(config.jwtIssuer)
                     .withAudience(config.jwtAudience)
                     .withSubject(userId.toString())
+                    .withClaim("sid", sessionId.toString())
                     .withIssuedAt(Date.from(now))
                     .withExpiresAt(Date.from(accessExpiresAt))
                     .sign(algorithm),
