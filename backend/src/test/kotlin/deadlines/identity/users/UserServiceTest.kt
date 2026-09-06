@@ -139,4 +139,10 @@ internal class InMemoryUserRepository : UserRepository {
         users[users.indexOfFirst { it.id == user.id }] = user
         return user
     }
+
+    override suspend fun markEmailVerified(id: UUID, verifiedAt: Instant): User? {
+        val index = users.indexOfFirst { it.id == id }
+        if (index == -1) return null
+        return users[index].copy(emailVerifiedAt = verifiedAt, updatedAt = verifiedAt).also { users[index] = it }
+    }
 }

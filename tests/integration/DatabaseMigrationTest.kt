@@ -3,6 +3,8 @@ package deadlines.integration
 import deadlines.config.DatabaseConfig
 import deadlines.identity.auth.ExposedSessionRepository
 import deadlines.identity.auth.Session
+import deadlines.identity.email.EmailToken
+import deadlines.identity.email.ExposedEmailTokenRepository
 import deadlines.identity.users.ExposedUserRepository
 import deadlines.identity.users.ExposedUserCredentialsRepository
 import deadlines.identity.users.User
@@ -162,6 +164,36 @@ class DatabaseMigrationTest {
                 assertNull(sessions.findActive(first.refreshTokenHash, now))
                 assertEquals(replacement, sessions.findActive(replacement.refreshTokenHash, now))
                 assertEquals(false, sessions.rotate(first.refreshTokenHash, replacement, now))
+            }
+        }
+
+    @Test
+    fun `email tokens are single use and replace active tokens`() =
+        runTest {
+            DatabaseFactory.open(databaseConfig()).use { database ->
+                val query = DatabaseQuery(database.database)
+                val users = ExposedUserRepository(query)
+                val tokens = ExposedEmailTokenRepository(query)
+                val now = Instant.now()
+                val user =
+                    User(
+                        id = UUID.randomUUID(),
+                        email = "email-token-${UUID.randomUUID()}@example.com",
+                        status = UserStatus.ACTIVE,
+                        profile = UserProfile("Email", "Token", null, null),
+                        createdAt = now,
+                        updatedAt = now,
+                    )
+                users.create(user)
+                val first = EmailToken(UUID.randomUUID(), user.id, "c".repeat(64), now.plusSeconds(60), now)
+                val replacement = EmailToken(UUID.randomUUID(), user.id, "d".repeat(64), now.plusSeconds(60), now)
+
+                tokens.createVerification(first)
+                tokens.createVerification(replacement)
+
+                assertNull(tokens.consumeVerification(first.tokenHash, now))
+                assertEquals(user.id, tokens.consumeVerification(replacement.tokenHash, now))
+                assertNull(tokens.consumeVerification(replacement.tokenHash, now))
             }
         }
 

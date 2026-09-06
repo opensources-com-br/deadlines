@@ -10,6 +10,7 @@ data class User(
     val profile: UserProfile,
     val createdAt: Instant,
     val updatedAt: Instant,
+    val emailVerifiedAt: Instant? = null,
 )
 
 data class UserProfile(

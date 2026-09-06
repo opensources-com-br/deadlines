@@ -29,6 +29,7 @@ data class UserResponse(
     val profile: UserProfileResponse,
     val createdAt: String,
     val updatedAt: String,
+    val emailVerifiedAt: String? = null,
 )
 
 @Serializable
@@ -67,4 +68,5 @@ fun User.toResponse() =
             ),
         createdAt = createdAt.toString(),
         updatedAt = updatedAt.toString(),
+        emailVerifiedAt = emailVerifiedAt?.toString(),
     )

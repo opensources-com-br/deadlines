@@ -26,6 +26,8 @@ interface UserRepository {
     suspend fun count(): Long
 
     suspend fun update(user: User): User
+
+    suspend fun markEmailVerified(id: UUID, verifiedAt: java.time.Instant): User?
 }
 
 data class UserCredentials(
@@ -110,6 +112,15 @@ class ExposedUserRepository(
                 user
             }
         }
+
+    override suspend fun markEmailVerified(id: UUID, verifiedAt: java.time.Instant): User? =
+        query {
+            UsersTable.update({ UsersTable.id eq id }) {
+                it[emailVerifiedAt] = verifiedAt.atOffset(ZoneOffset.UTC)
+                it[updatedAt] = verifiedAt.atOffset(ZoneOffset.UTC)
+            }
+            userQuery().where { UsersTable.id eq id }.singleOrNull()?.toUser()
+        }
 }
 
 class ExposedUserCredentialsRepository(
@@ -174,6 +185,7 @@ private object UsersTable : Table("users") {
     val email = varchar("email", 320)
     val status = varchar("status", 32)
     val passwordHash = varchar("password_hash", 100).nullable()
+    val emailVerifiedAt = timestampWithTimeZone("email_verified_at").nullable()
     val createdAt = timestampWithTimeZone("created_at")
     val updatedAt = timestampWithTimeZone("updated_at")
 
@@ -210,4 +222,5 @@ private fun org.jetbrains.exposed.v1.core.ResultRow.toUser() =
             ),
         createdAt = this[UsersTable.createdAt].toInstant(),
         updatedAt = this[UsersTable.updatedAt].toInstant(),
+        emailVerifiedAt = this[UsersTable.emailVerifiedAt]?.toInstant(),
     )

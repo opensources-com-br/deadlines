@@ -102,6 +102,13 @@ private class MemoryUsers : UserRepository {
     override suspend fun count() = values.size.toLong()
 
     override suspend fun update(user: User): User = user.also { values[it.email] = it }
+
+    override suspend fun markEmailVerified(id: UUID, verifiedAt: Instant): User? {
+        val current = findById(id) ?: return null
+        val updated = current.copy(emailVerifiedAt = verifiedAt, updatedAt = verifiedAt)
+        values[updated.email] = updated
+        return updated
+    }
 }
 
 private class MemoryCredentials(
