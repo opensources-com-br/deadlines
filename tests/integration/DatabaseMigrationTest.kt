@@ -19,6 +19,11 @@ import deadlines.organizations.Organization
 import deadlines.organizations.OrganizationAlreadyExistsException
 import deadlines.organizations.OrganizationContext
 import deadlines.organizations.OrganizationMembership
+import deadlines.organizations.access.ExposedPermissionRepository
+import deadlines.organizations.access.ExposedRoleRepository
+import deadlines.organizations.access.Permission
+import deadlines.organizations.access.PermissionAlreadyExistsException
+import deadlines.organizations.access.Role
 import deadlines.shared.database.DatabaseQuery
 import deadlines.shared.database.DatabaseFactory
 import kotlinx.coroutines.test.runTest
@@ -247,6 +252,60 @@ class DatabaseMigrationTest {
                 assertFailsWith<OrganizationAlreadyExistsException> {
                     organizations.createWithOwner(organizationContext(secondUser.id, slug.uppercase(), now))
                 }
+            }
+        }
+
+    @Test
+    fun `access repositories isolate and persist organization roles and permissions`() =
+        runTest {
+            DatabaseFactory.open(databaseConfig()).use { database ->
+                val query = DatabaseQuery(database.database)
+                val users = ExposedUserRepository(query)
+                val organizations = ExposedOrganizationRepository(query)
+                val permissions = ExposedPermissionRepository(query)
+                val roles = ExposedRoleRepository(query)
+                val now = Instant.now()
+                val user = testUser("access-owner", now)
+                val context = organizationContext(user.id, "access-${UUID.randomUUID()}", now)
+                users.create(user)
+                organizations.createWithOwner(context)
+
+                assertEquals(8, permissions.list(context.organization.id).count { it.isSystem })
+                assertEquals(setOf("member", "owner"), roles.list(context.organization.id).map { it.key }.toSet())
+
+                val customPermission =
+                    Permission(
+                        UUID.randomUUID(),
+                        context.organization.id,
+                        "deadlines.manage",
+                        "Manage deadlines",
+                        null,
+                        false,
+                        now,
+                        now,
+                    )
+                permissions.create(customPermission)
+                assertEquals(customPermission, permissions.findById(context.organization.id, customPermission.id))
+                assertFailsWith<PermissionAlreadyExistsException> {
+                    permissions.create(customPermission.copy(id = UUID.randomUUID()))
+                }
+
+                val customRole =
+                    Role(
+                        UUID.randomUUID(),
+                        context.organization.id,
+                        "manager",
+                        "Manager",
+                        null,
+                        false,
+                        now,
+                        now,
+                    )
+                roles.create(customRole)
+                roles.replacePermissions(customRole.id, listOf(customPermission.id))
+                assertEquals(listOf(customPermission), roles.listPermissions(customRole.id))
+                assertEquals(true, roles.delete(context.organization.id, customRole.id))
+                assertEquals(true, permissions.delete(context.organization.id, customPermission.id))
             }
         }
 
