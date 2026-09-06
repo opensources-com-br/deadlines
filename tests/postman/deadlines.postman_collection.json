@@ -34,10 +34,6 @@
         {
           "name": "Register",
           "event": [
-            { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
-              "const id = pm.variables.replaceIn('{{$randomUUID}}');",
-              "pm.collectionVariables.set('userEmail', `postman.${id}@example.com`);"
-            ] } },
             { "listen": "test", "script": { "type": "text/javascript", "exec": [
               "pm.test('status is 201', () => pm.response.to.have.status(201));",
               "const body = pm.response.json();",
