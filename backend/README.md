@@ -1,6 +1,6 @@
 # Backend
 
-Backend Kotlin + Ktor do Deadlines. A Fase 2 adiciona autenticação com JWT, refresh token rotativo e logout.
+Backend Kotlin + Ktor do Deadlines. A Fase 3 adiciona confirmação de e-mail e recuperação de senha ao fluxo de autenticação.
 
 ## Stack da Fase 0
 
@@ -60,6 +60,10 @@ POST   /api/v1/auth/login
 POST   /api/v1/auth/refresh
 POST   /api/v1/auth/logout
 GET    /api/v1/auth/me
+POST   /api/v1/auth/email/verify
+POST   /api/v1/auth/email/resend
+POST   /api/v1/auth/forgot-password
+POST   /api/v1/auth/reset-password
 POST   /api/v1/users
 GET    /api/v1/users?page=1&limit=20
 GET    /api/v1/users/{id}
@@ -67,7 +71,9 @@ PATCH  /api/v1/users/{id}
 DELETE /api/v1/users/{id}
 ```
 
-`/api/v1/auth/me` exige um access token Bearer. As rotas de usuários continuam sem autenticação durante o desenvolvimento local da Identity. O Compose publica o backend somente em `127.0.0.1`; não faça deploy desta fase.
+`/api/v1/auth/me` e `/api/v1/auth/email/resend` exigem um access token Bearer. Tokens de confirmação e redefinição são armazenados somente como hash, expiram e só podem ser usados uma vez; uma redefinição também revoga todas as sessões do usuário.
+
+No ambiente local, o serviço de e-mail apenas registra o envio sem incluir o token no log. Isso preserva o comportamento seguro até a integração com um provedor de e-mail. As rotas de usuários continuam sem autenticação durante o desenvolvimento local da Identity. O Compose publica o backend somente em `127.0.0.1`; não faça deploy desta fase.
 
 Exemplo de criação:
 

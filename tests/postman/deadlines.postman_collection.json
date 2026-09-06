@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "6aee26e6-8f56-4f29-94ea-72448c23e7ad",
     "name": "Deadlines API",
-    "description": "Collection local para Health, autenticação e usuários. Execute as pastas na ordem apresentada.",
+    "description": "Collection local para Health, autenticação, e-mail e usuários. Execute as pastas na ordem apresentada.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -12,7 +12,8 @@
     { "key": "accessToken", "value": "" },
     { "key": "refreshToken", "value": "" },
     { "key": "userId", "value": "" },
-    { "key": "managedUserId", "value": "" }
+    { "key": "managedUserId", "value": "" },
+    { "key": "emailToken", "value": "" }
   ],
   "item": [
     {
@@ -103,6 +104,53 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
             "url": "{{baseUrl}}/api/v1/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Email (local)",
+      "item": [
+        {
+          "name": "Resend verification",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 204', () => pm.response.to.have.status(204));"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/auth/email/resend"
+          }
+        },
+        {
+          "name": "Forgot password",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('status is 204', () => pm.response.to.have.status(204));"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{userEmail}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/forgot-password"
+          }
+        },
+        {
+          "name": "Verify email (manual token)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{emailToken}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/email/verify"
+          }
+        },
+        {
+          "name": "Reset password (manual token)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{emailToken}}\",\n  \"password\": \"new-postman-password-123\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/reset-password"
           }
         }
       ]

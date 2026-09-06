@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.3.0
-  description: API local do Deadlines. A autenticação está disponível; as rotas administrativas de usuários permanecem locais e abertas durante o desenvolvimento.
+  version: 0.4.0
+  description: API local do Deadlines. Inclui autenticação, verificação de e-mail e recuperação de senha; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
     description: Desenvolvimento local
@@ -10,6 +10,7 @@ tags:
   - name: Operations
   - name: Users
   - name: Authentication
+  - name: Email
 paths:
   /health:
     get:
@@ -115,6 +116,67 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /api/v1/auth/email/verify:
+    post:
+      tags: [Email]
+      summary: Confirma o e-mail com um token de uso único
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailRequest"
+      responses:
+        "204":
+          description: E-mail confirmado
+        "400":
+          $ref: "#/components/responses/InvalidEmailVerificationToken"
+  /api/v1/auth/email/resend:
+    post:
+      tags: [Email]
+      summary: Reenvia a confirmação para o usuário autenticado
+      operationId: resendEmailVerification
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Solicitação aceita
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/auth/forgot-password:
+    post:
+      tags: [Email]
+      summary: Solicita a recuperação de senha
+      description: Sempre retorna sucesso para evitar enumeração de contas.
+      operationId: requestPasswordReset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+      responses:
+        "204":
+          description: Solicitação aceita
+  /api/v1/auth/reset-password:
+    post:
+      tags: [Email]
+      summary: Redefine a senha com um token de uso único
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+      responses:
+        "204":
+          description: Senha redefinida e sessões revogadas
+        "400":
+          $ref: "#/components/responses/InvalidPasswordResetToken"
+        "422":
+          $ref: "#/components/responses/ValidationError"
   /api/v1/users:
     post:
       tags: [Users]
@@ -269,6 +331,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+    InvalidEmailVerificationToken:
+      description: Token de confirmação inválido ou expirado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InvalidPasswordResetToken:
+      description: Token de redefinição inválido ou expirado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
   schemas:
     HealthResponse:
       type: object
@@ -341,6 +415,35 @@ components:
         refreshToken:
           type: string
           writeOnly: true
+    VerifyEmailRequest:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token:
+          type: string
+          writeOnly: true
+    ForgotPasswordRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+    ResetPasswordRequest:
+      type: object
+      additionalProperties: false
+      required: [token, password]
+      properties:
+        token:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          minLength: 12
+          maxLength: 72
+          writeOnly: true
     AuthResponse:
       type: object
       required: [accessToken, refreshToken, tokenType, expiresIn, user]
@@ -398,6 +501,9 @@ components:
           enum: [pending, active, disabled]
         profile:
           $ref: "#/components/schemas/UserProfile"
+        emailVerifiedAt:
+          type: [string, "null"]
+          format: date-time
         createdAt:
           type: string
           format: date-time
