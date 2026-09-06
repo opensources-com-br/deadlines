@@ -1,4 +1,6 @@
-import { Button } from "@/shared/ui/Button";
+import Link from "next/link";
+
+import { buttonClassName } from "@/shared/ui/Button";
 
 export function LandingPage() {
   return (
@@ -17,7 +19,9 @@ export function LandingPage() {
             A calmer way to keep your work, relationships, and next steps moving forward.
           </p>
           <div className="mt-9">
-            <Button>Get started</Button>
+            <Link href="/login" className={buttonClassName}>
+              Get started
+            </Link>
           </div>
         </div>
       </section>
