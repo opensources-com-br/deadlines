@@ -22,10 +22,12 @@ class AuditService(private val organizations: OrganizationRepository, private va
             it.toLongOrNull()?.takeIf { value -> value in range } ?: throw AuditValidationException(key)
         } ?: default
         fun uuid(key: String): UUID? = parameters[key]?.let {
-            runCatching { UUID.fromString(it) }.getOrElse { throw AuditValidationException(key) }
+            runCatching { UUID.fromString(it).also { value -> require(value.toString().equals(it, ignoreCase = true)) } }.getOrElse { throw AuditValidationException(key) }
         }
         fun instant(key: String): Instant? = parameters[key]?.let {
-            runCatching { Instant.parse(it) }.getOrElse { throw AuditValidationException(key) }
+            runCatching { Instant.parse(it).also { value ->
+                require(value >= Instant.parse("0001-01-01T00:00:00Z") && value < Instant.parse("+10000-01-01T00:00:00Z"))
+            } }.getOrElse { throw AuditValidationException(key) }
         }
         fun text(key: String, max: Int): String? = parameters[key]?.also {
             if (it.length !in 1..max || !Regex("^[a-z][a-z._]*$").matches(it)) throw AuditValidationException(key)

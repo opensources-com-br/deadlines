@@ -39,7 +39,7 @@ class AuditRoutesTest {
         val repository = CapturingAudits()
         application { module(tokenService = tokens, auditService = AuditService(TestOrganizationRepository(accessContext(owner)), repository)) }
         for (query in listOf("limit=0", "limit=101", "offset=-1", "offset=9223372036854775808", "limit=no",
-            "actorId=invalid", "resourceId=invalid", "from=yesterday", "to=tomorrow", "action=", "resource=",
+            "actorId=invalid", "actorId=1-1-1-1-1", "from=%2B1000000000-12-31T23:59:59.999999999Z", "resourceId=invalid", "from=yesterday", "to=tomorrow", "action=", "resource=",
             "from=2026-09-07T00:00:00Z&to=2026-09-06T00:00:00Z", "organizationId=${UUID.randomUUID()}", "limit=1&limit=2")) {
             assertEquals(HttpStatusCode.UnprocessableEntity, client.get("/api/v1/audits?$query") {
                 bearerAuth(tokens.issue(owner).accessToken)

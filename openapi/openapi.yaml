@@ -24,8 +24,8 @@ paths:
       tags: [Audits]
       summary: Lista o histórico imutável da organização atual (somente Owner)
       description: >-
-        Ordem decrescente por occurredAt e id. Datas inclusivas em ISO-8601 UTC.
-        actorId nulo indica manutenção sem usuário autenticado. Eventos registram
+        Ordem decrescente por occurredAt e id. Datas inclusivas em ISO-8601 UTC, com anos entre 0001 e 9999.
+        actorId ausente indica manutenção sem usuário autenticado. Eventos registram
         alterações persistidas; created/resent de convite não garantem entrega de e-mail.
         Parâmetros desconhecidos ou repetidos são rejeitados.
       operationId: listAudits
@@ -1082,7 +1082,7 @@ components:
   schemas:
     AuditResponse:
       type: object
-      required: [id, organizationId, actorId, occurredAt, action, resource, resourceId, metadata]
+      required: [id, organizationId, occurredAt, action, resource, resourceId, metadata]
       properties:
         id: { type: string, format: uuid }
         organizationId: { type: string, format: uuid }

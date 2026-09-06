@@ -1,7 +1,7 @@
 export type AuditEvent = {
   id: string;
   organizationId: string;
-  actorId: string | null;
+  actorId?: string | null;
   occurredAt: string;
   action: string;
   resource: string;
