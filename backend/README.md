@@ -163,7 +163,8 @@ pode se deslocar se novos eventos forem gravados durante a navegação.
 exibição, incluindo preço mensal em centavos, moeda e limites por recurso.
 O valor `-1` em um limite significa ilimitado. A migration V012 inicia o
 catálogo com `Free`, `Pro` e `Business` e limites para `members`, `projects`
-e `deadlines`.
+e `deadlines`. Durante esta fase inicial, apenas o `Free` está ativo e é
+retornado pela API; os outros permanecem armazenados para ativação futura.
 
 Esta fase não associa um plano à organização e ainda não bloqueia uso pelos
 limites. Escolha de plano, assinatura, cobrança e enforcement pertencem às
