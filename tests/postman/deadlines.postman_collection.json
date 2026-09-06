@@ -137,6 +137,7 @@
         },
         {
           "name": "Verify email (manual token)",
+          "disabled": true,
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -146,6 +147,7 @@
         },
         {
           "name": "Reset password (manual token)",
+          "disabled": true,
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
