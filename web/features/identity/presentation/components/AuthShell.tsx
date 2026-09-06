@@ -22,12 +22,12 @@ export function AuthShell({ title, description, children }: AuthShellProps) {
         <ArrowLeft />
       </Link>
       <div className="w-full max-w-sm">
-        <Card className="w-full">
-          <CardHeader>
+        <Card className="w-full py-6">
+          <CardHeader className="px-6">
             <CardTitle>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </CardHeader>
-          <CardContent>{children}</CardContent>
+          <CardContent className="px-6">{children}</CardContent>
         </Card>
       </div>
     </main>
