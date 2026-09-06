@@ -25,6 +25,11 @@ export function AcceptInvitationScreen({ token, authenticated }: AcceptInvitatio
     if (!token) {
       return;
     }
+    fetch("/api/invitations/remember", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    }).catch(() => undefined);
     teamApi.previewInvitation(token)
       .then(setPreview)
       .catch((reason) => setError(reason instanceof Error ? reason.message : "Unable to load this invitation."));

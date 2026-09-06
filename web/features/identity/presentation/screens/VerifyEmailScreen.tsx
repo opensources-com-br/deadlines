@@ -26,7 +26,7 @@ export function VerifyEmailScreen({ token }: VerifyEmailScreenProps) {
     try {
       await identityApi.verifyEmail(token);
       toast.success("Your email has been confirmed. You can now sign in.");
-      router.push("/login");
+      router.push("/invitations/continue");
     } catch (error) {
       toast.error(identityErrorMessage(error));
     } finally {
