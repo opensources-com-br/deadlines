@@ -18,6 +18,9 @@ import deadlines.identity.email.PasswordResetService
 import deadlines.identity.users.ExposedUserCredentialsRepository
 import deadlines.identity.users.ExposedUserRepository
 import deadlines.identity.users.UserService
+import deadlines.organizations.ExposedOrganizationRepository
+import deadlines.organizations.OrganizationOperations
+import deadlines.organizations.OrganizationService
 import deadlines.shared.database.DatabaseFactory
 import deadlines.shared.database.DatabaseQuery
 import io.ktor.server.application.Application
@@ -35,6 +38,7 @@ fun main() {
         val credentialsRepository = ExposedUserCredentialsRepository(query)
         val sessionRepository = ExposedSessionRepository(query)
         val sessionService = SessionService(sessionRepository)
+        val organizationService = OrganizationService(ExposedOrganizationRepository(query))
         val passwordHasher = BcryptPasswordHasher()
         val emailTokens = ExposedEmailTokenRepository(query)
         val emailService =
@@ -56,7 +60,15 @@ fun main() {
             PasswordResetService(credentialsRepository, emailTokens, emailService, passwordHasher, sessionRepository, config.email)
 
         embeddedServer(Netty, port = config.http.port) {
-            module(userService, authService, tokenService, emailVerificationService, passwordResetService, sessionService)
+            module(
+                userService,
+                authService,
+                tokenService,
+                emailVerificationService,
+                passwordResetService,
+                sessionService,
+                organizationService,
+            )
         }.start(wait = true)
     }
 }
@@ -68,7 +80,8 @@ fun Application.module(
     emailVerification: EmailVerificationOperations? = null,
     passwordReset: PasswordResetOperations? = null,
     sessionService: SessionService? = null,
+    organizationService: OrganizationOperations? = null,
 ) {
     configurePlugins(tokenService)
-    configureRoutes(userService, authService, emailVerification, passwordReset, sessionService)
+    configureRoutes(userService, authService, emailVerification, passwordReset, sessionService, organizationService)
 }

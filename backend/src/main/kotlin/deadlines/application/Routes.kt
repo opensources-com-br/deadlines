@@ -9,6 +9,8 @@ import deadlines.identity.email.PasswordResetOperations
 import deadlines.identity.email.emailRoutes
 import deadlines.identity.users.UserService
 import deadlines.identity.users.userRoutes
+import deadlines.organizations.OrganizationOperations
+import deadlines.organizations.organizationRoutes
 import io.ktor.server.application.Application
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -26,6 +28,7 @@ fun Application.configureRoutes(
     emailVerification: EmailVerificationOperations? = null,
     passwordReset: PasswordResetOperations? = null,
     sessionService: SessionService? = null,
+    organizationService: OrganizationOperations? = null,
 ) {
     routing {
         get("/health") {
@@ -43,6 +46,9 @@ fun Application.configureRoutes(
         }
         if (sessionService != null) {
             sessionRoutes(sessionService)
+        }
+        if (organizationService != null) {
+            organizationRoutes(organizationService)
         }
     }
 }
