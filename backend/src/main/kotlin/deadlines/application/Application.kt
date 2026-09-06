@@ -1,5 +1,9 @@
 package deadlines.application
 
+import deadlines.organizations.audits.AuditService
+import deadlines.organizations.audits.ExposedAuditRepository
+import deadlines.organizations.audits.auditRoutes
+
 import deadlines.config.AppConfig
 import deadlines.config.EmailProvider
 import deadlines.identity.auth.AuthOperations
@@ -51,6 +55,7 @@ fun main() {
         val sessionRepository = ExposedSessionRepository(query)
         val sessionService = SessionService(sessionRepository)
         val organizationRepository = ExposedOrganizationRepository(query)
+        val auditService = AuditService(organizationRepository, ExposedAuditRepository(query))
         val organizationService = OrganizationService(organizationRepository)
         val permissionRepository = ExposedPermissionRepository(query)
         val permissionService = PermissionService(organizationRepository, permissionRepository)
@@ -101,6 +106,7 @@ fun main() {
                 roleService,
                 memberService,
                 invitationService,
+                auditService,
             )
         }.start(wait = true)
     }
@@ -118,6 +124,7 @@ fun Application.module(
     roleService: RoleOperations? = null,
     memberService: MemberOperations? = null,
     invitationService: InvitationOperations? = null,
+    auditService: AuditService? = null,
 ) {
     configurePlugins(tokenService)
     configureRoutes(
@@ -131,5 +138,6 @@ fun Application.module(
         roleService,
         memberService,
         invitationService,
+        auditService,
     )
 }

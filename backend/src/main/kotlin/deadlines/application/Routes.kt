@@ -1,5 +1,9 @@
 package deadlines.application
 
+import deadlines.organizations.audits.AuditService
+import deadlines.organizations.audits.ExposedAuditRepository
+import deadlines.organizations.audits.auditRoutes
+
 import deadlines.identity.auth.AuthOperations
 import deadlines.identity.auth.authRoutes
 import deadlines.identity.auth.SessionService
@@ -41,8 +45,10 @@ fun Application.configureRoutes(
     roleService: RoleOperations? = null,
     memberService: MemberOperations? = null,
     invitationService: InvitationOperations? = null,
+    auditService: AuditService? = null,
 ) {
     routing {
+        if (auditService != null) auditRoutes(auditService)
         get("/health") {
             call.respond(HealthResponse(status = "ok"))
         }
