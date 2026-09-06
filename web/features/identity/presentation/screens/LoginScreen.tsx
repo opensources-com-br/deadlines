@@ -1,17 +1,43 @@
+"use client";
+
 import Link from "next/link";
+import { useState, type FormEvent } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup } from "@/components/ui/field";
 import { AuthShell } from "@/features/identity/presentation/components/AuthShell";
 import { AuthTextField } from "@/features/identity/presentation/components/AuthTextField";
+import { identityApi, identityErrorMessage } from "@/features/identity/infrastructure/identity-api";
 
 export function LoginScreen() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    setIsSubmitting(true);
+    try {
+      await identityApi.login({
+        email: String(formData.get("email")),
+        password: String(formData.get("password")),
+      });
+      toast.success("Login successful.");
+    } catch (error) {
+      toast.error(identityErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <AuthShell title="Login to your account" description="Enter your email below to login to your account.">
-      <form>
+      <form onSubmit={handleSubmit}>
         <FieldGroup>
           <AuthTextField
             id="email"
+            name="email"
             label="Email"
             type="email"
             autoComplete="email"
@@ -20,6 +46,7 @@ export function LoginScreen() {
           />
           <AuthTextField
             id="password"
+            name="password"
             label="Password"
             type="password"
             autoComplete="current-password"
@@ -31,8 +58,8 @@ export function LoginScreen() {
             }
           />
           <Field>
-            <Button className="w-full" type="button">
-              Login
+            <Button className="w-full" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Signing in..." : "Login"}
             </Button>
             <FieldDescription className="text-center">
               Don&apos;t have an account?{" "}

@@ -8,5 +8,5 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
   const { token } = await searchParams;
   const verificationToken = typeof token === "string" ? token : undefined;
 
-  return <VerifyEmailScreen hasToken={Boolean(verificationToken)} />;
+  return <VerifyEmailScreen token={verificationToken} />;
 }

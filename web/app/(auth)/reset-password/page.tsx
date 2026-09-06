@@ -8,5 +8,5 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
   const { token } = await searchParams;
   const resetToken = typeof token === "string" ? token : undefined;
 
-  return <ResetPasswordScreen hasToken={Boolean(resetToken)} />;
+  return <ResetPasswordScreen token={resetToken} />;
 }
