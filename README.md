@@ -20,8 +20,8 @@ Cada diretório contém seu próprio README com o limite de responsabilidade cor
 
 - `web/`: aplicação Next.js existente.
 - `mobile/`: estrutura reservada, sem implementação.
-- `backend/`: Fase 3 com CRUD local de usuários, autenticação JWT, confirmação de e-mail, recuperação de senha e entrega via Resend quando configurado.
-- `database/`: migrations do Flyway para a fundação, usuários e tokens de e-mail.
+- `backend/`: Fase 7 com Identity, organizações, roles, permissões, membros e convites enviados pelo Resend.
+- `database/`: migrations do Flyway para Identity e isolamento dos dados por organização.
 - `openapi/`: contrato OpenAPI 3.1 dos endpoints implementados.
 - `tests/`: testes unitários, HTTP e de integração com PostgreSQL.
 
