@@ -2,6 +2,8 @@ package deadlines.organizations.invitations
 
 import deadlines.config.EmailConfig
 import deadlines.identity.email.EmailTokenGenerator
+import deadlines.identity.email.EmailDeliveryException
+import deadlines.identity.email.EmailService
 import deadlines.identity.email.RecordingEmailService
 import deadlines.identity.users.User
 import deadlines.identity.users.UserProfile
@@ -41,8 +43,8 @@ class InvitationServiceTest {
 
         assertEquals("invitee@example.com", response.email)
         assertEquals("pending", response.status)
-        assertEquals("invitee@example.com", fixture.email.sentMessages.single().to)
-        assertTrue(fixture.email.sentMessages.single().text.contains("/invitations/accept?token=invite-token"))
+        assertEquals("invitee@example.com", fixture.recordedEmail.sentMessages.single().to)
+        assertTrue(fixture.recordedEmail.sentMessages.single().text.contains("/invitations/accept?token=invite-token"))
     }
 
     @Test
@@ -84,22 +86,33 @@ class InvitationServiceTest {
 
         val renewed = fixture.service.resend(ownerId, UUID.fromString(invitation.id))
         assertEquals("pending", renewed.status)
-        assertEquals(2, fixture.email.sentMessages.size)
+        assertEquals(2, fixture.recordedEmail.sentMessages.size)
 
         fixture.service.revoke(ownerId, UUID.fromString(invitation.id))
         assertEquals("revoked", fixture.service.get(ownerId, UUID.fromString(invitation.id)).status)
     }
 
+    @Test
+    fun `failed invitation delivery revokes the newly created invitation`() = runTest {
+        val fixture = fixture(email = FailingEmailService())
+
+        assertFailsWith<EmailDeliveryException> {
+            fixture.service.create(ownerId, CreateInvitationRequest("invitee@example.com", memberRole.id.toString()))
+        }
+
+        assertEquals("revoked", fixture.service.list(ownerId).data.single().status)
+    }
+
     private fun fixture(
         extraUsers: List<User> = emptyList(),
         extraContexts: Map<UUID, OrganizationContext> = emptyMap(),
+        email: EmailService = RecordingEmailService(),
     ): Fixture {
         val ownerContext = organizationContext(ownerId, organizationId, owner = true)
         val organizations = MemoryOrganizations(mutableMapOf(ownerId to ownerContext).apply { putAll(extraContexts) })
         val users = MemoryUsers(listOf(user(ownerId, "owner@example.com")) + extraUsers)
         val members = MemoryMembers(memberRole)
         val invitations = MemoryInvitations(members, users)
-        val email = RecordingEmailService()
         val service =
             InvitationService(
                 organizations,
@@ -126,7 +139,14 @@ class InvitationServiceTest {
             if (owner) deadlines.organizations.MembershipRole.OWNER else deadlines.organizations.MembershipRole.MEMBER,
         )
 
-    private data class Fixture(val service: InvitationService, val email: RecordingEmailService)
+    private data class Fixture(val service: InvitationService, val email: EmailService) {
+        val recordedEmail: RecordingEmailService
+            get() = email as RecordingEmailService
+    }
+}
+
+private class FailingEmailService : EmailService {
+    override suspend fun send(message: deadlines.identity.email.EmailMessage): Nothing = throw EmailDeliveryException()
 }
 
 private class FixedInvitationTokenGenerator : EmailTokenGenerator {

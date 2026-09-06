@@ -82,9 +82,14 @@ class InvitationService(
                 expiresAt = now.plusSeconds(config.invitationExpirationSeconds),
                 createdAt = now,
                 updatedAt = now,
-            )
+        )
         invitations.create(invitation)
-        sendInvitation(invitation, rawToken)
+        try {
+            sendInvitation(invitation, rawToken)
+        } catch (exception: Exception) {
+            invitations.revoke(context.organization.id, invitation.id, clock.instant())
+            throw exception
+        }
         return invitation.toResponse()
     }
 
