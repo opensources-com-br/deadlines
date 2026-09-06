@@ -10,14 +10,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import type { UserSession } from "@/features/platform/domain/session";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { changePassword, updateUserProfile } from "@/features/platform/infrastructure/profile-api";
+import { SessionsCard } from "@/features/platform/presentation/SessionsCard";
 
 type PlatformHomeProps = {
   user: UserProfile;
+  sessions: UserSession[];
 };
 
-export function PlatformHome({ user }: PlatformHomeProps) {
+export function PlatformHome({ user, sessions }: PlatformHomeProps) {
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -115,6 +118,7 @@ export function PlatformHome({ user }: PlatformHomeProps) {
           </p>
         </div>
 
+        <div className="space-y-6">
         <Card>
           <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
             <div>
@@ -234,7 +238,7 @@ export function PlatformHome({ user }: PlatformHomeProps) {
                 <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                   <div>
                     <p className="text-sm font-medium">Password</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Receive a secure link by email to choose a new password.</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Update your password without leaving your account.</p>
                   </div>
                   <Button variant="outline" type="button" onClick={() => setIsChangingPassword(true)}>
                     Change password
@@ -244,6 +248,8 @@ export function PlatformHome({ user }: PlatformHomeProps) {
             )}
           </CardContent>
         </Card>
+        <SessionsCard initialSessions={sessions} />
+        </div>
       </section>
     </main>
   );

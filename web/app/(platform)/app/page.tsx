@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
+import type { SessionList } from "@/features/platform/domain/session";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { PlatformHome } from "@/features/platform/presentation/PlatformHome";
 
@@ -12,15 +13,22 @@ export default async function PlatformPage() {
     redirect("/login");
   }
 
-  const response = await fetch(backendApiUrl("/api/v1/users/me"), {
+  const authenticatedRequest = {
     headers: { Authorization: `Bearer ${accessToken}` },
-    cache: "no-store",
-  }).catch(() => undefined);
+    cache: "no-store" as const,
+  };
+  const [response, sessionsResponse] = await Promise.all([
+    fetch(backendApiUrl("/api/v1/users/me"), authenticatedRequest).catch(() => undefined),
+    fetch(backendApiUrl("/api/v1/sessions"), authenticatedRequest).catch(() => undefined),
+  ]);
 
   if (!response?.ok) {
     redirect("/login");
   }
 
   const user = (await response.json()) as UserProfile;
-  return <PlatformHome user={user} />;
+  const sessions = sessionsResponse?.ok
+    ? ((await sessionsResponse.json()) as SessionList).data
+    : [];
+  return <PlatformHome user={user} sessions={sessions} />;
 }
