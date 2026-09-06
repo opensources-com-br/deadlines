@@ -69,7 +69,7 @@ private class FakeAuthOperations : AuthOperations {
         )
     private val response = AuthResponse("access", "refresh", expiresIn = 900, user = user)
 
-    override suspend fun register(request: RegisterRequest, context: SessionContext) = response
+    override suspend fun register(request: RegisterRequest, context: SessionContext) = RegistrationResponse(user)
     override suspend fun login(request: LoginRequest, context: SessionContext) = response
     override suspend fun refresh(refreshToken: String, context: SessionContext) = response
     override suspend fun logout(refreshToken: String) = Unit

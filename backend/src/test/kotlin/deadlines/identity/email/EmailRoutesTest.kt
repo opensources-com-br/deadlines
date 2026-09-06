@@ -3,7 +3,6 @@ package deadlines.identity.email
 import deadlines.application.module
 import deadlines.config.AuthConfig
 import deadlines.identity.auth.TokenService
-import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -45,27 +44,29 @@ class EmailRoutesTest {
     }
 
     @Test
-    fun `resend verification requires authentication`() = testApplication {
+    fun `resend verification accepts an email without authentication`() = testApplication {
         val verification = FakeVerificationOperations()
         application { module(tokenService = tokenService, emailVerification = verification, passwordReset = FakePasswordResetOperations()) }
 
-        assertEquals(HttpStatusCode.Unauthorized, client.post("/api/v1/auth/email/resend").status)
-
-        val userId = UUID.randomUUID()
         val response = client.post("/api/v1/auth/email/resend") {
-            bearerAuth(tokenService.issue(userId).accessToken)
+            contentType(ContentType.Application.Json)
+            setBody("""{"email":"user@example.com"}""")
         }
         assertEquals(HttpStatusCode.NoContent, response.status)
-        assertEquals(userId, verification.resentUserId)
+        assertEquals("user@example.com", verification.resentEmail)
     }
 }
 
 private class FakeVerificationOperations : EmailVerificationOperations {
     var verifiedToken: String? = null
-    var resentUserId: UUID? = null
+    var resentEmail: String? = null
 
     override suspend fun resend(userId: UUID): Boolean {
-        resentUserId = userId
+        return true
+    }
+
+    override suspend fun resendForEmail(email: String): Boolean {
+        resentEmail = email
         return true
     }
 

@@ -1,16 +1,12 @@
 package deadlines.identity.email
 
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.auth.authenticate
-import io.ktor.server.auth.jwt.JWTPrincipal
-import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import kotlinx.serialization.Serializable
-import java.util.UUID
 
 @Serializable
 data class VerifyEmailRequest(
@@ -19,6 +15,11 @@ data class VerifyEmailRequest(
 
 @Serializable
 data class ForgotPasswordRequest(
+    val email: String,
+)
+
+@Serializable
+data class ResendVerificationRequest(
     val email: String,
 )
 
@@ -46,12 +47,9 @@ fun Route.emailRoutes(
             passwordReset.reset(request.token, request.password)
             call.respond(HttpStatusCode.NoContent)
         }
-        authenticate("auth-jwt") {
-            post("/email/resend") {
-                val subject = call.principal<JWTPrincipal>()!!.payload.subject
-                verification.resend(UUID.fromString(subject))
-                call.respond(HttpStatusCode.NoContent)
-            }
+        post("/email/resend") {
+            verification.resendForEmail(call.receive<ResendVerificationRequest>().email)
+            call.respond(HttpStatusCode.NoContent)
         }
     }
 }

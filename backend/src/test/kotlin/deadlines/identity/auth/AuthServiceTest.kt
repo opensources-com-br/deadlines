@@ -6,6 +6,9 @@ import deadlines.identity.users.UserAlreadyExistsException
 import deadlines.identity.users.UserCredentials
 import deadlines.identity.users.UserCredentialsRepository
 import deadlines.identity.users.UserRepository
+import deadlines.identity.users.UserProfile
+import deadlines.identity.users.UserStatus
+import deadlines.identity.email.EmailVerificationOperations
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -28,19 +31,26 @@ class AuthServiceTest {
             Clock.fixed(now, ZoneOffset.UTC),
         )
     private val service =
-        AuthService(credentials, users, sessions, FakePasswordHasher(), tokenService, Clock.fixed(now, ZoneOffset.UTC))
+        AuthService(
+            credentials,
+            users,
+            sessions,
+            FakePasswordHasher(),
+            tokenService,
+            FakeEmailVerificationOperations(),
+            Clock.fixed(now, ZoneOffset.UTC),
+        )
     private val context = SessionContext("test-agent", "127.0.0.1")
 
     @Test
-    fun `register creates credentials and an authenticated session`() =
+    fun `register creates a pending account and sends verification`() =
         runTest {
             val response = service.register(RegisterRequest(" USER@Example.com ", "password-123", " User ", " Name "), context)
 
             assertEquals("user@example.com", response.user.email)
+            assertEquals("pending", response.user.status)
             assertEquals("hash:password-123", credentials.values["user@example.com"]?.passwordHash)
-            assertEquals(1, sessions.values.size)
-            assertEquals("test-agent", sessions.values.single().userAgent)
-            assertTrue(tokenService.verifier().verify(response.accessToken).subject == response.user.id)
+            assertEquals(0, sessions.values.size)
         }
 
     @Test
@@ -65,27 +75,40 @@ class AuthServiceTest {
     @Test
     fun `refresh rotates the token and prevents reuse`() =
         runTest {
-            val registered = service.register(RegisterRequest("user@example.com", "password-123", "User", "Name"), context)
-            val refreshed = service.refresh(registered.refreshToken, context)
+            createActiveUser()
+            val authenticated = service.login(LoginRequest("user@example.com", "password-123"), context)
+            val refreshed = service.refresh(authenticated.refreshToken, context)
 
-            assertNotEquals(registered.refreshToken, refreshed.refreshToken)
-            assertFailsWith<InvalidRefreshTokenException> { service.refresh(registered.refreshToken, context) }
+            assertNotEquals(authenticated.refreshToken, refreshed.refreshToken)
+            assertFailsWith<InvalidRefreshTokenException> { service.refresh(authenticated.refreshToken, context) }
         }
 
     @Test
     fun `logout revokes the refresh token`() =
         runTest {
-            val registered = service.register(RegisterRequest("user@example.com", "password-123", "User", "Name"), context)
-            service.logout(registered.refreshToken)
+            createActiveUser()
+            val authenticated = service.login(LoginRequest("user@example.com", "password-123"), context)
+            service.logout(authenticated.refreshToken)
 
-            assertFailsWith<InvalidRefreshTokenException> { service.refresh(registered.refreshToken, context) }
+            assertFailsWith<InvalidRefreshTokenException> { service.refresh(authenticated.refreshToken, context) }
         }
+
+    private suspend fun createActiveUser() {
+        val user = User(UUID.randomUUID(), "user@example.com", UserStatus.ACTIVE, UserProfile("User", "Name", null, null), now, now, now)
+        credentials.create(user, "hash:password-123")
+    }
 }
 
 private class FakePasswordHasher : PasswordHasher {
     override suspend fun hash(password: String) = "hash:$password"
 
     override suspend fun verify(password: String, hash: String) = hash == "hash:$password"
+}
+
+private class FakeEmailVerificationOperations : EmailVerificationOperations {
+    override suspend fun resend(userId: UUID) = true
+    override suspend fun resendForEmail(email: String) = true
+    override suspend fun verify(rawToken: String) = Unit
 }
 
 private class MemoryUsers : UserRepository {
@@ -105,7 +128,7 @@ private class MemoryUsers : UserRepository {
 
     override suspend fun markEmailVerified(id: UUID, verifiedAt: Instant): User? {
         val current = findById(id) ?: return null
-        val updated = current.copy(emailVerifiedAt = verifiedAt, updatedAt = verifiedAt)
+        val updated = current.copy(status = UserStatus.ACTIVE, emailVerifiedAt = verifiedAt, updatedAt = verifiedAt)
         values[updated.email] = updated
         return updated
     }

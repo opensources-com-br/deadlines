@@ -22,7 +22,7 @@ class EmailVerificationServiceTest {
     fun `sends and consumes a single-use verification token`() =
         runTest {
             val users = InMemoryUserRepository()
-            val user = User(UUID.randomUUID(), "user@example.com", UserStatus.ACTIVE, UserProfile("User", "Test", null, null), now, now)
+            val user = User(UUID.randomUUID(), "user@example.com", UserStatus.PENDING, UserProfile("User", "Test", null, null), now, now)
             users.create(user)
             val tokens = MemoryEmailTokens()
             val messages = RecordingEmailService()
@@ -33,6 +33,7 @@ class EmailVerificationServiceTest {
             service.verify("fixed-token")
 
             assertEquals(now, users.findById(user.id)?.emailVerifiedAt)
+            assertEquals(UserStatus.ACTIVE, users.findById(user.id)?.status)
             assertFalse(service.resend(user.id))
         }
 

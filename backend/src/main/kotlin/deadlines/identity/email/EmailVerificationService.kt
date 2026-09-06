@@ -3,6 +3,7 @@ package deadlines.identity.email
 import deadlines.config.EmailConfig
 import deadlines.identity.users.UserNotFoundException
 import deadlines.identity.users.UserRepository
+import deadlines.identity.users.UserStatus
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.time.Clock
@@ -26,6 +27,7 @@ class SecureEmailTokenGenerator : EmailTokenGenerator {
 
 interface EmailVerificationOperations {
     suspend fun resend(userId: UUID): Boolean
+    suspend fun resendForEmail(email: String): Boolean
     suspend fun verify(rawToken: String)
 }
 
@@ -39,7 +41,7 @@ class EmailVerificationService(
 ) : EmailVerificationOperations {
     override suspend fun resend(userId: UUID): Boolean {
         val user = users.findById(userId) ?: throw UserNotFoundException()
-        if (user.emailVerifiedAt != null) return false
+        if (user.emailVerifiedAt != null || user.status != UserStatus.PENDING) return false
 
         val now = clock.instant()
         val rawToken = tokenGenerator.generate()
@@ -54,6 +56,11 @@ class EmailVerificationService(
             ),
         )
         return true
+    }
+
+    override suspend fun resendForEmail(email: String): Boolean {
+        val user = users.findByEmail(email.trim().lowercase()) ?: return false
+        return resend(user.id)
     }
 
     override suspend fun verify(rawToken: String) {

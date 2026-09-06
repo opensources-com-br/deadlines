@@ -7,6 +7,7 @@ import deadlines.identity.users.UserProfile
 import deadlines.identity.users.UserRepository
 import deadlines.identity.users.UserStatus
 import deadlines.identity.users.toResponse
+import deadlines.identity.email.EmailVerificationOperations
 import java.time.Clock
 import java.util.UUID
 
@@ -16,7 +17,7 @@ data class SessionContext(
 )
 
 interface AuthOperations {
-    suspend fun register(request: RegisterRequest, context: SessionContext): AuthResponse
+    suspend fun register(request: RegisterRequest, context: SessionContext): RegistrationResponse
     suspend fun login(request: LoginRequest, context: SessionContext): AuthResponse
     suspend fun refresh(refreshToken: String, context: SessionContext): AuthResponse
     suspend fun logout(refreshToken: String)
@@ -29,9 +30,10 @@ class AuthService(
     private val sessions: SessionRepository,
     private val passwordHasher: PasswordHasher,
     private val tokens: TokenService,
+    private val emailVerification: EmailVerificationOperations,
     private val clock: Clock = Clock.systemUTC(),
 ) : AuthOperations {
-    override suspend fun register(request: RegisterRequest, context: SessionContext): AuthResponse {
+    override suspend fun register(request: RegisterRequest, context: SessionContext): RegistrationResponse {
         val email = request.email.trim().lowercase()
         val firstName = request.firstName.trim()
         val lastName = request.lastName.trim()
@@ -46,13 +48,14 @@ class AuthService(
             User(
                 id = UUID.randomUUID(),
                 email = email,
-                status = UserStatus.ACTIVE,
+                status = UserStatus.PENDING,
                 profile = UserProfile(firstName, lastName, null, null),
                 createdAt = now,
                 updatedAt = now,
-            )
+        )
         credentials.create(user, passwordHasher.hash(request.password))
-        return createSession(user, context)
+        emailVerification.resend(user.id)
+        return RegistrationResponse(user.toResponse())
     }
 
     override suspend fun login(request: LoginRequest, context: SessionContext): AuthResponse {

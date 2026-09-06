@@ -12,6 +12,12 @@ data class RegisterRequest(
 )
 
 @Serializable
+data class RegistrationResponse(
+    val user: UserResponse,
+    val message: String = "Confirm your email to activate your account",
+)
+
+@Serializable
 data class LoginRequest(
     val email: String,
     val password: String,

@@ -34,14 +34,6 @@ fun main() {
         val credentialsRepository = ExposedUserCredentialsRepository(query)
         val sessionRepository = ExposedSessionRepository(query)
         val passwordHasher = BcryptPasswordHasher()
-        val authService =
-            AuthService(
-                credentialsRepository,
-                userRepository,
-                sessionRepository,
-                passwordHasher,
-                tokenService,
-            )
         val emailTokens = ExposedEmailTokenRepository(query)
         val emailService =
             when (config.email.provider) {
@@ -49,6 +41,15 @@ fun main() {
                 EmailProvider.RESEND -> ResendEmailService(config.email.resendApiKey!!, config.email.from)
             }
         val emailVerificationService = EmailVerificationService(userRepository, emailTokens, emailService, config.email)
+        val authService =
+            AuthService(
+                credentialsRepository,
+                userRepository,
+                sessionRepository,
+                passwordHasher,
+                tokenService,
+                emailVerificationService,
+            )
         val passwordResetService =
             PasswordResetService(credentialsRepository, emailTokens, emailService, passwordHasher, sessionRepository, config.email)
 

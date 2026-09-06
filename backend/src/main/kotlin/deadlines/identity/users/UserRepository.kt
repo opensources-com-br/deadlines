@@ -118,6 +118,7 @@ class ExposedUserRepository(
     override suspend fun markEmailVerified(id: UUID, verifiedAt: java.time.Instant): User? =
         query {
             UsersTable.update({ UsersTable.id eq id }) {
+                it[status] = UserStatus.ACTIVE.name.lowercase()
                 it[emailVerifiedAt] = verifiedAt.atOffset(ZoneOffset.UTC)
                 it[updatedAt] = verifiedAt.atOffset(ZoneOffset.UTC)
             }
