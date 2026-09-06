@@ -1,9 +1,5 @@
+import { LandingPage } from "@/features/landing/presentation/LandingPage";
+
 export default function Home() {
-  return (
-    <iframe
-      src="/deadlines-standalone.html"
-      title="Deadlines"
-      className="flex-1 w-full border-0"
-    />
-  );
+  return <LandingPage />;
 }
