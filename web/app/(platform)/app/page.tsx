@@ -17,12 +17,19 @@ export default async function PlatformPage() {
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store" as const,
   };
-  const [response, sessionsResponse] = await Promise.all([
+  const [response, sessionsResponse, organizationResponse] = await Promise.all([
     fetch(backendApiUrl("/api/v1/users/me"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/sessions"), authenticatedRequest).catch(() => undefined),
+    fetch(backendApiUrl("/api/v1/organizations/current"), authenticatedRequest).catch(() => undefined),
   ]);
 
   if (!response?.ok) {
+    redirect("/login");
+  }
+  if (organizationResponse?.status === 404) {
+    redirect("/onboarding/organization");
+  }
+  if (!organizationResponse?.ok) {
     redirect("/login");
   }
 
