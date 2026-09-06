@@ -84,10 +84,12 @@ class ExposedRoleRepository(
         }
 
     override suspend fun delete(organizationId: UUID, roleId: UUID): Boolean =
-        query {
-            RolesTable.deleteWhere {
-                (RolesTable.id eq roleId) and (RolesTable.organizationId eq organizationId)
-            } == 1
+        mapRoleConflict {
+            query {
+                RolesTable.deleteWhere {
+                    (RolesTable.id eq roleId) and (RolesTable.organizationId eq organizationId)
+                } == 1
+            }
         }
 
     override suspend fun listPermissions(roleId: UUID): List<Permission> =
@@ -126,6 +128,7 @@ private suspend fun <T> mapRoleConflict(block: suspend () -> T): T =
         block()
     } catch (exception: Exception) {
         if (exception.hasRoleSqlState("23505")) throw RoleAlreadyExistsException()
+        if (exception.hasRoleSqlState("23503")) throw RoleInUseException()
         throw exception
     }
 

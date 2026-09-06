@@ -24,6 +24,7 @@ import deadlines.organizations.access.ExposedRoleRepository
 import deadlines.organizations.access.Permission
 import deadlines.organizations.access.PermissionAlreadyExistsException
 import deadlines.organizations.access.Role
+import deadlines.organizations.access.RoleInUseException
 import deadlines.organizations.invitations.ExposedInvitationRepository
 import deadlines.organizations.invitations.InvitationStatus
 import deadlines.organizations.invitations.OrganizationInvitation
@@ -353,6 +354,9 @@ class DatabaseMigrationTest {
                 assertEquals(true, invitations.accept(invitation, invitee.id, UUID.randomUUID(), now))
                 assertEquals(invitee.id, members.findByUserId(context.organization.id, invitee.id)?.userId)
                 assertEquals("accepted", invitations.findById(context.organization.id, invitation.id, now)?.status?.name?.lowercase())
+                assertFailsWith<RoleInUseException> {
+                    roles.delete(context.organization.id, memberRole.id)
+                }
             }
         }
 

@@ -30,6 +30,12 @@ class SystemRoleImmutableException : ApiException(
     "System roles cannot be changed or deleted",
 )
 
+class RoleInUseException : ApiException(
+    409,
+    "ROLE_IN_USE",
+    "A role assigned to a member or invitation cannot be deleted",
+)
+
 class OwnerPermissionsImmutableException : ApiException(
     409,
     "OWNER_PERMISSIONS_IMMUTABLE",
