@@ -11,7 +11,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(path, options);
   if (response.status === 204) return undefined as T;
   const data = (await response.json().catch(() => ({}))) as T & ErrorPayload;
-  if (!response.ok) throw new Error(data.error?.message ?? "Unable to update your team.");
+  if (!response.ok) {
+    const fallback = response.status === 403
+      ? "Only the organization owner can manage members and invitations."
+      : "Unable to update your team.";
+    throw new Error(data.error?.message ?? fallback);
+  }
   return data;
 }
 
