@@ -39,6 +39,7 @@ import deadlines.organizations.invitations.OrganizationInvitation
 import deadlines.organizations.members.ExposedMemberRepository
 import deadlines.shared.database.DatabaseQuery
 import deadlines.shared.database.DatabaseFactory
+import deadlines.subscriptions.ExposedSubscriptionRepository
 import kotlinx.coroutines.test.runTest
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
@@ -76,6 +77,25 @@ class DatabaseMigrationTest {
                     }
                 }
             }
+        }
+    }
+
+    @Test
+    fun `creating an organization provisions an active free subscription`() = runTest {
+        DatabaseFactory.open(databaseConfig()).use { database ->
+            val query = DatabaseQuery(database.database)
+            val users = ExposedUserRepository(query)
+            val organizations = ExposedOrganizationRepository(query)
+            val now = Instant.parse("2026-09-06T20:00:00Z")
+            val user = testUser("subscription", now)
+            users.create(user)
+            val context = organizationContext(user.id, "subscription-${UUID.randomUUID().toString().take(8)}", now)
+
+            organizations.createWithOwner(context)
+
+            val subscription = ExposedSubscriptionRepository(query).findActiveByOrganization(context.organization.id)
+            assertEquals("free", subscription?.plan?.key)
+            assertEquals(context.organization.id, subscription?.organizationId)
         }
     }
 
