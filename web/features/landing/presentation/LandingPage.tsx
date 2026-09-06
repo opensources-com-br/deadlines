@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { buttonClassName } from "@/shared/ui/Button";
+import { buttonVariants } from "@/components/ui/button";
 
 export function LandingPage() {
   return (
@@ -19,7 +19,7 @@ export function LandingPage() {
             A calmer way to keep your work, relationships, and next steps moving forward.
           </p>
           <div className="mt-9">
-            <Link href="/login" className={buttonClassName}>
+            <Link href="/login" className={buttonVariants({ size: "lg" })}>
               Get started
             </Link>
           </div>

@@ -1,19 +1,19 @@
 import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
 import { AuthShell } from "@/features/identity/presentation/components/AuthShell";
-import { Button } from "@/shared/ui/Button";
-import { Input } from "@/shared/ui/Input";
+import { AuthTextField } from "@/features/identity/presentation/components/AuthTextField";
 
 export function RegisterScreen() {
   return (
     <AuthShell title="Create your account" description="Start organizing the work that matters.">
       <form className="grid gap-5">
         <div className="grid gap-5 sm:grid-cols-2">
-          <Input id="first-name" label="First name" autoComplete="given-name" placeholder="First name" required />
-          <Input id="last-name" label="Last name" autoComplete="family-name" placeholder="Last name" required />
+          <AuthTextField id="first-name" label="First name" autoComplete="given-name" placeholder="First name" required />
+          <AuthTextField id="last-name" label="Last name" autoComplete="family-name" placeholder="Last name" required />
         </div>
-        <Input id="email" label="Email" type="email" autoComplete="email" placeholder="you@example.com" required />
-        <Input
+        <AuthTextField id="email" label="Email" type="email" autoComplete="email" placeholder="you@example.com" required />
+        <AuthTextField
           id="password"
           label="Password"
           type="password"
@@ -22,7 +22,7 @@ export function RegisterScreen() {
           hint="Use at least 12 characters."
           required
         />
-        <Input
+        <AuthTextField
           id="password-confirmation"
           label="Confirm password"
           type="password"
@@ -30,11 +30,11 @@ export function RegisterScreen() {
           placeholder="Repeat your password"
           required
         />
-        <Button className="mt-1 w-full">Create account</Button>
+        <Button className="mt-1 w-full" size="lg">Create account</Button>
       </form>
-      <p className="mt-6 text-sm text-zinc-600">
+      <p className="mt-6 text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-zinc-950 underline underline-offset-4">
+        <Link href="/login" className="font-medium text-foreground underline underline-offset-4">
           Sign in
         </Link>
       </p>

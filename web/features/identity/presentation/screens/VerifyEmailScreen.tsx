@@ -1,7 +1,7 @@
 import Link from "next/link";
 
+import { Button, buttonVariants } from "@/components/ui/button";
 import { AuthShell } from "@/features/identity/presentation/components/AuthShell";
-import { Button } from "@/shared/ui/Button";
 
 type VerifyEmailScreenProps = {
   hasToken: boolean;
@@ -13,7 +13,7 @@ export function VerifyEmailScreen({ hasToken }: VerifyEmailScreenProps) {
       <AuthShell title="This link is invalid" description="Request a new confirmation email and try again.">
         <Link
           href="/check-email"
-          className="inline-flex h-11 items-center justify-center rounded-lg bg-zinc-950 px-5 text-sm font-medium text-white"
+          className={buttonVariants({ size: "lg" })}
         >
           Send a new link
         </Link>
@@ -23,10 +23,10 @@ export function VerifyEmailScreen({ hasToken }: VerifyEmailScreenProps) {
 
   return (
     <AuthShell title="Confirm your email" description="Confirm your email address to activate your Deadlines account.">
-      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-sm leading-6 text-zinc-600">
+      <div className="rounded-xl border bg-muted/50 p-5 text-sm leading-6 text-muted-foreground">
         Your confirmation link is ready. Once confirmed, you can sign in to your account.
       </div>
-      <Button className="mt-5 w-full">Confirm email</Button>
+      <Button className="mt-5 w-full" size="lg">Confirm email</Button>
     </AuthShell>
   );
 }
