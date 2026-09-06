@@ -47,7 +47,7 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
     event.preventDefault();
     setIsSaving(true);
     try {
-      const input = { key, name, description: description || undefined };
+      const input = { key, name, description };
       const saved = editing === "new"
         ? await accessApi.createRole(input)
         : await accessApi.updateRole(editing!.id, input);

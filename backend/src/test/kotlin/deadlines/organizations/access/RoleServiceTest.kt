@@ -37,12 +37,13 @@ class RoleServiceTest {
             val roleId = UUID.randomUUID()
             val service = service(repository = repository, idGenerator = { roleId })
 
-            val created = service.create(userId, CreateRoleRequest(" Project-Manager ", " Project Manager "))
+            val created = service.create(userId, CreateRoleRequest(" Project-Manager ", " Project Manager ", "Details"))
             assertEquals("project-manager", created.key)
             assertEquals(roleId.toString(), created.id)
 
             val updated = service.update(userId, roleId, UpdateRoleRequest(name = "Delivery Manager"))
             assertEquals("Delivery Manager", updated.name)
+            assertEquals(null, service.update(userId, roleId, UpdateRoleRequest(description = "")).description)
             service.delete(userId, roleId)
             assertEquals(emptyList(), repository.values)
         }

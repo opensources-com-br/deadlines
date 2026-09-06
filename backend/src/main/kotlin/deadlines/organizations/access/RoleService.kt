@@ -70,7 +70,7 @@ class RoleService(
             current.copy(
                 key = request.key?.let(::validateKey) ?: current.key,
                 name = request.name?.let(::validateName) ?: current.name,
-                description = request.description?.let(::validateDescription) ?: current.description,
+                description = if (request.description != null) validateDescription(request.description) else current.description,
                 updatedAt = clock.instant(),
             )
         return roles.update(updated).toResponse()

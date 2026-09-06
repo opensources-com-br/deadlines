@@ -42,7 +42,7 @@ export function PermissionsCard({ initialPermissions, canManage }: PermissionsCa
     event.preventDefault();
     setIsSaving(true);
     try {
-      const input = { key, name, description: description || undefined };
+      const input = { key, name, description };
       const saved = editing === "new"
         ? await accessApi.createPermission(input)
         : await accessApi.updatePermission(editing!.id, input);
