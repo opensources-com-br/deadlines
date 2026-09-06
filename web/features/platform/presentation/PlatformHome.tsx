@@ -2,7 +2,6 @@
 
 import { AuditsCard } from "@/features/audits/presentation/AuditsCard";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
@@ -12,10 +11,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import type { UserSession } from "@/features/platform/domain/session";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { changePassword, updateUserProfile } from "@/features/platform/infrastructure/profile-api";
 import { SessionsCard } from "@/features/platform/presentation/SessionsCard";
+import { PlatformSidebar } from "@/features/platform/presentation/PlatformSidebar";
 import type { Organization } from "@/features/organizations/domain/organization";
 import { OrganizationCard } from "@/features/organizations/presentation/OrganizationCard";
 import type { Permission, Role } from "@/features/access/domain/access";
@@ -113,12 +114,11 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
   }
 
   return (
-    <main className="min-h-svh bg-background text-foreground">
+    <SidebarProvider>
+      <PlatformSidebar user={user} />
+      <SidebarInset className="min-h-svh bg-background text-foreground">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-          <Image className="size-8 invert" src="/deadlines-mark.png" alt="" width={32} height={32} priority />
-          Deadlines
-        </div>
+        <SidebarTrigger variant="ghost" size="icon" aria-label="Toggle sidebar" />
         <Button variant="outline" type="button" onClick={handleSignOut} disabled={isSigningOut}>
           {isSigningOut ? "Signing out..." : "Log out"}
         </Button>
@@ -279,6 +279,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
         <SessionsCard initialSessions={sessions} />
         </div>
       </section>
-    </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
