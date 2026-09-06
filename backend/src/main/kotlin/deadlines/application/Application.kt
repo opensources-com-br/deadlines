@@ -27,6 +27,12 @@ import deadlines.organizations.access.PermissionService
 import deadlines.organizations.access.ExposedRoleRepository
 import deadlines.organizations.access.RoleOperations
 import deadlines.organizations.access.RoleService
+import deadlines.organizations.invitations.ExposedInvitationRepository
+import deadlines.organizations.invitations.InvitationOperations
+import deadlines.organizations.invitations.InvitationService
+import deadlines.organizations.members.ExposedMemberRepository
+import deadlines.organizations.members.MemberOperations
+import deadlines.organizations.members.MemberService
 import deadlines.shared.database.DatabaseFactory
 import deadlines.shared.database.DatabaseQuery
 import io.ktor.server.application.Application
@@ -48,7 +54,10 @@ fun main() {
         val organizationService = OrganizationService(organizationRepository)
         val permissionRepository = ExposedPermissionRepository(query)
         val permissionService = PermissionService(organizationRepository, permissionRepository)
-        val roleService = RoleService(organizationRepository, ExposedRoleRepository(query), permissionRepository)
+        val roleRepository = ExposedRoleRepository(query)
+        val roleService = RoleService(organizationRepository, roleRepository, permissionRepository)
+        val memberRepository = ExposedMemberRepository(query)
+        val memberService = MemberService(organizationRepository, memberRepository, roleRepository)
         val passwordHasher = BcryptPasswordHasher()
         val emailTokens = ExposedEmailTokenRepository(query)
         val emailService =
@@ -57,6 +66,16 @@ fun main() {
                 EmailProvider.RESEND -> ResendEmailService(config.email.resendApiKey!!, config.email.from)
             }
         val emailVerificationService = EmailVerificationService(userRepository, emailTokens, emailService, config.email)
+        val invitationService =
+            InvitationService(
+                organizationRepository,
+                ExposedInvitationRepository(query),
+                roleRepository,
+                memberRepository,
+                userRepository,
+                emailService,
+                config.email,
+            )
         val authService =
             AuthService(
                 credentialsRepository,
@@ -80,6 +99,8 @@ fun main() {
                 organizationService,
                 permissionService,
                 roleService,
+                memberService,
+                invitationService,
             )
         }.start(wait = true)
     }
@@ -95,6 +116,8 @@ fun Application.module(
     organizationService: OrganizationOperations? = null,
     permissionService: PermissionOperations? = null,
     roleService: RoleOperations? = null,
+    memberService: MemberOperations? = null,
+    invitationService: InvitationOperations? = null,
 ) {
     configurePlugins(tokenService)
     configureRoutes(
@@ -106,5 +129,7 @@ fun Application.module(
         organizationService,
         permissionService,
         roleService,
+        memberService,
+        invitationService,
     )
 }
