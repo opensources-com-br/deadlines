@@ -30,7 +30,8 @@ export function LoginScreen({ nextPath }: LoginScreenProps) {
         password: String(formData.get("password")),
       });
       toast.success("Login successful.");
-      router.push(nextPath ?? "/app");
+      router.replace(nextPath ?? "/app");
+      router.refresh();
     } catch (error) {
       toast.error(identityErrorMessage(error));
     } finally {
