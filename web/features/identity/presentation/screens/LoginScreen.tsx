@@ -11,7 +11,11 @@ import { AuthShell } from "@/features/identity/presentation/components/AuthShell
 import { AuthTextField } from "@/features/identity/presentation/components/AuthTextField";
 import { identityApi, identityErrorMessage } from "@/features/identity/infrastructure/identity-api";
 
-export function LoginScreen() {
+type LoginScreenProps = {
+  nextPath?: string;
+};
+
+export function LoginScreen({ nextPath }: LoginScreenProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -26,7 +30,7 @@ export function LoginScreen() {
         password: String(formData.get("password")),
       });
       toast.success("Login successful.");
-      router.push("/app");
+      router.push(nextPath ?? "/app");
     } catch (error) {
       toast.error(identityErrorMessage(error));
     } finally {
@@ -66,7 +70,10 @@ export function LoginScreen() {
             </Button>
             <FieldDescription className="text-center">
               Don&apos;t have an account?{" "}
-              <Link href="/register" className="underline-offset-4 hover:underline">
+              <Link
+                href={nextPath ? `/register?next=${encodeURIComponent(nextPath)}` : "/register"}
+                className="underline-offset-4 hover:underline"
+              >
                 Sign up
               </Link>
             </FieldDescription>
