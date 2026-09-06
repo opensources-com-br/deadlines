@@ -40,6 +40,9 @@ import deadlines.organizations.members.MemberService
 import deadlines.plans.ExposedPlanRepository
 import deadlines.plans.PlanOperations
 import deadlines.plans.PlanService
+import deadlines.subscriptions.ExposedSubscriptionRepository
+import deadlines.subscriptions.SubscriptionOperations
+import deadlines.subscriptions.SubscriptionService
 import deadlines.shared.database.DatabaseFactory
 import deadlines.shared.database.DatabaseQuery
 import io.ktor.server.application.Application
@@ -59,6 +62,7 @@ fun main() {
         val sessionService = SessionService(sessionRepository)
         val organizationRepository = ExposedOrganizationRepository(query)
         val planService = PlanService(ExposedPlanRepository(query))
+        val subscriptionService = SubscriptionService(organizationRepository, ExposedSubscriptionRepository(query))
         val auditService = AuditService(organizationRepository, ExposedAuditRepository(query))
         val organizationService = OrganizationService(organizationRepository)
         val permissionRepository = ExposedPermissionRepository(query)
@@ -112,6 +116,7 @@ fun main() {
                 invitationService,
                 auditService,
                 planService,
+                subscriptionService,
             )
         }.start(wait = true)
     }
@@ -131,6 +136,7 @@ fun Application.module(
     invitationService: InvitationOperations? = null,
     auditService: AuditService? = null,
     planService: PlanOperations? = null,
+    subscriptionService: SubscriptionOperations? = null,
 ) {
     configurePlugins(tokenService)
     configureRoutes(
@@ -146,5 +152,6 @@ fun Application.module(
         invitationService,
         auditService,
         planService,
+        subscriptionService,
     )
 }
