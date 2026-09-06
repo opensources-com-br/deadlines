@@ -1,5 +1,6 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
 
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
 type AuthTextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
@@ -10,15 +11,15 @@ type AuthTextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
 
 export function AuthTextField({ id, label, hint, action, className, ...props }: AuthTextFieldProps) {
   return (
-    <div className="grid gap-2">
+    <Field>
       <div className="flex items-center justify-between gap-4">
-        <label className="text-sm font-medium text-foreground" htmlFor={id}>
+        <FieldLabel htmlFor={id}>
           {label}
-        </label>
+        </FieldLabel>
         {action}
       </div>
       <Input id={id} className={className} {...props} />
-      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
-    </div>
+      {hint ? <FieldDescription>{hint}</FieldDescription> : null}
+    </Field>
   );
 }

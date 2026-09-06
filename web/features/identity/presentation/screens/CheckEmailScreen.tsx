@@ -9,7 +9,7 @@ export function CheckEmailScreen() {
       <div className="rounded-xl border bg-muted/50 p-5 text-sm leading-6 text-muted-foreground">
         Your account will be ready once you confirm your email. The link expires after a limited time for your security.
       </div>
-      <Button className="mt-5 w-full" size="lg">Resend confirmation email</Button>
+      <Button className="mt-5 w-full" type="button">Resend confirmation email</Button>
       <p className="mt-6 text-sm text-muted-foreground">
         Already confirmed your email?{" "}
         <Link href="/login" className="font-medium text-foreground underline underline-offset-4">

@@ -11,11 +11,11 @@ type AuthShellProps = {
 
 export function AuthShell({ title, description, children }: AuthShellProps) {
   return (
-    <main className="min-h-screen bg-muted/30 px-6 py-6 text-foreground">
-      <Link href="/" className="inline-flex text-lg font-semibold tracking-tight">
-        Deadlines
-      </Link>
-      <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-md items-center">
+    <main className="flex min-h-svh w-full items-center justify-center bg-muted/30 p-6 text-foreground md:p-10">
+      <div className="w-full max-w-sm">
+        <Link href="/" className="mb-6 inline-flex text-lg font-semibold tracking-tight">
+          Deadlines
+        </Link>
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-2xl font-semibold tracking-tight">{title}</CardTitle>

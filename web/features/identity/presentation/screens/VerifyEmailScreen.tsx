@@ -26,7 +26,7 @@ export function VerifyEmailScreen({ hasToken }: VerifyEmailScreenProps) {
       <div className="rounded-xl border bg-muted/50 p-5 text-sm leading-6 text-muted-foreground">
         Your confirmation link is ready. Once confirmed, you can sign in to your account.
       </div>
-      <Button className="mt-5 w-full" size="lg">Confirm email</Button>
+      <Button className="mt-5 w-full" type="button">Confirm email</Button>
     </AuthShell>
   );
 }

@@ -1,13 +1,15 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { Field, FieldDescription, FieldGroup, FieldSeparator } from "@/components/ui/field";
 import { AuthShell } from "@/features/identity/presentation/components/AuthShell";
 import { AuthTextField } from "@/features/identity/presentation/components/AuthTextField";
 
 export function LoginScreen() {
   return (
-    <AuthShell title="Welcome back" description="Enter your details to access your workspace.">
-      <form className="grid gap-5">
+    <AuthShell title="Login to your account" description="Enter your email below to login to your account.">
+      <form>
+        <FieldGroup>
         <AuthTextField id="email" label="Email" type="email" autoComplete="email" placeholder="you@example.com" required />
         <AuthTextField
           id="password"
@@ -22,16 +24,25 @@ export function LoginScreen() {
             </Link>
           }
         />
-        <Button className="mt-1 w-full" size="lg">
-          Sign in
-        </Button>
+        <Field>
+          <Button className="w-full" type="button">
+            Login
+          </Button>
+        </Field>
+        <FieldSeparator>Or continue with</FieldSeparator>
+        <Field>
+          <Button className="w-full" variant="outline" type="button">
+            Continue with Google
+          </Button>
+        </Field>
+        <FieldDescription className="text-center">
+          Don&apos;t have an account?{" "}
+          <Link href="/register" className="font-medium text-foreground underline underline-offset-4">
+            Sign up
+          </Link>
+        </FieldDescription>
+        </FieldGroup>
       </form>
-      <p className="mt-6 text-sm text-muted-foreground">
-        New to Deadlines?{" "}
-        <Link href="/register" className="font-medium text-foreground underline underline-offset-4">
-          Create an account
-        </Link>
-      </p>
     </AuthShell>
   );
 }
