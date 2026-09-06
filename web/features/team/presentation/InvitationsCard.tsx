@@ -90,7 +90,9 @@ export function InvitationsCard({ initialInvitations, roles, canManage }: Invita
               <Field>
                 <FieldLabel>Role</FieldLabel>
                 <Select value={roleId} onValueChange={(value) => setRoleId(value ?? "")} required>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full">
+                    <SelectValue>{assignableRoles.find((role) => role.id === roleId)?.name ?? "Select a role"}</SelectValue>
+                  </SelectTrigger>
                   <SelectContent>
                     {assignableRoles.map((role) => <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>)}
                   </SelectContent>

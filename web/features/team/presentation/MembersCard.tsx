@@ -76,7 +76,7 @@ export function MembersCard({ initialMembers, roles, canManage }: MembersCardPro
                         disabled={busyMemberId === member.id}
                       >
                         <SelectTrigger size="sm" className="min-w-32">
-                          <SelectValue />
+                          <SelectValue>{member.role.name}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {assignableRoles.map((role) => <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>)}
