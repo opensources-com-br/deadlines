@@ -11,6 +11,7 @@ import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
+import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 
 fun Route.roleRoutes(service: RoleOperations) {
@@ -34,6 +35,20 @@ fun Route.roleRoutes(service: RoleOperations) {
                 delete {
                     service.delete(call.accessUserId(), call.accessResourceId("roleId"))
                     call.respond(HttpStatusCode.NoContent)
+                }
+                route("/permissions") {
+                    get {
+                        call.respond(service.listPermissions(call.accessUserId(), call.accessResourceId("roleId")))
+                    }
+                    put {
+                        call.respond(
+                            service.replacePermissions(
+                                call.accessUserId(),
+                                call.accessResourceId("roleId"),
+                                call.receive(),
+                            ),
+                        )
+                    }
                 }
             }
         }
