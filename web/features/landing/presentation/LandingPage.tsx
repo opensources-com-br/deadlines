@@ -1,5 +1,5 @@
+import Image from "next/image";
 import Link from "next/link";
-import { CalendarCheck2 } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 
@@ -8,8 +8,8 @@ export function LandingPage() {
     <main className="flex min-h-screen flex-col bg-white px-6 text-zinc-950">
       <header className="sticky top-5 z-10 mx-auto mt-5 flex w-full max-w-6xl items-center justify-between rounded-2xl border border-zinc-200 bg-white/90 px-4 py-3 shadow-sm backdrop-blur md:px-5">
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight" aria-label="Deadlines home">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-zinc-950 text-white">
-            <CalendarCheck2 className="size-4" aria-hidden="true" />
+          <span className="flex size-8 items-center justify-center" aria-hidden="true">
+            <Image src="/deadlines-mark.png" alt="" width={32} height={32} priority />
           </span>
           Deadlines
         </Link>
