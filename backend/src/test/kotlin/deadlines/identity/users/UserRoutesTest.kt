@@ -1,6 +1,9 @@
 package deadlines.identity.users
 
 import deadlines.application.module
+import deadlines.config.AuthConfig
+import deadlines.identity.auth.TokenService
+import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.patch
@@ -19,10 +22,47 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class UserRoutesTest {
+    private val tokenService =
+        TokenService(AuthConfig("a-local-test-secret-with-32-characters", "issuer", "audience", 900, 3600))
+
+    @Test
+    fun `authenticated user can read and update own profile`() =
+        testApplication {
+            val service = UserService(InMemoryUserRepository())
+            val user =
+                service.create(
+                    CreateUserRequest(
+                        email = "user@example.com",
+                        firstName = "User",
+                        lastName = "Name",
+                    ),
+                )
+            application { module(userService = service, tokenService = tokenService) }
+
+            assertEquals(HttpStatusCode.Unauthorized, client.get("/api/v1/users/me").status)
+
+            val found =
+                client.get("/api/v1/users/me") {
+                    bearerAuth(tokenService.issue(user.id).accessToken)
+                }
+            assertEquals(HttpStatusCode.OK, found.status)
+
+            val updated =
+                client.patch("/api/v1/users/me") {
+                    bearerAuth(tokenService.issue(user.id).accessToken)
+                    contentType(ContentType.Application.Json)
+                    setBody("""{"firstName":"Updated","lastName":"User"}""")
+                }
+            assertEquals(HttpStatusCode.OK, updated.status)
+            val profile = Json.parseToJsonElement(updated.bodyAsText()).jsonObject.getValue("profile").jsonObject
+            assertEquals("Updated", profile.getValue("firstName").jsonPrimitive.content)
+            assertEquals("User", profile.getValue("lastName").jsonPrimitive.content)
+        }
+
     @Test
     fun `supports the complete local user lifecycle`() =
         testApplication {
-            application { module(UserService(InMemoryUserRepository())) }
+            application { module(UserService(InMemoryUserRepository()), tokenService = tokenService) }
 
             val created =
                 client.post("/api/v1/users") {
@@ -67,7 +107,7 @@ class UserRoutesTest {
     @Test
     fun `rejects malformed identifiers`() =
         testApplication {
-            application { module(UserService(InMemoryUserRepository())) }
+            application { module(UserService(InMemoryUserRepository()), tokenService = tokenService) }
 
             val response = client.get("/api/v1/users/not-a-uuid")
 
@@ -82,7 +122,7 @@ class UserRoutesTest {
     @Test
     fun `rejects malformed json`() =
         testApplication {
-            application { module(UserService(InMemoryUserRepository())) }
+            application { module(UserService(InMemoryUserRepository()), tokenService = tokenService) }
 
             val response =
                 client.post("/api/v1/users") {

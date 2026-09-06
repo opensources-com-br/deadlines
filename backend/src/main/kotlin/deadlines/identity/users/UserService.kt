@@ -86,6 +86,15 @@ class UserService(
         return repository.update(updated)
     }
 
+    suspend fun updateOwnProfile(id: UUID, request: UpdateOwnProfileRequest): User =
+        update(
+            id,
+            UpdateUserRequest(
+                firstName = request.firstName,
+                lastName = request.lastName,
+            ),
+        )
+
     suspend fun disable(id: UUID) {
         val current = get(id)
         if (current.status != UserStatus.DISABLED) {

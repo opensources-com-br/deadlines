@@ -2,6 +2,9 @@ package deadlines.identity.users
 
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
@@ -15,6 +18,19 @@ import java.util.UUID
 
 fun Route.userRoutes(service: UserService) {
     route("/api/v1/users") {
+        authenticate("auth-jwt") {
+            route("/me") {
+                get {
+                    call.respond(service.get(call.authenticatedUserId()).toResponse())
+                }
+
+                patch {
+                    val user = service.updateOwnProfile(call.authenticatedUserId(), call.receive())
+                    call.respond(user.toResponse())
+                }
+            }
+        }
+
         post {
             val user = service.create(call.receive<CreateUserRequest>())
             call.response.header(HttpHeaders.Location, "/api/v1/users/${user.id}")
@@ -42,6 +58,9 @@ fun Route.userRoutes(service: UserService) {
         }
     }
 }
+
+private fun io.ktor.server.application.ApplicationCall.authenticatedUserId(): UUID =
+    UUID.fromString(principal<JWTPrincipal>()!!.payload.subject)
 
 private fun io.ktor.server.application.ApplicationCall.userId(): UUID {
     val rawId = parameters["id"]

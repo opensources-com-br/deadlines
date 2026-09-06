@@ -64,6 +64,8 @@ POST   /api/v1/auth/email/verify
 POST   /api/v1/auth/email/resend
 POST   /api/v1/auth/forgot-password
 POST   /api/v1/auth/reset-password
+GET    /api/v1/users/me
+PATCH  /api/v1/users/me
 POST   /api/v1/users
 GET    /api/v1/users?page=1&limit=20
 GET    /api/v1/users/{id}

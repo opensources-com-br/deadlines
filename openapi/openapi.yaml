@@ -234,6 +234,47 @@ paths:
                 $ref: "#/components/schemas/UserList"
         "422":
           $ref: "#/components/responses/ValidationError"
+  /api/v1/users/me:
+    get:
+      tags: [Users]
+      summary: Busca o perfil do usuário autenticado
+      operationId: getOwnProfile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Perfil do usuário autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      tags: [Users]
+      summary: Atualiza o perfil do usuário autenticado
+      operationId: updateOwnProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOwnProfileRequest"
+      responses:
+        "200":
+          description: Perfil atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
   /api/v1/users/{id}:
     parameters:
       - $ref: "#/components/parameters/UserId"
@@ -505,6 +546,19 @@ components:
         status:
           type: string
           enum: [pending, active, disabled]
+    UpdateOwnProfileRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 100
     User:
       type: object
       required: [id, email, status, profile, createdAt, updatedAt]
