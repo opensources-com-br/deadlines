@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.9.0
+  version: 0.10.0
   description: API local do Deadlines. O cadastro exige confirmação de e-mail antes da ativação e do login; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
@@ -16,8 +16,61 @@ tags:
   - name: Permissions
   - name: Roles
   - name: Members
+  - name: Audits
   - name: Invitations
 paths:
+  /api/v1/audits:
+    get:
+      tags: [Audits]
+      summary: Lista o histórico imutável da organização atual (somente Owner)
+      description: >-
+        Ordem decrescente por occurredAt e id. Datas inclusivas em ISO-8601 UTC.
+        actorId nulo indica manutenção sem usuário autenticado. Eventos registram
+        alterações persistidas; created/resent de convite não garantem entrega de e-mail.
+        Parâmetros desconhecidos ou repetidos são rejeitados.
+      operationId: listAudits
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0, maximum: 1000000, default: 0 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - in: query
+          name: action
+          schema: { type: string, maxLength: 80, minLength: 1, pattern: "^[a-z][a-z._]*$" }
+        - in: query
+          name: resource
+          schema: { type: string, maxLength: 40, minLength: 1, pattern: "^[a-z][a-z._]*$" }
+        - in: query
+          name: actorId
+          schema: { type: string, format: uuid }
+        - in: query
+          name: resourceId
+          schema: { type: string, format: uuid }
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Página de eventos da organização atual
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Apenas Owner pode consultar o histórico
+        "404":
+          description: Usuário sem organização ativa
+        "422":
+          description: Filtro inválido ou intervalo de datas invertido
   /health:
     get:
       tags: [Operations]
@@ -1027,6 +1080,33 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
   schemas:
+    AuditResponse:
+      type: object
+      required: [id, organizationId, actorId, occurredAt, action, resource, resourceId, metadata]
+      properties:
+        id: { type: string, format: uuid }
+        organizationId: { type: string, format: uuid }
+        actorId: { type: [string, "null"], format: uuid }
+        occurredAt: { type: string, format: date-time }
+        action: { type: string, example: member.role_updated }
+        resource: { type: string, example: member }
+        resourceId: { type: string, format: uuid }
+        metadata:
+          type: object
+          description: Apenas IDs e indicadores de campos alterados; sem conteúdo livre ou credenciais.
+          additionalProperties:
+            type: [string, boolean]
+    AuditListResponse:
+      type: object
+      required: [data, offset, limit, hasMore]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditResponse"
+        offset: { type: integer, minimum: 0 }
+        limit: { type: integer, minimum: 1, maximum: 100 }
+        hasMore: { type: boolean }
     HealthResponse:
       type: object
       required: [status]

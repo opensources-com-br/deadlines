@@ -29,6 +29,87 @@
   ],
   "item": [
     {
+      "name": "Audits (Owner only)",
+      "item": [
+        {
+          "name": "List audit history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audits?limit=20&offset=0"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('scoped to current organization', () => pm.response.json().data.forEach(event => pm.expect(event.organizationId).to.eql(pm.collectionVariables.get('organizationId'))));",
+                  "pm.test('pagination', () => pm.expect(pm.response.json().hasMore).to.be.a('boolean'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filter organization changes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audits?action=organization.updated&limit=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('scoped to current organization', () => pm.response.json().data.forEach(event => pm.expect(event.organizationId).to.eql(pm.collectionVariables.get('organizationId'))));",
+                  "pm.test('pagination', () => pm.expect(pm.response.json().hasMore).to.be.a('boolean'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject invalid page size",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audits?limit=101"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Operations",
       "item": [
         {
