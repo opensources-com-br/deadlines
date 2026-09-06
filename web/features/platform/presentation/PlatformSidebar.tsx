@@ -47,9 +47,9 @@ export function PlatformSidebar({ user }: PlatformSidebarProps) {
   return (
     <Sidebar variant="floating" collapsible="icon">
       <SidebarHeader className="p-3">
-        <div className="flex h-8 items-center gap-2 px-2 text-sm font-semibold tracking-tight">
+        <div className="flex h-8 items-center gap-2 px-2 text-sm font-semibold tracking-tight group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
           <Image className="size-6 invert" src="/deadlines-mark.png" alt="Deadlines" width={24} height={24} priority />
-          <span>Deadlines</span>
+          <span className="group-data-[collapsible=icon]:hidden">Deadlines</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
