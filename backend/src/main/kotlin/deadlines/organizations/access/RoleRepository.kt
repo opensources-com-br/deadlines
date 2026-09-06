@@ -8,6 +8,7 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.java.javaUUID
 import org.jetbrains.exposed.v1.javatime.timestampWithTimeZone
 import org.jetbrains.exposed.v1.jdbc.batchInsert
@@ -114,8 +115,17 @@ class ExposedRoleRepository(
 
     override suspend fun replacePermissions(roleId: UUID, permissionIds: List<UUID>) {
         query {
-            RolePermissionsTable.deleteWhere { RolePermissionsTable.roleId eq roleId }
-            RolePermissionsTable.batchInsert(permissionIds.distinct()) { permissionId ->
+            val current = RolePermissionsTable.selectAll()
+                .where { RolePermissionsTable.roleId eq roleId }
+                .map { it[RolePermissionsTable.permissionId] }.toSet()
+            val requested = permissionIds.toSet()
+            val removed = current - requested
+            if (removed.isNotEmpty()) {
+                RolePermissionsTable.deleteWhere {
+                    (RolePermissionsTable.roleId eq roleId) and (RolePermissionsTable.permissionId inList removed)
+                }
+            }
+            RolePermissionsTable.batchInsert(requested - current) { permissionId ->
                 this[RolePermissionsTable.roleId] = roleId
                 this[RolePermissionsTable.permissionId] = permissionId
             }

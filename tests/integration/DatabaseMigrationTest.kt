@@ -398,6 +398,9 @@ class DatabaseMigrationTest {
             val roleId = UUID.fromString(role.id)
             roleService.update(owner.id, roleId, UpdateRoleRequest(name = "Changed role"))
             roleService.replacePermissions(owner.id, roleId, ReplaceRolePermissionsRequest(listOf(permission.id)))
+            val countBeforeNoOp = audits.list(org, AuditFilter(limit = 100)).data.size
+            roleService.replacePermissions(owner.id, roleId, ReplaceRolePermissionsRequest(listOf(permission.id)))
+            assertEquals(countBeforeNoOp, audits.list(org, AuditFilter(limit = 100)).data.size)
             roleService.replacePermissions(owner.id, roleId, ReplaceRolePermissionsRequest(emptyList()))
             val memberRole = roles.list(org).single { it.key == "member" }
             val invitation = OrganizationInvitation(UUID.randomUUID(), org, context.organization.name,
