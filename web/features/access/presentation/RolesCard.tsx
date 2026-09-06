@@ -5,24 +5,29 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import type { Role } from "@/features/access/domain/access";
+import type { Permission, Role } from "@/features/access/domain/access";
 import { accessApi } from "@/features/access/infrastructure/access-api";
 
 type RolesCardProps = {
   initialRoles: Role[];
+  permissions: Permission[];
   canManage: boolean;
 };
 
-export function RolesCard({ initialRoles, canManage }: RolesCardProps) {
+export function RolesCard({ initialRoles, permissions, canManage }: RolesCardProps) {
   const [roles, setRoles] = useState(initialRoles);
   const [editing, setEditing] = useState<Role | "new">();
   const [key, setKey] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [managingRole, setManagingRole] = useState<Role>();
+  const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>([]);
+  const [loadingRoleId, setLoadingRoleId] = useState<string>();
 
   function beginEdit(role?: Role) {
     setEditing(role ?? "new");
@@ -69,6 +74,39 @@ export function RolesCard({ initialRoles, canManage }: RolesCardProps) {
     }
   }
 
+  async function beginManagePermissions(role: Role) {
+    setLoadingRoleId(role.id);
+    try {
+      const assigned = await accessApi.listRolePermissions(role.id);
+      setManagingRole(role);
+      setSelectedPermissionIds(assigned.data.map((permission) => permission.id));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to load role permissions.");
+    } finally {
+      setLoadingRoleId(undefined);
+    }
+  }
+
+  async function savePermissions() {
+    if (!managingRole) return;
+    setIsSaving(true);
+    try {
+      await accessApi.replaceRolePermissions(managingRole.id, selectedPermissionIds);
+      toast.success("Role permissions updated.");
+      setManagingRole(undefined);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to update role permissions.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function togglePermission(permissionId: string, checked: boolean) {
+    setSelectedPermissionIds((current) =>
+      checked ? [...new Set([...current, permissionId])] : current.filter((id) => id !== permissionId),
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
@@ -79,7 +117,38 @@ export function RolesCard({ initialRoles, canManage }: RolesCardProps) {
         {canManage && !editing ? <Button variant="outline" type="button" onClick={() => beginEdit()}>New role</Button> : null}
       </CardHeader>
       <CardContent>
-        {editing ? (
+        {managingRole ? (
+          <div className="space-y-5">
+            <div>
+              <p className="text-sm font-medium">{managingRole.name}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {managingRole.key === "owner" ? "The owner always retains every permission." : "Select the capabilities assigned to this role."}
+              </p>
+            </div>
+            <div className="space-y-3">
+              {permissions.map((permission) => (
+                <label key={permission.id} className="flex cursor-pointer items-start gap-3 rounded-lg border p-3">
+                  <Checkbox
+                    className="mt-0.5"
+                    checked={selectedPermissionIds.includes(permission.id)}
+                    onCheckedChange={(checked) => togglePermission(permission.id, checked === true)}
+                    disabled={!canManage || managingRole.key === "owner"}
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium">{permission.name}</span>
+                    <span className="block font-mono text-xs text-muted-foreground">{permission.key}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" type="button" onClick={() => setManagingRole(undefined)} disabled={isSaving}>Back</Button>
+              {canManage && managingRole.key !== "owner" ? (
+                <Button type="button" onClick={savePermissions} disabled={isSaving}>{isSaving ? "Saving..." : "Save permissions"}</Button>
+              ) : null}
+            </div>
+          </div>
+        ) : editing ? (
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
@@ -114,12 +183,17 @@ export function RolesCard({ initialRoles, canManage }: RolesCardProps) {
                     <p className="mt-1 font-mono text-xs text-muted-foreground">{role.key}</p>
                     {role.description ? <p className="mt-1 text-xs text-muted-foreground">{role.description}</p> : null}
                   </div>
-                  {canManage && !role.isSystem ? (
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" type="button" onClick={() => beginEdit(role)}>Edit</Button>
-                      <Button variant="ghost" size="sm" type="button" onClick={() => handleDelete(role)}>Delete</Button>
-                    </div>
-                  ) : null}
+                  <div className="flex flex-wrap justify-end gap-1">
+                    <Button variant="ghost" size="sm" type="button" onClick={() => beginManagePermissions(role)} disabled={loadingRoleId === role.id}>
+                      {loadingRoleId === role.id ? "Loading..." : "Permissions"}
+                    </Button>
+                    {canManage && !role.isSystem ? (
+                      <>
+                        <Button variant="ghost" size="sm" type="button" onClick={() => beginEdit(role)}>Edit</Button>
+                        <Button variant="ghost" size="sm" type="button" onClick={() => handleDelete(role)}>Delete</Button>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             ))}

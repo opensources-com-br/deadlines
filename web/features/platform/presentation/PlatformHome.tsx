@@ -129,7 +129,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles 
         <div className="space-y-6">
         <OrganizationCard organization={organization} />
         <PermissionsCard initialPermissions={permissions} canManage={organization.role === "owner"} />
-        <RolesCard initialRoles={roles} canManage={organization.role === "owner"} />
+        <RolesCard initialRoles={roles} permissions={permissions} canManage={organization.role === "owner"} />
         <Card>
           <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
             <div>
