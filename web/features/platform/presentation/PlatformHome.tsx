@@ -24,6 +24,7 @@ import { RolesCard } from "@/features/access/presentation/RolesCard";
 import type { OrganizationInvitation, OrganizationMember } from "@/features/team/domain/team";
 import { InvitationsCard } from "@/features/team/presentation/InvitationsCard";
 import { MembersCard } from "@/features/team/presentation/MembersCard";
+import { PlansCard } from "@/features/plans/presentation/PlansCard";
 
 type PlatformHomeProps = {
   user: UserProfile;
@@ -136,6 +137,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
 
         <div className="space-y-6">
         <OrganizationCard organization={organization} />
+        <PlansCard />
         <MembersCard initialMembers={members} roles={roles} canManage={organization.role === "owner"} />
         <InvitationsCard initialInvitations={invitations} roles={roles} canManage={organization.role === "owner"} />
         <PermissionsCard
