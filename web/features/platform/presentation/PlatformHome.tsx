@@ -19,6 +19,9 @@ import { OrganizationCard } from "@/features/organizations/presentation/Organiza
 import type { Permission, Role } from "@/features/access/domain/access";
 import { PermissionsCard } from "@/features/access/presentation/PermissionsCard";
 import { RolesCard } from "@/features/access/presentation/RolesCard";
+import type { OrganizationInvitation, OrganizationMember } from "@/features/team/domain/team";
+import { InvitationsCard } from "@/features/team/presentation/InvitationsCard";
+import { MembersCard } from "@/features/team/presentation/MembersCard";
 
 type PlatformHomeProps = {
   user: UserProfile;
@@ -26,9 +29,11 @@ type PlatformHomeProps = {
   sessions: UserSession[];
   permissions: Permission[];
   roles: Role[];
+  members: OrganizationMember[];
+  invitations: OrganizationInvitation[];
 };
 
-export function PlatformHome({ user, organization, sessions, permissions, roles }: PlatformHomeProps) {
+export function PlatformHome({ user, organization, sessions, permissions, roles, members, invitations }: PlatformHomeProps) {
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -129,6 +134,8 @@ export function PlatformHome({ user, organization, sessions, permissions, roles 
 
         <div className="space-y-6">
         <OrganizationCard organization={organization} />
+        <MembersCard initialMembers={members} roles={roles} canManage={organization.role === "owner"} />
+        <InvitationsCard initialInvitations={invitations} roles={roles} canManage={organization.role === "owner"} />
         <PermissionsCard
           initialPermissions={availablePermissions}
           canManage={organization.role === "owner"}

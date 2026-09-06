@@ -7,6 +7,7 @@ import type { AccessList, Permission, Role } from "@/features/access/domain/acce
 import type { SessionList } from "@/features/platform/domain/session";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { PlatformHome } from "@/features/platform/presentation/PlatformHome";
+import type { OrganizationInvitation, OrganizationMember, TeamList } from "@/features/team/domain/team";
 
 export default async function PlatformPage() {
   const cookieStore = await cookies();
@@ -19,12 +20,14 @@ export default async function PlatformPage() {
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store" as const,
   };
-  const [response, sessionsResponse, organizationResponse, permissionsResponse, rolesResponse] = await Promise.all([
+  const [response, sessionsResponse, organizationResponse, permissionsResponse, rolesResponse, membersResponse, invitationsResponse] = await Promise.all([
     fetch(backendApiUrl("/api/v1/users/me"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/sessions"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/organizations/current"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/permissions"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/roles"), authenticatedRequest).catch(() => undefined),
+    fetch(backendApiUrl("/api/v1/members"), authenticatedRequest).catch(() => undefined),
+    fetch(backendApiUrl("/api/v1/invitations"), authenticatedRequest).catch(() => undefined),
   ]);
 
   if (!response?.ok) {
@@ -46,5 +49,19 @@ export default async function PlatformPage() {
     ? ((await permissionsResponse.json()) as AccessList<Permission>).data
     : [];
   const roles = rolesResponse?.ok ? ((await rolesResponse.json()) as AccessList<Role>).data : [];
-  return <PlatformHome user={user} organization={organization} sessions={sessions} permissions={permissions} roles={roles} />;
+  const members = membersResponse?.ok ? ((await membersResponse.json()) as TeamList<OrganizationMember>).data : [];
+  const invitations = invitationsResponse?.ok
+    ? ((await invitationsResponse.json()) as TeamList<OrganizationInvitation>).data
+    : [];
+  return (
+    <PlatformHome
+      user={user}
+      organization={organization}
+      sessions={sessions}
+      permissions={permissions}
+      roles={roles}
+      members={members}
+      invitations={invitations}
+    />
+  );
 }
