@@ -32,6 +32,7 @@ data class RefreshTokenRequest(
 data class ChangePasswordRequest(
     val currentPassword: String,
     val newPassword: String,
+    val refreshToken: String,
 )
 
 @Serializable

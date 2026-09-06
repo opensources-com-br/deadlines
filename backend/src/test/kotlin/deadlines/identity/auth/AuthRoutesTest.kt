@@ -66,10 +66,12 @@ class AuthRoutesTest {
                 client.patch("/api/v1/auth/password") {
                     bearerAuth(tokenService.issue(auth.userId).accessToken)
                     contentType(ContentType.Application.Json)
-                    setBody("""{"currentPassword":"password-123","newPassword":"new-password-123"}""")
+                    setBody(
+                        """{"currentPassword":"password-123","newPassword":"new-password-123","refreshToken":"refresh"}""",
+                    )
                 }
 
-            assertEquals(HttpStatusCode.NoContent, response.status)
+            assertEquals(HttpStatusCode.OK, response.status)
             assertEquals("new-password-123", auth.changedPassword?.newPassword)
         }
 }
@@ -93,7 +95,8 @@ private class FakeAuthOperations : AuthOperations {
     override suspend fun refresh(refreshToken: String, context: SessionContext) = response
     override suspend fun logout(refreshToken: String) = Unit
     override suspend fun me(userId: UUID) = user
-    override suspend fun changePassword(userId: UUID, request: ChangePasswordRequest) {
+    override suspend fun changePassword(userId: UUID, request: ChangePasswordRequest, context: SessionContext): AuthResponse {
         changedPassword = request
+        return response
     }
 }

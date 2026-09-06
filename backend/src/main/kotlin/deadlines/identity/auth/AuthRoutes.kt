@@ -38,8 +38,7 @@ fun Route.authRoutes(auth: AuthOperations) {
             }
             patch("/password") {
                 val subject = call.principal<JWTPrincipal>()!!.payload.subject
-                auth.changePassword(UUID.fromString(subject), call.receive())
-                call.respond(HttpStatusCode.NoContent)
+                call.respond(auth.changePassword(UUID.fromString(subject), call.receive(), call.sessionContext()))
             }
         }
     }
