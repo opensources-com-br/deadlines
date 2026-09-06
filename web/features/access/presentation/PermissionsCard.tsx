@@ -14,9 +14,10 @@ import { accessApi } from "@/features/access/infrastructure/access-api";
 type PermissionsCardProps = {
   initialPermissions: Permission[];
   canManage: boolean;
+  onPermissionsChange: (permissions: Permission[]) => void;
 };
 
-export function PermissionsCard({ initialPermissions, canManage }: PermissionsCardProps) {
+export function PermissionsCard({ initialPermissions, canManage, onPermissionsChange }: PermissionsCardProps) {
   const [permissions, setPermissions] = useState(initialPermissions);
   const [editing, setEditing] = useState<Permission | "new">();
   const [key, setKey] = useState("");
@@ -46,9 +47,11 @@ export function PermissionsCard({ initialPermissions, canManage }: PermissionsCa
       const saved = editing === "new"
         ? await accessApi.createPermission(input)
         : await accessApi.updatePermission(editing!.id, input);
-      setPermissions((current) =>
-        editing === "new" ? [...current, saved] : current.map((item) => item.id === saved.id ? saved : item),
-      );
+      const updated = editing === "new"
+        ? [...permissions, saved]
+        : permissions.map((item) => item.id === saved.id ? saved : item);
+      setPermissions(updated);
+      onPermissionsChange(updated);
       cancelEdit();
       toast.success(editing === "new" ? "Permission created." : "Permission updated.");
     } catch (error) {
@@ -62,7 +65,9 @@ export function PermissionsCard({ initialPermissions, canManage }: PermissionsCa
     if (!window.confirm(`Delete the “${permission.name}” permission?`)) return;
     try {
       await accessApi.deletePermission(permission.id);
-      setPermissions((current) => current.filter((item) => item.id !== permission.id));
+      const updated = permissions.filter((item) => item.id !== permission.id);
+      setPermissions(updated);
+      onPermissionsChange(updated);
       toast.success("Permission deleted.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to delete this permission.");

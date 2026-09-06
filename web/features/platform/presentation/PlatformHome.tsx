@@ -40,6 +40,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [availablePermissions, setAvailablePermissions] = useState(permissions);
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -128,8 +129,12 @@ export function PlatformHome({ user, organization, sessions, permissions, roles 
 
         <div className="space-y-6">
         <OrganizationCard organization={organization} />
-        <PermissionsCard initialPermissions={permissions} canManage={organization.role === "owner"} />
-        <RolesCard initialRoles={roles} permissions={permissions} canManage={organization.role === "owner"} />
+        <PermissionsCard
+          initialPermissions={availablePermissions}
+          canManage={organization.role === "owner"}
+          onPermissionsChange={setAvailablePermissions}
+        />
+        <RolesCard initialRoles={roles} permissions={availablePermissions} canManage={organization.role === "owner"} />
         <Card>
           <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
             <div>
