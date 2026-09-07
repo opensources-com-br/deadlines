@@ -91,16 +91,23 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
           <TabsList aria-label="Settings categories">
             {settingsNavigation.map((group) => <TabsTrigger key={group.key} value={group.key}>{group.label}</TabsTrigger>)}
           </TabsList>
-          <Tabs value={activeSettingsSection} onValueChange={(value) => router.push(`/app/${value}`)}>
-            <TabsList aria-label={`${activeGroup.label} settings`}>
-              {activeGroup.items.map((item) => <TabsTrigger key={item.key} value={item.key}>{item.label}</TabsTrigger>)}
-            </TabsList>
-          </Tabs>
         </Tabs>
-        <div className="mt-6 space-y-6">
+        <div className="mt-6 rounded-2xl border bg-card/40 p-4 sm:p-6">
+          <div className="flex flex-col gap-5 border-b pb-5">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Settings / {activeGroup.label}</p>
+              <h2 className="mt-1 text-lg font-semibold tracking-tight">{activeGroup.label} settings</h2>
+            </div>
+            <Tabs value={activeSettingsSection} onValueChange={(value) => router.push(`/app/${value}`)}>
+              <TabsList aria-label={`${activeGroup.label} settings`}>
+                {activeGroup.items.map((item) => <TabsTrigger key={item.key} value={item.key}>{item.label}</TabsTrigger>)}
+              </TabsList>
+            </Tabs>
+          </div>
+        <div className="space-y-6 pt-6">
         <div>
           <p className="text-sm font-medium text-muted-foreground">{details.eyebrow}</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight">{details.title}</h2>
+          <h3 className="mt-2 text-2xl font-semibold tracking-tight">{details.title}</h3>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{details.description}</p>
         </div>
         {activeSettingsSection === "organization" && <OrganizationCard organization={organization} />}
@@ -117,6 +124,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
         {activeSettingsSection === "notifications" && <NotificationsCard />}
         {activeSettingsSection === "security" && organization.role === "owner" && <AuditsCard key={organization.id} members={members} />}
         {activeSettingsSection === "security" && <SessionsCard initialSessions={sessions} />}
+        </div>
         </div>
       </section>
       </SidebarInset>
