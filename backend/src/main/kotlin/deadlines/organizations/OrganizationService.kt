@@ -13,6 +13,12 @@ interface OrganizationOperations {
     suspend fun current(userId: UUID): OrganizationResponse
 
     suspend fun update(userId: UUID, request: UpdateOrganizationRequest): OrganizationResponse
+
+    suspend fun suspend(userId: UUID): OrganizationResponse = throw UnsupportedOperationException()
+
+    suspend fun reactivate(userId: UUID): OrganizationResponse = throw UnsupportedOperationException()
+
+    suspend fun delete(userId: UUID): Unit = throw UnsupportedOperationException()
 }
 
 class OrganizationService(
@@ -71,6 +77,33 @@ class OrganizationService(
                 updatedAt = clock.instant(),
             )
         return@withAuditActor current.copy(organization = repository.update(updated)).toResponse()
+    }
+
+    override suspend fun suspend(userId: UUID): OrganizationResponse = withAuditActor(userId) {
+        authorization.requirePermission(userId, PlatformPermission.ORGANIZATION_UPDATE)
+        val current = requireOwnedCurrent(userId)
+        val now = clock.instant()
+        if (!repository.suspend(current.organization.id, now)) throw OrganizationStateConflictException()
+        return@withAuditActor current.copy(
+            organization = current.organization.copy(status = OrganizationStatus.SUSPENDED, updatedAt = now),
+        ).toResponse()
+    }
+
+    override suspend fun reactivate(userId: UUID): OrganizationResponse = withAuditActor(userId) {
+        return@withAuditActor (repository.reactivateOwnedBy(userId, clock.instant())
+            ?: throw OrganizationStateConflictException()).toResponse()
+    }
+
+    override suspend fun delete(userId: UUID) = withAuditActor(userId) {
+        authorization.requirePermission(userId, PlatformPermission.ORGANIZATION_UPDATE)
+        val current = requireOwnedCurrent(userId)
+        if (!repository.delete(current.organization.id, clock.instant())) throw OrganizationStateConflictException()
+    }
+
+    private suspend fun requireOwnedCurrent(userId: UUID): OrganizationContext {
+        val current = repository.findCurrentByUser(userId) ?: throw OrganizationNotFoundException()
+        if (current.membership.role != MembershipRole.OWNER) throw OrganizationAccessDeniedException()
+        return current
     }
 
     private fun validateName(value: String): String {

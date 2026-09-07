@@ -26,6 +26,12 @@ class OrganizationAccessDeniedException : ApiException(
     message = "Only the organization owner can perform this action",
 )
 
+class OrganizationStateConflictException : ApiException(
+    status = 409,
+    code = "ORGANIZATION_STATE_CONFLICT",
+    message = "The organization is not in the required state",
+)
+
 class OrganizationValidationException(
     violations: Map<String, String>,
 ) : ApiException(
