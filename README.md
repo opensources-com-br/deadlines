@@ -1,48 +1,48 @@
 # Deadlines
 
-O Deadlines será um SaaS multi-tenant para reunir CRM e ERP em uma única plataforma. O produto é construído incrementalmente, com cada fase validada antes da próxima.
+Deadlines is a multi-tenant SaaS platform that brings CRM and ERP capabilities together in one place. The product is being built incrementally, with each phase validated before the next one begins.
 
-## Estrutura
+## Project structure
 
 ```text
 deadlines/
-├── web/         aplicação web existente
-├── mobile/      aplicação mobile futura
-├── backend/     aplicação Kotlin + Ktor
-├── database/    migrations e seeds
-├── openapi/     contrato da API
-└── tests/       testes de integração e ponta a ponta
+├── web/         Next.js web application
+├── mobile/      reserved for the future mobile application
+├── backend/     Kotlin and Ktor API
+├── database/    database migrations and seed data
+├── openapi/     API contract
+└── tests/       integration and end-to-end tests
 ```
 
-Cada diretório contém seu próprio README com o limite de responsabilidade correspondente.
+Each directory includes its own README with more specific setup instructions and a description of its responsibilities.
 
-## Estado atual
+## Current status
 
-- `web/`: aplicação Next.js existente.
-- `mobile/`: estrutura reservada, sem implementação.
-- `backend/`: Fase 10 com Identity, organizações, acesso, auditoria, planos e assinaturas Free.
-- `database/`: migrations do Flyway para Identity, isolamento por organização, auditoria, planos e assinaturas.
-- `openapi/`: contrato OpenAPI 3.1 dos endpoints implementados.
-- `tests/`: testes unitários, HTTP e de integração com PostgreSQL.
+- `web/`: Next.js application with authentication and the initial platform experience.
+- `mobile/`: reserved structure; implementation has not started yet.
+- `backend/`: Phase 10, covering identity, organizations, access control, audit logs, plans, and Free subscriptions.
+- `database/`: Flyway migrations for identity, organization isolation, auditing, plans, and subscriptions.
+- `openapi/`: OpenAPI 3.1 contract for the implemented endpoints.
+- `tests/`: unit, HTTP, and PostgreSQL integration tests.
 
-## Desenvolvimento local
+## Local development
 
-O backend e o banco de dados são publicados somente em `127.0.0.1` durante o desenvolvimento da Identity.
+During local development, the backend and database are exposed only on `127.0.0.1`.
 
-Crie o arquivo local de ambiente e inicie PostgreSQL e backend:
+Create the local environment file, then start PostgreSQL and the backend:
 
 ```bash
 cp .env.example .env
 docker compose up -d --build backend
 ```
 
-Verifique o backend:
+Verify that the backend is running:
 
 ```bash
 curl http://localhost:8080/health
 ```
 
-Para executar a aplicação web:
+Install the web dependencies and start the development server:
 
 ```bash
 cd web
@@ -50,4 +50,6 @@ npm ci
 npm run dev
 ```
 
-Consulte os READMEs de cada aplicação para instruções específicas e `openapi/openapi.yaml` para o contrato completo da API.
+The web application is available at [http://localhost:3000](http://localhost:3000).
+
+See the README inside each directory for component-specific instructions. The complete API contract is available in [`openapi/openapi.yaml`](openapi/openapi.yaml).
