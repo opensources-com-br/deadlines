@@ -8,6 +8,7 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.patch
+import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -45,6 +46,17 @@ class MemberRoutesTest {
         )
         assertEquals(service.roleId.toString(), service.updatedRoleId)
         assertEquals(HttpStatusCode.NoContent, client.delete("/api/v1/members/${service.id}") { bearerAuth(token) }.status)
+        assertEquals(HttpStatusCode.OK, client.post("/api/v1/members/${service.id}/suspend") { bearerAuth(token) }.status)
+        assertEquals(HttpStatusCode.OK, client.post("/api/v1/members/${service.id}/reactivate") { bearerAuth(token) }.status)
+        assertEquals(
+            HttpStatusCode.OK,
+            client.post("/api/v1/members/${service.id}/transfer-ownership") {
+                bearerAuth(token)
+                contentType(ContentType.Application.Json)
+                setBody("""{"previousOwnerRoleId":"${service.roleId}"}""")
+            }.status,
+        )
+        assertEquals(HttpStatusCode.NoContent, client.delete("/api/v1/members/me") { bearerAuth(token) }.status)
     }
 }
 
@@ -60,6 +72,11 @@ private class FakeMemberOperations : MemberOperations {
         return member()
     }
     override suspend fun remove(userId: UUID, membershipId: UUID) = Unit
+    override suspend fun suspend(userId: UUID, membershipId: UUID) = member().copy(status = "suspended")
+    override suspend fun reactivate(userId: UUID, membershipId: UUID) = member()
+    override suspend fun leave(userId: UUID) = Unit
+    override suspend fun transferOwnership(userId: UUID, nextOwnerMembershipId: UUID, request: TransferOwnershipRequest) =
+        member().copy(role = member().role.copy(key = "owner", name = "Owner"))
 
     private fun member() =
         MemberResponse(
