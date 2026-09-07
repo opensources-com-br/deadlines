@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Bell, CircleHelp, CircleUserRound, CreditCard, EllipsisVertical, LogOut, Search, Settings } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -43,6 +44,7 @@ function userInitials(user: UserProfile) {
 }
 
 export function PlatformSidebar({ activeItem, user, onSignOut, isSigningOut }: PlatformSidebarProps) {
+  const t = useTranslations("Sidebar");
   const { isMobile } = useSidebar();
   const name = `${user.profile.firstName} ${user.profile.lastName}`.trim() || user.email;
 
@@ -51,7 +53,7 @@ export function PlatformSidebar({ activeItem, user, onSignOut, isSigningOut }: P
       <SidebarHeader className="px-4 pt-5 pb-4 group-data-[collapsible=icon]:p-3 group-data-[collapsible=icon]:pt-4">
         <Link
           href="/app"
-          aria-label="Go to platform home"
+          aria-label={t("home")}
           className="flex h-8 items-center justify-center gap-2 rounded-md px-2 text-base font-semibold tracking-tight outline-hidden hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:px-0"
         >
           <Image className="size-6 shrink-0 invert" src="/deadlines-mark.png" alt="Deadlines" width={24} height={24} priority />
@@ -63,29 +65,29 @@ export function PlatformSidebar({ activeItem, user, onSignOut, isSigningOut }: P
         <SidebarGroup className="p-0">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton isActive={activeItem === "settings"} tooltip="Settings" render={<Link href="/app/organization" />}>
+              <SidebarMenuButton isActive={activeItem === "settings"} tooltip={t("settings")} render={<Link href="/app/organization" />}>
                 <Settings />
-                <span>Settings</span>
+                <span>{t("settings")}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
-                tooltip="Get Help"
+                tooltip={t("help")}
                 type="button"
-                onClick={() => toast.info("The help center is coming soon.")}
+                onClick={() => toast.info(t("helpSoon"))}
               >
                 <CircleHelp />
-                <span>Get Help</span>
+                <span>{t("help")}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
-                tooltip="Search"
+                tooltip={t("search")}
                 type="button"
-                onClick={() => toast.info("Search is coming soon.")}
+                onClick={() => toast.info(t("searchSoon"))}
               >
                 <Search />
-                <span>Search</span>
+                <span>{t("search")}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -121,21 +123,21 @@ export function PlatformSidebar({ activeItem, user, onSignOut, isSigningOut }: P
                 <DropdownMenuGroup>
                   <DropdownMenuItem render={<Link href="/app/account" />}>
                     <CircleUserRound />
-                    Account
+                    {t("account")}
                   </DropdownMenuItem>
                   <DropdownMenuItem render={<Link href="/app/plans" />}>
                     <CreditCard />
-                    Plans
+                    {t("plans")}
                   </DropdownMenuItem>
                   <DropdownMenuItem render={<Link href="/app/notifications" />}>
                     <Bell />
-                    Notifications
+                    {t("notifications")}
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem disabled={isSigningOut} onClick={onSignOut}>
                   <LogOut />
-                  {isSigningOut ? "Signing out..." : "Log out"}
+                  {isSigningOut ? t("signingOut") : t("logout")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

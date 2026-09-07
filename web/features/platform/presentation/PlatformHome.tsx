@@ -3,6 +3,7 @@
 import { AuditsCard } from "@/features/audits/presentation/AuditsCard";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -35,26 +36,25 @@ type PlatformHomeProps = {
   settingsSection?: SettingsSection;
 };
 
-const sectionDetails: Record<SettingsSection, { eyebrow: string; title: string; description: string }> = {
-  organization: { eyebrow: "Workspace", title: "Organization", description: "Manage your organization and its workspace details." },
-  plans: { eyebrow: "Workspace", title: "Plans", description: "Review your organization’s current subscription." },
-  team: { eyebrow: "Management", title: "Team", description: "Manage members and invitations for your organization." },
-  "access-control": { eyebrow: "Management", title: "Access control", description: "Manage roles and permissions for your organization." },
-  security: { eyebrow: "Security", title: "Security", description: "Review organization history and active sessions." },
-  account: { eyebrow: "Account", title: "Your account", description: "Manage your personal information and password." },
-  notifications: { eyebrow: "Account", title: "Notifications", description: "Manage how you receive account updates." },
-};
-
-const settingsNavigation: Array<{ key: string; label: string; items: Array<{ key: SettingsSection; label: string }> }> = [
-  { key: "organization", label: "Organization", items: [{ key: "organization", label: "General" }, { key: "plans", label: "Plan and usage" }, { key: "team", label: "Users" }] },
-  { key: "access", label: "Access", items: [{ key: "access-control", label: "Roles and permissions" }] },
-  { key: "personal", label: "Personal", items: [{ key: "account", label: "My account" }, { key: "notifications", label: "Notifications" }, { key: "security", label: "Security" }] },
-];
-
 export function PlatformHome({ user, organization, sessions, permissions, roles, members, invitations, section, settingsSection }: PlatformHomeProps) {
+  const t = useTranslations("SettingsShell");
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [availablePermissions, setAvailablePermissions] = useState(permissions);
+  const sectionDetails: Record<SettingsSection, { eyebrow: string; title: string; description: string }> = {
+    organization: { eyebrow: t("workspace"), title: t("organizationTitle"), description: t("organizationDescription") },
+    plans: { eyebrow: t("workspace"), title: t("plansTitle"), description: t("plansDescription") },
+    team: { eyebrow: t("management"), title: t("teamTitle"), description: t("teamDescription") },
+    "access-control": { eyebrow: t("management"), title: t("accessTitle"), description: t("accessDescription") },
+    security: { eyebrow: t("security"), title: t("security"), description: t("securityDescription") },
+    account: { eyebrow: t("account"), title: t("accountTitle"), description: t("accountDescription") },
+    notifications: { eyebrow: t("account"), title: t("notifications"), description: t("notificationsDescription") },
+  };
+  const settingsNavigation: Array<{ key: string; label: string; items: Array<{ key: SettingsSection; label: string }> }> = [
+    { key: "organization", label: t("organization"), items: [{ key: "organization", label: t("general") }, { key: "plans", label: t("plans") }, { key: "team", label: t("users") }] },
+    { key: "access", label: t("access"), items: [{ key: "access-control", label: t("roles") }] },
+    { key: "personal", label: t("personal"), items: [{ key: "account", label: t("account") }, { key: "notifications", label: t("notifications") }, { key: "security", label: t("security") }] },
+  ];
   const activeSettingsSection = settingsSection ?? (section === "settings" ? "organization" : section);
   const details = sectionDetails[activeSettingsSection];
   const activeGroup = settingsNavigation.find((group) => group.items.some((item) => item.key === activeSettingsSection)) ?? settingsNavigation[0];
@@ -80,20 +80,20 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
       </header>
 
       <section className="w-full px-[30px] pb-[34px] pt-[22px]">
-        <h1 className="sr-only">Settings</h1>
+        <h1 className="sr-only">{t("settings")}</h1>
         <Tabs value={activeGroup.key} onValueChange={(value) => {
           const nextGroup = settingsNavigation.find((group) => group.key === value);
           if (nextGroup) router.push(`/app/${nextGroup.items[0].key}`);
         }}>
-          <TabsList aria-label="Settings categories">
+          <TabsList aria-label={t("settings")}>
             {settingsNavigation.map((group) => <TabsTrigger key={group.key} value={group.key}>{group.label}</TabsTrigger>)}
           </TabsList>
         </Tabs>
         <div className="mt-6 rounded-2xl border bg-card/40 p-4 sm:p-6">
           <div className="flex flex-col gap-5 border-b pb-5">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Settings / {activeGroup.label}</p>
-              <h2 className="mt-1 text-lg font-semibold tracking-tight">{activeGroup.label} settings</h2>
+              <p className="text-sm font-medium text-muted-foreground">{t("categoryBreadcrumb", { category: activeGroup.label })}</p>
+              <h2 className="mt-1 text-lg font-semibold tracking-tight">{t("categoryTitle", { category: activeGroup.label })}</h2>
             </div>
             <Tabs value={activeSettingsSection} onValueChange={(value) => router.push(`/app/${value}`)}>
               <TabsList aria-label={`${activeGroup.label} settings`}>
