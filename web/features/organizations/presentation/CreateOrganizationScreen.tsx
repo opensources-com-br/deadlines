@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,7 @@ function toSlug(value: string) {
 }
 
 export function CreateOrganizationScreen() {
+  const t = useTranslations("OrganizationOnboarding");
   const router = useRouter();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -34,11 +36,11 @@ export function CreateOrganizationScreen() {
     setIsSubmitting(true);
     try {
       await organizationApi.create({ name, slug });
-      toast.success("Your organization is ready.");
+      toast.success(t("success"));
       router.replace("/app");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to create your organization.");
+      toast.error(error instanceof Error ? error.message : t("error"));
     } finally {
       setIsSubmitting(false);
     }
@@ -63,19 +65,18 @@ export function CreateOrganizationScreen() {
         onClick={handleSignOut}
         disabled={isSigningOut}
       >
-        {isSigningOut ? "Signing out..." : "Log out"}
+        {isSigningOut ? t("signingOut") : t("logout")}
       </Button>
 
       <Card className="w-full max-w-sm py-8">
         <CardHeader className="px-8">
-          <CardTitle>Create your organization</CardTitle>
-          <CardDescription>This will be the workspace for you and your team.</CardDescription>
+          <CardTitle>{t("title")}</CardTitle><CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent className="px-8">
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="organization-name">Organization name</FieldLabel>
+                <FieldLabel htmlFor="organization-name">{t("name")}</FieldLabel>
                 <Input
                   id="organization-name"
                   value={name}
@@ -93,7 +94,7 @@ export function CreateOrganizationScreen() {
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="organization-slug">Workspace URL</FieldLabel>
+                <FieldLabel htmlFor="organization-slug">{t("workspaceUrl")}</FieldLabel>
                 <Input
                   id="organization-slug"
                   value={slug}
@@ -107,11 +108,11 @@ export function CreateOrganizationScreen() {
                   placeholder="acme-inc"
                   required
                 />
-                <FieldDescription>deadlines.app/{slug || "your-workspace"}</FieldDescription>
+                <FieldDescription>deadlines.app/{slug || t("slugFallback")}</FieldDescription>
               </Field>
               <Field>
                 <Button className="w-full" type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Creating..." : "Create organization"}
+                  {isSubmitting ? t("creating") : t("submit")}
                 </Button>
               </Field>
             </FieldGroup>
