@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldDescription, FieldGroup } from "@/components/ui/field";
 import { AuthShell } from "@/features/identity/presentation/components/AuthShell";
 import { AuthTextField } from "@/features/identity/presentation/components/AuthTextField";
@@ -18,6 +19,7 @@ type LoginScreenProps = {
 export function LoginScreen({ nextPath }: LoginScreenProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [keepSignedIn, setKeepSignedIn] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,6 +30,7 @@ export function LoginScreen({ nextPath }: LoginScreenProps) {
       await identityApi.login({
         email: String(formData.get("email")),
         password: String(formData.get("password")),
+        keepSignedIn,
       });
       toast.success("Login successful.");
       router.replace(nextPath ?? "/app");
@@ -65,6 +68,17 @@ export function LoginScreen({ nextPath }: LoginScreenProps) {
               </Link>
             }
           />
+          <label className="flex cursor-pointer items-start gap-3 text-sm">
+            <Checkbox
+              className="mt-0.5"
+              checked={keepSignedIn}
+              onCheckedChange={(checked) => setKeepSignedIn(checked === true)}
+            />
+            <span>
+              <span className="block font-medium">Keep me signed in</span>
+              <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">Stay signed in on this device for up to 30 days.</span>
+            </span>
+          </label>
           <Field>
             <Button className="w-full" type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Signing in..." : "Login"}

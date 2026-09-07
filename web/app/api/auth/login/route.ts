@@ -5,6 +5,7 @@ import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 const accessCookieName = "deadlines_access_token";
 const refreshCookieName = "deadlines_refresh_token";
 const activityCookieName = "deadlines_last_activity";
+const persistentCookieName = "deadlines_persistent_session";
 
 type AuthResponse = {
   accessToken: string;
@@ -21,7 +22,7 @@ type AuthResponse = {
 };
 
 export async function POST(request: Request) {
-  const payload = await request.json().catch(() => null);
+  const payload = await request.json().catch(() => null) as { email?: string; password?: string; keepSignedIn?: boolean } | null;
   if (!payload) {
     return NextResponse.json(
       { error: { code: "INVALID_REQUEST", message: "Request body is invalid" } },
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
     backendResponse = await fetch(backendApiUrl("/api/v1/auth/login"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ email: payload.email, password: payload.password }),
       cache: "no-store",
     });
   } catch {
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
   const auth = data as AuthResponse;
   const response = NextResponse.json({ user: auth.user });
   const secure = process.env.NODE_ENV === "production";
+  const keepSignedIn = payload.keepSignedIn === true;
   response.cookies.set(accessCookieName, auth.accessToken, {
     httpOnly: true,
     sameSite: "lax",
@@ -66,7 +68,7 @@ export async function POST(request: Request) {
     sameSite: "lax",
     secure,
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    ...(keepSignedIn ? { maxAge: 60 * 60 * 24 * 30 } : {}),
   });
   response.cookies.set(activityCookieName, "active", {
     httpOnly: true,
@@ -75,6 +77,11 @@ export async function POST(request: Request) {
     path: "/",
     maxAge: auth.expiresIn,
   });
+  if (keepSignedIn) {
+    response.cookies.set(persistentCookieName, "true", { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: 60 * 60 * 24 * 30 });
+  } else {
+    response.cookies.delete(persistentCookieName);
+  }
 
   return response;
 }
