@@ -11,6 +11,7 @@ import java.sql.SQLException
 import deadlines.config.DatabaseConfig
 import deadlines.identity.auth.ExposedSessionRepository
 import deadlines.identity.auth.Session
+import deadlines.identity.preferences.ExposedUserPreferenceRepository
 import deadlines.identity.email.EmailToken
 import deadlines.identity.email.ExposedEmailTokenRepository
 import deadlines.identity.users.ExposedUserRepository
@@ -73,7 +74,7 @@ class DatabaseMigrationTest {
                 ).use { statement ->
                     statement.executeQuery().use { result ->
                         result.next()
-                        assertEquals(15, result.getInt(1))
+                        assertEquals(16, result.getInt(1))
                     }
                 }
             }
@@ -178,6 +179,36 @@ class DatabaseMigrationTest {
 
                 assertEquals(user, credentials?.user)
                 assertEquals("a-password-hash", credentials?.passwordHash)
+            }
+        }
+
+    @Test
+    fun `new users receive default preferences that can be updated`() =
+        runTest {
+            DatabaseFactory.open(databaseConfig()).use { database ->
+                val query = DatabaseQuery(database.database)
+                val users = ExposedUserRepository(query)
+                val preferences = ExposedUserPreferenceRepository(query)
+                val now = Instant.now()
+                val user = User(
+                    UUID.randomUUID(),
+                    "preferences-${UUID.randomUUID()}@example.com",
+                    UserStatus.ACTIVE,
+                    UserProfile("Preference", "Test", null, null),
+                    now,
+                    now,
+                )
+
+                users.create(user)
+                val defaults = preferences.findByUserId(user.id)
+                val updated = preferences.update(user.id, "en", "Europe/Lisbon", "dark", now.plusSeconds(1))
+
+                assertEquals("pt-BR", defaults?.locale)
+                assertEquals("America/Sao_Paulo", defaults?.timezone)
+                assertEquals("system", defaults?.theme)
+                assertEquals("en", updated?.locale)
+                assertEquals("Europe/Lisbon", updated?.timezone)
+                assertEquals("dark", updated?.theme)
             }
         }
 
