@@ -46,6 +46,7 @@ const sectionDetails: Record<SettingsSection, { eyebrow: string; title: string; 
   "access-control": { eyebrow: "Management", title: "Access control", description: "Manage roles and permissions for your organization." },
   security: { eyebrow: "Security", title: "Security", description: "Review organization history and active sessions." },
   account: { eyebrow: "Account", title: "Your account", description: "Manage your personal information and password." },
+  notifications: { eyebrow: "Account", title: "Notifications", description: "Manage how you receive account updates." },
 };
 
 const settingsNavigation: Array<{ key: SettingsSection; label: string }> = [
@@ -319,6 +320,12 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
               </div>
             )}
           </CardContent>
+        </Card>}
+        {activeSettingsSection === "notifications" && <Card>
+          <CardHeader>
+            <CardTitle>Notifications</CardTitle>
+            <CardDescription>Notification preferences will be available here soon.</CardDescription>
+          </CardHeader>
         </Card>}
         {activeSettingsSection === "security" && organization.role === "owner" && <AuditsCard key={organization.id} members={members} />}
         {activeSettingsSection === "security" && <SessionsCard initialSessions={sessions} />}

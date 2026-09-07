@@ -17,6 +17,7 @@ const sections = new Set<PlatformNavigationItem>([
   "access-control",
   "security",
   "account",
+  "notifications",
   "settings",
 ]);
 
@@ -27,6 +28,7 @@ const settingsSections = new Set<SettingsSection>([
   "access-control",
   "security",
   "account",
+  "notifications",
 ]);
 
 type PlatformSectionPageProps = {

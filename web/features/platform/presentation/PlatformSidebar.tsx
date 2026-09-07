@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { CircleHelp, CircleUserRound, CreditCard, EllipsisVertical, LogOut, Search, Settings, ShieldCheck } from "lucide-react";
+import { Bell, CircleHelp, CircleUserRound, CreditCard, EllipsisVertical, LogOut, Search, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -36,7 +36,7 @@ type PlatformSidebarProps = {
   isSigningOut: boolean;
 };
 
-export type SettingsSection = "organization" | "plans" | "team" | "access-control" | "security" | "account";
+export type SettingsSection = "organization" | "plans" | "team" | "access-control" | "security" | "account" | "notifications";
 export type PlatformNavigationItem = "settings" | SettingsSection;
 
 function userInitials(user: UserProfile) {
@@ -122,9 +122,9 @@ export function PlatformSidebar({ activeItem, user, onSignOut, onSettingsSelect,
                     <CreditCard />
                     Plans
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onSettingsSelect("security")}>
-                    <ShieldCheck />
-                    Security
+                  <DropdownMenuItem onClick={() => onSettingsSelect("notifications")}>
+                    <Bell />
+                    Notifications
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
