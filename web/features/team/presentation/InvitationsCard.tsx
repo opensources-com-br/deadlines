@@ -11,6 +11,8 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Role } from "@/features/access/domain/access";
+import { platformPermission } from "@/features/access/domain/authorization";
+import { usePermission } from "@/features/access/presentation/AuthorizationProvider";
 import type { OrganizationInvitation } from "@/features/team/domain/team";
 import { teamApi } from "@/features/team/infrastructure/team-api";
 import { useLocalizedFormatters } from "@/features/platform/presentation/useLocalizedFormatters";
@@ -18,11 +20,11 @@ import { useLocalizedFormatters } from "@/features/platform/presentation/useLoca
 type InvitationsCardProps = {
   initialInvitations: OrganizationInvitation[];
   roles: Role[];
-  canManage: boolean;
 };
 
-export function InvitationsCard({ initialInvitations, roles, canManage }: InvitationsCardProps) {
+export function InvitationsCard({ initialInvitations, roles }: InvitationsCardProps) {
   const t = useTranslations("Team");
+  const canInvite = usePermission(platformPermission.membersInvite);
   const { formatDate } = useLocalizedFormatters();
   const [invitations, setInvitations] = useState(() => initialInvitations.filter((invitation) => invitation.status !== "revoked"));
   const [isCreating, setIsCreating] = useState(false);
@@ -81,7 +83,7 @@ export function InvitationsCard({ initialInvitations, roles, canManage }: Invita
           <CardTitle>{t("invitations")}</CardTitle>
           <CardDescription className="mt-1">{t("invitationsDescription")}</CardDescription>
         </div>
-        {canManage && !isCreating ? <Button variant="outline" type="button" onClick={() => setIsCreating(true)}>{t("invite")}</Button> : null}
+        {canInvite && !isCreating ? <Button variant="outline" type="button" onClick={() => setIsCreating(true)}>{t("invite")}</Button> : null}
       </CardHeader>
       <CardContent>
         {isCreating ? (
@@ -126,7 +128,7 @@ export function InvitationsCard({ initialInvitations, roles, canManage }: Invita
                     <td className="px-4 py-3 text-muted-foreground">{invitation.role.name}</td>
                     <td className="px-4 py-3"><span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">{t(invitation.status as "pending" | "expired" | "accepted" | "revoked")}</span></td>
                     <td className="px-4 py-3 whitespace-nowrap text-muted-foreground"><time dateTime={invitation.expiresAt}>{formatDate(invitation.expiresAt) ?? "—"}</time></td>
-                    <td className="px-4 py-3 text-right">{canManage && actionable ? (
+                    <td className="px-4 py-3 text-right">{canInvite && actionable ? (
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="sm" type="button" onClick={() => resend(invitation)} disabled={busyId === invitation.id}>{t("resend")}</Button>
                         <Button variant="ghost" size="sm" type="button" onClick={() => revoke(invitation)} disabled={busyId === invitation.id}>{t("revoke")}</Button>
