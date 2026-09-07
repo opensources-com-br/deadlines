@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { Role } from "@/features/access/domain/access";
 import type { OrganizationMember } from "@/features/team/domain/team";
 import { teamApi } from "@/features/team/infrastructure/team-api";
@@ -21,6 +21,7 @@ export function MembersCard({ initialMembers, roles, canManage }: MembersCardPro
   const [members, setMembers] = useState(initialMembers);
   const [busyMemberId, setBusyMemberId] = useState<string>();
   const assignableRoles = roles.filter((role) => role.key !== "owner");
+  const formatter = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
 
   async function changeRole(member: OrganizationMember, roleId: string | null) {
     if (!roleId || roleId === member.role.id) return;
@@ -53,22 +54,22 @@ export function MembersCard({ initialMembers, roles, canManage }: MembersCardPro
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Members</CardTitle>
-        <CardDescription className="mt-1">People with access to this organization.</CardDescription>
+        <CardTitle>Users</CardTitle>
+        <CardDescription className="mt-1">Manage the people who currently have access to this organization.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {members.map((member, index) => {
+        {members.length === 0 ? <p className="text-sm text-muted-foreground">No users have joined this organization yet.</p> : <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full min-w-[680px] text-left text-sm">
+            <thead className="border-b bg-muted/40 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <tr><th className="px-4 py-3">User</th><th className="px-4 py-3">Role</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Joined</th><th className="px-4 py-3 text-right"><span className="sr-only">Actions</span></th></tr>
+            </thead>
+            <tbody className="divide-y">
+          {members.map((member) => {
             const isOwner = member.role.key === "owner";
             return (
-              <div key={member.id}>
-                {index > 0 ? <Separator className="mb-4" /> : null}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{member.firstName} {member.lastName}</p>
-                    <p className="truncate text-xs text-muted-foreground">{member.email}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
+              <tr key={member.id}>
+                  <td className="px-4 py-3"><div className="flex min-w-0 items-center gap-3"><Avatar className="size-8"><AvatarFallback>{`${member.firstName[0] ?? ""}${member.lastName[0] ?? ""}`.toUpperCase()}</AvatarFallback></Avatar><div className="min-w-0"><p className="truncate font-medium">{member.firstName} {member.lastName}</p><p className="truncate text-xs text-muted-foreground">{member.email}</p></div></div></td>
+                  <td className="px-4 py-3">
                     {canManage && !isOwner ? (
                       <Select
                         value={member.role.id}
@@ -85,17 +86,16 @@ export function MembersCard({ initialMembers, roles, canManage }: MembersCardPro
                     ) : (
                       <span className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground">{member.role.name}</span>
                     )}
-                    {canManage && !isOwner ? (
-                      <Button variant="ghost" size="sm" type="button" onClick={() => removeMember(member)} disabled={busyMemberId === member.id}>
-                        Remove
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
+                  </td>
+                  <td className="px-4 py-3"><span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">Active</span></td>
+                  <td className="whitespace-nowrap px-4 py-3 text-muted-foreground"><time dateTime={member.joinedAt}>{formatter.format(new Date(member.joinedAt))}</time></td>
+                  <td className="px-4 py-3 text-right">{canManage && !isOwner ? <Button variant="ghost" size="sm" type="button" onClick={() => removeMember(member)} disabled={busyMemberId === member.id}>Remove</Button> : null}</td>
+              </tr>
             );
           })}
-        </div>
+            </tbody>
+          </table>
+        </div>}
       </CardContent>
     </Card>
   );

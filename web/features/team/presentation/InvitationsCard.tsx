@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import type { Role } from "@/features/access/domain/access";
 import type { OrganizationInvitation } from "@/features/team/domain/team";
 import { teamApi } from "@/features/team/infrastructure/team-api";
@@ -107,27 +106,28 @@ export function InvitationsCard({ initialInvitations, roles, canManage }: Invita
         ) : invitations.length === 0 ? (
           <p className="text-sm text-muted-foreground">No invitations yet.</p>
         ) : (
-          <div className="space-y-4">
-            {invitations.map((invitation, index) => {
+          <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full min-w-[600px] text-left text-sm">
+            <thead className="border-b bg-muted/40 text-xs font-medium uppercase tracking-wide text-muted-foreground"><tr><th className="px-4 py-3">Email</th><th className="px-4 py-3">Role</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Expires</th><th className="px-4 py-3 text-right"><span className="sr-only">Actions</span></th></tr></thead>
+            <tbody className="divide-y">
+            {invitations.map((invitation) => {
               const actionable = invitation.status === "pending" || invitation.status === "expired";
               return (
-                <div key={invitation.id}>
-                  {index > 0 ? <Separator className="mb-4" /> : null}
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{invitation.email}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{invitation.role.name} · {invitation.status}</p>
-                    </div>
-                    {canManage && actionable ? (
-                      <div className="flex gap-1">
+                <tr key={invitation.id}>
+                    <td className="px-4 py-3 font-medium">{invitation.email}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{invitation.role.name}</td>
+                    <td className="px-4 py-3"><span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium capitalize text-amber-700 dark:text-amber-400">{invitation.status}</span></td>
+                    <td className="px-4 py-3 whitespace-nowrap text-muted-foreground"><time dateTime={invitation.expiresAt}>{new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(invitation.expiresAt))}</time></td>
+                    <td className="px-4 py-3 text-right">{canManage && actionable ? (
+                      <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="sm" type="button" onClick={() => resend(invitation)} disabled={busyId === invitation.id}>Resend</Button>
                         <Button variant="ghost" size="sm" type="button" onClick={() => revoke(invitation)} disabled={busyId === invitation.id}>Revoke</Button>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
+                      </div>) : null}</td>
+                </tr>
               );
             })}
+            </tbody>
+          </table>
           </div>
         )}
       </CardContent>
