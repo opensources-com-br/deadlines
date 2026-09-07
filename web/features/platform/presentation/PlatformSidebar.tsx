@@ -49,7 +49,7 @@ export function PlatformSidebar({ activeItem, user, onSignOut, onSettingsSelect,
 
   return (
     <Sidebar variant="floating" collapsible="icon">
-      <SidebarHeader className="p-3">
+      <SidebarHeader className="p-4">
         <Link
           href="/app"
           aria-label="Go to platform home"
