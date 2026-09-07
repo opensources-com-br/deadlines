@@ -2,23 +2,49 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Settings } from "lucide-react";
+import { CircleUserRound, CreditCard, EllipsisVertical, LogOut, Settings, ShieldCheck } from "lucide-react";
 
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
-type PlatformSidebarProps = { activeItem: PlatformNavigationItem };
+import type { UserProfile } from "@/features/platform/domain/user-profile";
+
+type PlatformSidebarProps = {
+  activeItem: PlatformNavigationItem;
+  user: UserProfile;
+  onSignOut: () => void;
+  isSigningOut: boolean;
+};
 
 export type SettingsSection = "organization" | "plans" | "team" | "access-control" | "security" | "account";
 export type PlatformNavigationItem = "settings" | SettingsSection;
 
-export function PlatformSidebar({ activeItem }: PlatformSidebarProps) {
+function userInitials(user: UserProfile) {
+  return `${user.profile.firstName[0] ?? ""}${user.profile.lastName[0] ?? ""}`.toUpperCase() || user.email.slice(0, 2).toUpperCase();
+}
+
+export function PlatformSidebar({ activeItem, user, onSignOut, isSigningOut }: PlatformSidebarProps) {
+  const { isMobile } = useSidebar();
+  const name = `${user.profile.firstName} ${user.profile.lastName}`.trim() || user.email;
+
   return (
     <Sidebar variant="floating" collapsible="icon">
       <SidebarHeader className="p-3">
@@ -39,6 +65,57 @@ export function PlatformSidebar({ activeItem }: PlatformSidebarProps) {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="p-3">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="aria-expanded:bg-sidebar-accent" />}>
+                <Avatar className="rounded-lg">
+                  <AvatarFallback className="rounded-lg">{userInitials(user)}</AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+                  <span className="truncate font-medium">{name}</span>
+                  <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                </div>
+                <EllipsisVertical className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="min-w-56" side={isMobile ? "bottom" : "right"} align="end" sideOffset={4}>
+                <DropdownMenuLabel className="p-1 font-normal">
+                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                    <Avatar className="rounded-lg">
+                      <AvatarFallback className="rounded-lg">{userInitials(user)}</AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 leading-tight">
+                      <span className="truncate font-medium">{name}</span>
+                      <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem render={<Link href="/app/settings?section=account" />}>
+                    <CircleUserRound />
+                    Account
+                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/app/settings?section=plans" />}>
+                    <CreditCard />
+                    Plans
+                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/app/settings?section=security" />}>
+                    <ShieldCheck />
+                    Security
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled={isSigningOut} onClick={onSignOut}>
+                  <LogOut />
+                  {isSigningOut ? "Signing out..." : "Log out"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

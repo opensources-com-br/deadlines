@@ -143,7 +143,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
 
   return (
     <SidebarProvider>
-      <PlatformSidebar activeItem="settings" />
+      <PlatformSidebar activeItem="settings" user={user} onSignOut={() => void handleSignOut()} isSigningOut={isSigningOut} />
       <SidebarInset className="min-h-svh bg-background text-foreground">
       <header className="w-full py-4">
         <div className="flex w-full items-center justify-between px-[30px]">
