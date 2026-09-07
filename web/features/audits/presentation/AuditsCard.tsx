@@ -2,7 +2,8 @@
 
 import { CalendarIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { enUS, ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +52,7 @@ function AuditDatePicker({ label, value, endOfDay, disabled, placeholder, clearL
   clearLabel: string;
   onChange: (value: string) => void;
 }) {
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const selected = value ? new Date(value) : undefined;
 
@@ -64,12 +66,13 @@ function AuditDatePicker({ label, value, endOfDay, disabled, placeholder, clearL
         >
           <CalendarIcon className="text-muted-foreground" aria-hidden="true" />
           {selected
-            ? new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(selected)
+            ? new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(selected)
             : <span className="text-muted-foreground">{placeholder}</span>}
         </PopoverTrigger>
         <PopoverContent align="start" className="w-auto p-0">
           <Calendar
             mode="single"
+            locale={locale === "pt-BR" ? ptBR : enUS}
             selected={selected}
             onSelect={(date) => {
               if (!date) return;
