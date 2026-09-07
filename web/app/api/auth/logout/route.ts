@@ -22,5 +22,7 @@ export async function POST() {
   const response = new NextResponse(null, { status: 204 });
   response.cookies.delete(accessCookieName);
   response.cookies.delete(refreshCookieName);
+  response.headers.set("Cache-Control", "private, no-store, no-cache, must-revalidate, max-age=0");
+  response.headers.set("Clear-Site-Data", '"cache"');
   return response;
 }

@@ -47,8 +47,7 @@ export function CreateOrganizationScreen() {
   async function handleSignOut() {
     setIsSigningOut(true);
     await fetch("/api/auth/logout", { method: "POST" });
-    router.replace("/login");
-    router.refresh();
+    window.location.replace("/login");
   }
 
   return (

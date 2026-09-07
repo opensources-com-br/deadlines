@@ -24,8 +24,7 @@ export function PlatformBlankHome({ user }: PlatformBlankHomeProps) {
     setIsSigningOut(true);
     await fetch("/api/auth/logout", { method: "POST" });
     toast.success("You have been signed out.");
-    router.replace("/login");
-    router.refresh();
+    window.location.replace("/login");
   }
 
   return (

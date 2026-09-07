@@ -81,8 +81,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
     setIsSigningOut(true);
     await fetch("/api/auth/logout", { method: "POST" });
     toast.success("You have been signed out.");
-    router.replace("/login");
-    router.refresh();
+    window.location.replace("/login");
   }
 
   async function handleProfileUpdate(event: FormEvent<HTMLFormElement>) {
