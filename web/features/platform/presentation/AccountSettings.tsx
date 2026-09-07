@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { changePassword, updateUserProfile } from "@/features/platform/infrastructure/profile-api";
 
@@ -21,6 +22,7 @@ export function AccountSettings({ user }: { user: UserProfile }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [locale, setLocale] = useState("pt-BR");
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setIsSaving(true);
@@ -45,6 +47,27 @@ export function AccountSettings({ user }: { user: UserProfile }) {
     <Card>
       <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4"><div><CardTitle>Password</CardTitle><CardDescription>Choose a strong password to protect your account.</CardDescription></div>{!isChangingPassword ? <Button variant="outline" onClick={() => setIsChangingPassword(true)}>Change password</Button> : null}</CardHeader>
       {isChangingPassword ? <CardContent><form onSubmit={savePassword}><FieldGroup><Field><FieldLabel htmlFor="current-password">Current password</FieldLabel><Input id="current-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></Field><Field><FieldLabel htmlFor="new-password">New password</FieldLabel><Input id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={12} maxLength={72} required /><p className="text-xs text-muted-foreground">Use between 12 and 72 characters.</p></Field><Field><FieldLabel htmlFor="password-confirmation">Confirm new password</FieldLabel><Input id="password-confirmation" type="password" autoComplete="new-password" value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} minLength={12} maxLength={72} required /></Field><Field orientation="horizontal" className="justify-end"><Button variant="outline" type="button" disabled={isSaving} onClick={() => { setCurrentPassword(""); setNewPassword(""); setPasswordConfirmation(""); setIsChangingPassword(false); }}>Cancel</Button><Button type="submit" disabled={isSaving}>{isSaving ? "Changing..." : "Update password"}</Button></Field></FieldGroup></form></CardContent> : null}
+    </Card>
+    <Card>
+      <CardHeader>
+        <CardTitle>Language and region</CardTitle>
+        <CardDescription>Choose the language used for navigation, dates, and messages.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Field className="max-w-sm">
+          <FieldLabel>Language</FieldLabel>
+          <Select value={locale} onValueChange={(value) => value && setLocale(value)}>
+            <SelectTrigger className="w-full" aria-label="Language">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="start">
+              <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
+              <SelectItem value="en">English</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">Dates and numbers are displayed using this language.</p>
+        </Field>
+      </CardContent>
     </Card>
   </div>;
 }
