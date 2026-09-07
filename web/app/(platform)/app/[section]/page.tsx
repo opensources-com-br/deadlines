@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 import type { AccessList, Permission, Role } from "@/features/access/domain/access";
+import type { AuthorizationContext } from "@/features/access/domain/authorization";
+import { AuthorizationProvider } from "@/features/access/presentation/AuthorizationProvider";
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import type { Organization } from "@/features/organizations/domain/organization";
 import type { SessionList } from "@/features/platform/domain/session";
@@ -53,10 +55,11 @@ export default async function PlatformSectionPage({ params, searchParams }: Plat
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store" as const,
   };
-  const [response, sessionsResponse, organizationResponse, permissionsResponse, rolesResponse, membersResponse, invitationsResponse] = await Promise.all([
+  const [response, sessionsResponse, organizationResponse, authorizationResponse, permissionsResponse, rolesResponse, membersResponse, invitationsResponse] = await Promise.all([
     fetch(backendApiUrl("/api/v1/users/me"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/sessions"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/organizations/current"), authenticatedRequest).catch(() => undefined),
+    fetch(backendApiUrl("/api/v1/users/me/authorization"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/permissions"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/roles"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/members"), authenticatedRequest).catch(() => undefined),
@@ -66,9 +69,11 @@ export default async function PlatformSectionPage({ params, searchParams }: Plat
   if (!response?.ok) redirect(refreshToken && (recentActivity || persistentSession) && response?.status === 401 ? `/api/auth/refresh?returnTo=${encodeURIComponent(returnTo)}` : "/login");
   if (organizationResponse?.status === 404) redirect("/onboarding/organization");
   if (!organizationResponse?.ok) redirect("/login");
+  if (!authorizationResponse?.ok) redirect("/login");
 
   const user = (await response.json()) as UserProfile;
   const organization = (await organizationResponse.json()) as Organization;
+  const authorization = (await authorizationResponse.json()) as AuthorizationContext;
   const sessions = sessionsResponse?.ok ? ((await sessionsResponse.json()) as SessionList).data : [];
   const permissions = permissionsResponse?.ok ? ((await permissionsResponse.json()) as AccessList<Permission>).data : [];
   const roles = rolesResponse?.ok ? ((await rolesResponse.json()) as AccessList<Role>).data : [];
@@ -76,16 +81,18 @@ export default async function PlatformSectionPage({ params, searchParams }: Plat
   const invitations = invitationsResponse?.ok ? ((await invitationsResponse.json()) as TeamList<OrganizationInvitation>).data : [];
 
   return (
-    <PlatformHome
-      user={user}
-      organization={organization}
-      sessions={sessions}
-      permissions={permissions}
-      roles={roles}
-      members={members}
-      invitations={invitations}
-      section={section as PlatformNavigationItem}
-      settingsSection={settingsSections.has(settingsSection as SettingsSection) ? settingsSection as SettingsSection : undefined}
-    />
+    <AuthorizationProvider authorization={authorization}>
+      <PlatformHome
+        user={user}
+        organization={organization}
+        sessions={sessions}
+        permissions={permissions}
+        roles={roles}
+        members={members}
+        invitations={invitations}
+        section={section as PlatformNavigationItem}
+        settingsSection={settingsSections.has(settingsSection as SettingsSection) ? settingsSection as SettingsSection : undefined}
+      />
+    </AuthorizationProvider>
   );
 }
