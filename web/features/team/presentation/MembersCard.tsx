@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Role } from "@/features/access/domain/access";
 import type { OrganizationMember } from "@/features/team/domain/team";
 import { teamApi } from "@/features/team/infrastructure/team-api";
@@ -71,18 +72,19 @@ export function MembersCard({ initialMembers, roles, canManage }: MembersCardPro
                   <td className="px-4 py-3"><div className="flex min-w-0 items-center gap-3"><Avatar className="size-8"><AvatarFallback>{`${member.firstName[0] ?? ""}${member.lastName[0] ?? ""}`.toUpperCase()}</AvatarFallback></Avatar><div className="min-w-0"><p className="truncate font-medium">{member.firstName} {member.lastName}</p><p className="truncate text-xs text-muted-foreground">{member.email}</p></div></div></td>
                   <td className="px-4 py-3">
                     {canManage && !isOwner ? (
-                      <Select
-                        value={member.role.id}
-                        onValueChange={(value) => changeRole(member, value)}
-                        disabled={busyMemberId === member.id}
-                      >
-                        <SelectTrigger size="sm" className="min-w-32">
-                          <SelectValue>{member.role.name}</SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {assignableRoles.map((role) => <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          disabled={busyMemberId === member.id}
+                          render={<Button variant="outline" size="sm" className="min-w-32 justify-between" />}
+                        >
+                          {member.role.name}<ChevronDown />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuRadioGroup value={member.role.id} onValueChange={(value) => changeRole(member, value)}>
+                            {assignableRoles.map((role) => <DropdownMenuRadioItem key={role.id} value={role.id}>{role.name}</DropdownMenuRadioItem>)}
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     ) : (
                       <span className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground">{member.role.name}</span>
                     )}
