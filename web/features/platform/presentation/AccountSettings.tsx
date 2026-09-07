@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,8 @@ import { changePassword, updateUserProfile } from "@/features/platform/infrastru
 
 export function AccountSettings({ user }: { user: UserProfile }) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations("LocaleSwitcher");
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -22,7 +25,25 @@ export function AccountSettings({ user }: { user: UserProfile }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [locale, setLocale] = useState("pt-BR");
+  const [isChangingLocale, setIsChangingLocale] = useState(false);
+
+  async function changeLocale(nextLocale: string) {
+    if (nextLocale === locale) return;
+    setIsChangingLocale(true);
+    try {
+      const response = await fetch("/api/locale", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locale: nextLocale }),
+      });
+      if (!response.ok) throw new Error(t("error"));
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("error"));
+    } finally {
+      setIsChangingLocale(false);
+    }
+  }
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setIsSaving(true);
@@ -50,14 +71,14 @@ export function AccountSettings({ user }: { user: UserProfile }) {
     </Card>
     <Card>
       <CardHeader>
-        <CardTitle>Language and region</CardTitle>
-        <CardDescription>Choose the language used for navigation, dates, and messages.</CardDescription>
+        <CardTitle>{t("title")}</CardTitle>
+        <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <Field className="max-w-sm">
-          <FieldLabel>Language</FieldLabel>
-          <Select value={locale} onValueChange={(value) => value && setLocale(value)}>
-            <SelectTrigger className="w-full" aria-label="Language">
+          <FieldLabel>{t("label")}</FieldLabel>
+          <Select value={locale} disabled={isChangingLocale} onValueChange={(value) => value && void changeLocale(value)}>
+            <SelectTrigger className="w-full" aria-label={t("label")}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent align="start">
@@ -65,7 +86,7 @@ export function AccountSettings({ user }: { user: UserProfile }) {
               <SelectItem value="en">English</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">Dates and numbers are displayed using this language.</p>
+          <p className="text-xs text-muted-foreground">{t("help")}</p>
         </Field>
       </CardContent>
     </Card>

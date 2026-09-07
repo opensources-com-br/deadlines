@@ -1,0 +1,9 @@
+{
+  "LocaleSwitcher": {
+    "title": "Language and region",
+    "description": "Choose the language used for navigation, dates, and messages.",
+    "label": "Language",
+    "help": "Dates and numbers are displayed using this language.",
+    "error": "Unable to change the language."
+  }
+}

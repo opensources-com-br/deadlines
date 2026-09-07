@@ -1,0 +1,9 @@
+{
+  "LocaleSwitcher": {
+    "title": "Idioma e região",
+    "description": "Escolha o idioma usado na navegação, nas datas e nas mensagens.",
+    "label": "Idioma",
+    "help": "Datas e números são exibidos usando este idioma.",
+    "error": "Não foi possível alterar o idioma."
+  }
+}
