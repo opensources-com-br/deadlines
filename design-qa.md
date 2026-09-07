@@ -1,43 +1,48 @@
-# Design QA — sidebar refinements
+# Design QA — Settings tabs
 
-- Source visual truth: `/var/folders/15/bsnxdb1n0r9446hfq1kl71t80000gn/T/codex-clipboard-9a5179fa-5965-4ebe-a8f1-5aefbefb727a.png`
-- Implementation URL inspected: `http://localhost:3000/app`
-- Browser viewport: default in-app browser viewport
-- State requested: desktop, authenticated application with the sidebar expanded
+- Source visual truth: `/var/folders/15/bsnxdb1n0r9446hfq1kl71t80000gn/T/codex-clipboard-22566d89-5049-4a3a-b3a6-e0f8a44795c2.png`
+- Implementation URL attempted: `http://localhost:3001/app/organization`
+- Intended viewport: desktop web app; source is 453 × 103 px
+- Implementation screenshot: unavailable
+- State: Settings with an active primary and secondary tab
 
 ## Full-view comparison evidence
 
-The reference is available, but the local application redirects to the login screen before the authenticated sidebar renders. The resulting browser DOM exposes only the login form, so it is not the same visual state and cannot be compared reliably.
+The source image was opened and inspected. It specifies a compact dark tab capsule with a 12 px outer radius, fine neutral border, 4 px inner gap/padding, muted inactive labels, and a filled rounded active state.
+
+The browser could not reach the locally launched Next.js server (`ERR_CONNECTION_REFUSED`), so no browser-rendered implementation screenshot was available for a faithful comparison.
 
 ## Focused region comparison evidence
 
-Blocked: the sidebar toggle, its border, and the new header divider are behind authentication; no implementation crop exists for a meaningful comparison.
+Blocked: the settings tabs could not be captured in the running application. The source region is small and requires a same-state rendered crop to validate its tab height, radius, spacing, and selected state.
 
 ## Required fidelity surfaces
 
-- Fonts and typography: blocked by the authenticated route.
-- Spacing and layout rhythm: code updates set the floating sidebar to a 20 px radius and preserve its existing spacing.
-- Colors and visual tokens: code updates use the existing `border-border`, `muted`, and `sidebar-accent` tokens.
-- Image quality and asset fidelity: no image assets changed.
-- Copy and content: no copy changed.
+- Fonts and typography: implementation uses the existing Geist-based application typography; browser-rendered weights and antialiasing remain unverified.
+- Spacing and layout rhythm: code sets a compact capsule, 4 px internal gap, and 9 px selected-tab radius; visual comparison remains blocked.
+- Colors and visual tokens: code maps the source’s dark surface to existing `card`, `border`, `secondary`, and muted text tokens; browser contrast remains unverified.
+- Image quality and asset fidelity: no image assets are part of the requested tab control.
+- Copy and content: application tab labels remain unchanged by design.
 
 ## Interaction and console checks
 
-- `npm run lint` passed.
-- The public local route loaded without a browser-rendering error, but authentication prevented testing the sidebar interaction.
+- The local server was started, but the browser connection to `localhost:3001` was refused.
+- Browser interaction of primary and secondary tabs could not be tested.
+- Console inspection could not be completed without a loaded application page.
 
 ## Findings
 
-- [P2] Authenticated sidebar visual comparison is unavailable.
-  Location: `/app` local route.
-  Evidence: the browser was redirected to the login form instead of rendering the requested sidebar state.
-  Impact: visual fidelity against the reference cannot be signed off.
-  Fix: provide an authenticated local session or a route that renders the sidebar in isolation, then capture the same desktop state and compare it with the source image.
+- [P2] Browser-rendered tab comparison is unavailable.
+  Location: `web/components/ui/tabs.tsx`.
+  Evidence: the source visual is available; the corresponding local page could not load in the in-app browser.
+  Impact: the component cannot receive a visual-fidelity sign-off yet.
+  Fix: run the local application on a browser-reachable port, capture `/app/organization` with the active tab state, and compare the focused tab control against the reference.
 
 ## Implementation Checklist
 
-1. Open an authenticated desktop app session.
-2. Capture the expanded sidebar and header at the reference viewport.
-3. Compare the radius, toggle outline, and divider with the source image.
+1. Start the web app on a browser-reachable local port.
+2. Capture the Settings tabs with Organization and General selected.
+3. Test category and subtab navigation and check console errors.
+4. Update this report with the rendered crop and final comparison.
 
 final result: blocked

@@ -9,11 +9,11 @@ function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive
 }
 
 function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {
-  return <TabsPrimitive.List data-slot="tabs-list" className={cn("flex w-full items-center gap-1 overflow-x-auto border-b", className)} {...props} />
+  return <TabsPrimitive.List data-slot="tabs-list" className={cn("flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-xl border bg-card/60 p-1", className)} {...props} />
 }
 
 function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Tab>) {
-  return <TabsPrimitive.Tab data-slot="tabs-trigger" className={cn("relative shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-[active]:border-foreground data-[active]:text-foreground", className)} {...props} />
+  return <TabsPrimitive.Tab data-slot="tabs-trigger" className={cn("shrink-0 rounded-[9px] px-4 py-2 text-sm font-semibold text-muted-foreground outline-none transition-[background-color,color,box-shadow] duration-150 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-[active]:bg-secondary data-[active]:text-secondary-foreground data-[active]:shadow-sm", className)} {...props} />
 }
 
 export { Tabs, TabsList, TabsTrigger }

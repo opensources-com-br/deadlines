@@ -92,8 +92,8 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
             {settingsNavigation.map((group) => <TabsTrigger key={group.key} value={group.key}>{group.label}</TabsTrigger>)}
           </TabsList>
           <Tabs value={activeSettingsSection} onValueChange={(value) => router.push(`/app/${value}`)}>
-            <TabsList aria-label={`${activeGroup.label} settings`} className="gap-2 border-0">
-              {activeGroup.items.map((item) => <TabsTrigger key={item.key} value={item.key} className="rounded-md border-0 px-3 py-1.5 data-[active]:bg-muted data-[active]:text-foreground">{item.label}</TabsTrigger>)}
+            <TabsList aria-label={`${activeGroup.label} settings`}>
+              {activeGroup.items.map((item) => <TabsTrigger key={item.key} value={item.key}>{item.label}</TabsTrigger>)}
             </TabsList>
           </Tabs>
         </Tabs>
