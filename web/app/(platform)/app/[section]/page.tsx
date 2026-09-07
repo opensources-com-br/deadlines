@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import type { AccessList, Permission, Role } from "@/features/access/domain/access";
 import type { AuthorizationContext } from "@/features/access/domain/authorization";
+import { platformPermission } from "@/features/access/domain/authorization";
 import { AuthorizationProvider } from "@/features/access/presentation/AuthorizationProvider";
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import type { Organization } from "@/features/organizations/domain/organization";
@@ -55,25 +56,31 @@ export default async function PlatformSectionPage({ params, searchParams }: Plat
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store" as const,
   };
-  const [response, sessionsResponse, organizationResponse, authorizationResponse, permissionsResponse, rolesResponse, membersResponse, invitationsResponse] = await Promise.all([
+  const [response, sessionsResponse, authorizationResponse] = await Promise.all([
     fetch(backendApiUrl("/api/v1/users/me"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/sessions"), authenticatedRequest).catch(() => undefined),
-    fetch(backendApiUrl("/api/v1/organizations/current"), authenticatedRequest).catch(() => undefined),
     fetch(backendApiUrl("/api/v1/users/me/authorization"), authenticatedRequest).catch(() => undefined),
-    fetch(backendApiUrl("/api/v1/permissions"), authenticatedRequest).catch(() => undefined),
-    fetch(backendApiUrl("/api/v1/roles"), authenticatedRequest).catch(() => undefined),
-    fetch(backendApiUrl("/api/v1/members"), authenticatedRequest).catch(() => undefined),
-    fetch(backendApiUrl("/api/v1/invitations"), authenticatedRequest).catch(() => undefined),
   ]);
 
   if (!response?.ok) redirect(refreshToken && (recentActivity || persistentSession) && response?.status === 401 ? `/api/auth/refresh?returnTo=${encodeURIComponent(returnTo)}` : "/login");
-  if (organizationResponse?.status === 404) redirect("/onboarding/organization");
-  if (!organizationResponse?.ok) redirect("/login");
+  if (authorizationResponse?.status === 404) redirect("/onboarding/organization");
   if (!authorizationResponse?.ok) redirect("/login");
 
   const user = (await response.json()) as UserProfile;
-  const organization = (await organizationResponse.json()) as Organization;
   const authorization = (await authorizationResponse.json()) as AuthorizationContext;
+  const can = (permission: string) => authorization.permissions.includes(permission);
+  const fetchWhen = (allowed: boolean, path: string) => allowed
+    ? fetch(backendApiUrl(path), authenticatedRequest).catch(() => undefined)
+    : Promise.resolve(undefined);
+  const [organizationResponse, permissionsResponse, rolesResponse, membersResponse, invitationsResponse] = await Promise.all([
+    fetchWhen(can(platformPermission.organizationRead), "/api/v1/organizations/current"),
+    fetchWhen(can(platformPermission.permissionsRead), "/api/v1/permissions"),
+    fetchWhen(can(platformPermission.rolesRead), "/api/v1/roles"),
+    fetchWhen(can(platformPermission.membersRead), "/api/v1/members"),
+    fetchWhen(can(platformPermission.membersInvite), "/api/v1/invitations"),
+  ]);
+
+  const organization = organizationResponse?.ok ? (await organizationResponse.json()) as Organization : null;
   const sessions = sessionsResponse?.ok ? ((await sessionsResponse.json()) as SessionList).data : [];
   const permissions = permissionsResponse?.ok ? ((await permissionsResponse.json()) as AccessList<Permission>).data : [];
   const roles = rolesResponse?.ok ? ((await rolesResponse.json()) as AccessList<Role>).data : [];
