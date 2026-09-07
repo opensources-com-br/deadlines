@@ -17,8 +17,8 @@ fun testAuthorization(
         )
     return AuthorizationService(
         object : AuthorizationRepository {
-            override suspend fun findByUserId(candidate: UUID): AuthorizationContext? =
-                context.takeIf { candidate == userId }
+            override suspend fun findByUserId(userId: UUID): AuthorizationContext? =
+                context.takeIf { it.userId == userId }
         },
     )
 }
