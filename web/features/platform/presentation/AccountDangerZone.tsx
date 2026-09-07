@@ -85,7 +85,9 @@ function ActionRow({ icon, title, description, action, buttonLabel }: {
     } catch (error) {
       const message = error instanceof AccountActionError && error.code === "ACCOUNT_OWNER_CONFLICT"
         ? t("ownerConflict")
-        : error instanceof Error ? error.message : t("accountActionError");
+        : error instanceof AccountActionError && error.code === "INVALID_CURRENT_PASSWORD"
+          ? t("invalidAccountPassword")
+          : error instanceof Error ? error.message : t("accountActionError");
       toast.error(message);
       setIsSubmitting(false);
     }
