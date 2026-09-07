@@ -12,6 +12,7 @@ import deadlines.identity.email.EmailVerificationOperations
 import deadlines.identity.email.PasswordResetOperations
 import deadlines.identity.email.emailRoutes
 import deadlines.identity.users.UserService
+import deadlines.identity.users.AccountLifecycleOperations
 import deadlines.identity.users.userRoutes
 import deadlines.identity.preferences.UserPreferenceOperations
 import deadlines.identity.preferences.userPreferenceRoutes
@@ -58,6 +59,7 @@ fun Application.configureRoutes(
     subscriptionService: SubscriptionOperations? = null,
     userPreferenceService: UserPreferenceOperations? = null,
     authorizationService: AuthorizationOperations? = null,
+    accountLifecycleService: AccountLifecycleOperations? = null,
 ) {
     routing {
         if (planService != null) planRoutes(planService)
@@ -70,7 +72,7 @@ fun Application.configureRoutes(
         }
 
         if (userService != null) {
-            userRoutes(userService)
+            userRoutes(userService, accountLifecycleService)
         }
         if (authService != null) {
             authRoutes(authService)

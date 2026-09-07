@@ -16,7 +16,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import java.util.UUID
 
-fun Route.userRoutes(service: UserService) {
+fun Route.userRoutes(service: UserService, lifecycle: AccountLifecycleOperations? = null) {
     route("/api/v1/users") {
         authenticate("auth-jwt") {
             route("/me") {
@@ -27,6 +27,20 @@ fun Route.userRoutes(service: UserService) {
                 patch {
                     val user = service.updateOwnProfile(call.authenticatedUserId(), call.receive())
                     call.respond(user.toResponse())
+                }
+
+                if (lifecycle != null) {
+                    post("/deactivate") {
+                        val request = call.receive<ConfirmAccountActionRequest>()
+                        lifecycle.deactivate(call.authenticatedUserId(), request.password)
+                        call.respond(HttpStatusCode.NoContent)
+                    }
+
+                    delete {
+                        val request = call.receive<ConfirmAccountActionRequest>()
+                        lifecycle.delete(call.authenticatedUserId(), request.password)
+                        call.respond(HttpStatusCode.NoContent)
+                    }
                 }
             }
         }

@@ -21,6 +21,9 @@ import deadlines.identity.email.PasswordResetOperations
 import deadlines.identity.email.PasswordResetService
 import deadlines.identity.users.ExposedUserCredentialsRepository
 import deadlines.identity.users.ExposedUserRepository
+import deadlines.identity.users.AccountLifecycleService
+import deadlines.identity.users.AccountPasswordVerifier
+import deadlines.identity.users.ExposedAccountLifecycleRepository
 import deadlines.identity.users.UserService
 import deadlines.identity.preferences.ExposedUserPreferenceRepository
 import deadlines.identity.preferences.UserPreferenceOperations
@@ -80,6 +83,13 @@ fun main() {
         val memberRepository = ExposedMemberRepository(query)
         val memberService = MemberService(authorizationService, memberRepository, roleRepository)
         val passwordHasher = BcryptPasswordHasher()
+        val accountLifecycleService =
+            AccountLifecycleService(
+                userRepository,
+                organizationRepository,
+                AccountPasswordVerifier(credentialsRepository, passwordHasher),
+                ExposedAccountLifecycleRepository(query),
+            )
         val emailTokens = ExposedEmailTokenRepository(query)
         val emailService =
             when (config.email.provider) {
@@ -128,6 +138,7 @@ fun main() {
                 subscriptionService,
                 userPreferenceService,
                 authorizationService,
+                accountLifecycleService,
             )
         }.start(wait = true)
     }
@@ -150,6 +161,7 @@ fun Application.module(
     subscriptionService: SubscriptionOperations? = null,
     userPreferenceService: UserPreferenceOperations? = null,
     authorizationService: AuthorizationOperations? = null,
+    accountLifecycleService: deadlines.identity.users.AccountLifecycleOperations? = null,
 ) {
     configurePlugins(tokenService)
     configureRoutes(
@@ -168,5 +180,6 @@ fun Application.module(
         subscriptionService,
         userPreferenceService,
         authorizationService,
+        accountLifecycleService,
     )
 }

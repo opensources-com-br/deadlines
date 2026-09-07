@@ -28,6 +28,11 @@ data class UpdateOwnProfileRequest(
 )
 
 @Serializable
+data class ConfirmAccountActionRequest(
+    val password: String,
+)
+
+@Serializable
 data class UserResponse(
     val id: String,
     val email: String,
