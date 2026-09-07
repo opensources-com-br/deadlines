@@ -47,5 +47,24 @@
     "notifications": "Notificações",
     "signingOut": "Saindo...",
     "logout": "Sair"
+  },
+  "Organization": {
+    "details": "Detalhes da organização",
+    "detailsDescription": "O nome e o endereço usados para identificar este workspace.",
+    "edit": "Editar detalhes",
+    "name": "Nome da organização",
+    "workspaceUrl": "URL do workspace",
+    "cancel": "Cancelar",
+    "saving": "Salvando...",
+    "save": "Salvar alterações",
+    "updated": "Sua organização foi atualizada.",
+    "updateError": "Não foi possível atualizar sua organização.",
+    "yourRole": "Sua função",
+    "owner": "Proprietário",
+    "member": "Membro",
+    "ownership": "Propriedade do workspace",
+    "ownershipDescription": "Proprietários podem gerenciar membros, controle de acesso e cobrança. A transferência de propriedade estará disponível futuramente.",
+    "currentAccess": "Seu acesso atual: {role}",
+    "created": "Criada em {date}"
   }
 }

@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,8 @@ type OrganizationCardProps = {
 };
 
 export function OrganizationCard({ organization: initialOrganization }: OrganizationCardProps) {
+  const t = useTranslations("Organization");
+  const locale = useLocale();
   const [organization, setOrganization] = useState(initialOrganization);
   const [name, setName] = useState(initialOrganization.name);
   const [slug, setSlug] = useState(initialOrganization.slug);
@@ -30,9 +33,9 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
       setName(updated.name);
       setSlug(updated.slug);
       setIsEditing(false);
-      toast.success("Your organization has been updated.");
+      toast.success(t("updated"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to update your organization.");
+      toast.error(error instanceof Error ? error.message : t("updateError"));
     } finally {
       setIsSaving(false);
     }
@@ -49,12 +52,12 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
       <Card>
         <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
           <div>
-            <CardTitle>Organization details</CardTitle>
-            <CardDescription className="mt-1">The name and address people use to identify this workspace.</CardDescription>
+            <CardTitle>{t("details")}</CardTitle>
+            <CardDescription className="mt-1">{t("detailsDescription")}</CardDescription>
           </div>
           {!isEditing && organization.role === "owner" ? (
             <Button variant="outline" type="button" onClick={() => setIsEditing(true)}>
-              Edit details
+              {t("edit")}
             </Button>
           ) : null}
         </CardHeader>
@@ -63,7 +66,7 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="organization-settings-name">Organization name</FieldLabel>
+                <FieldLabel htmlFor="organization-settings-name">{t("name")}</FieldLabel>
                 <Input
                   id="organization-settings-name"
                   value={name}
@@ -74,7 +77,7 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="organization-settings-slug">Workspace URL</FieldLabel>
+                <FieldLabel htmlFor="organization-settings-slug">{t("workspaceUrl")}</FieldLabel>
                 <Input
                   id="organization-settings-slug"
                   value={slug}
@@ -87,10 +90,10 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
               </Field>
               <Field orientation="horizontal" className="justify-end">
                 <Button variant="outline" type="button" onClick={handleCancel} disabled={isSaving}>
-                  Cancel
+                  {t("cancel")}
                 </Button>
                 <Button type="submit" disabled={isSaving}>
-                  {isSaving ? "Saving..." : "Save changes"}
+                  {isSaving ? t("saving") : t("save")}
                 </Button>
               </Field>
             </FieldGroup>
@@ -98,16 +101,16 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
         ) : (
           <dl className="space-y-5">
             <div className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-6">
-              <dt className="text-sm text-muted-foreground">Name</dt>
+              <dt className="text-sm text-muted-foreground">{t("name")}</dt>
               <dd className="text-sm font-medium">{organization.name}</dd>
             </div>
             <div className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-6">
-              <dt className="text-sm text-muted-foreground">Workspace URL</dt>
+              <dt className="text-sm text-muted-foreground">{t("workspaceUrl")}</dt>
               <dd className="text-sm font-medium">deadlines.app/{organization.slug}</dd>
             </div>
             <div className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-6">
-              <dt className="text-sm text-muted-foreground">Your role</dt>
-              <dd className="text-sm font-medium capitalize">{organization.role}</dd>
+              <dt className="text-sm text-muted-foreground">{t("yourRole")}</dt>
+              <dd className="text-sm font-medium">{t(organization.role)}</dd>
             </div>
           </dl>
         )}
@@ -115,12 +118,12 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
       </Card>
       <Card className="border-dashed bg-muted/20">
         <CardHeader>
-          <CardTitle>Workspace ownership</CardTitle>
-          <CardDescription>Owners can manage members, access control, and billing. Ownership transfer will be available in a future update.</CardDescription>
+          <CardTitle>{t("ownership")}</CardTitle>
+          <CardDescription>{t("ownershipDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Your current access: <span className="font-medium capitalize text-foreground">{organization.role}</span></p>
-          <p className="mt-2 text-xs text-muted-foreground">Created {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(organization.createdAt))}</p>
+          <p className="text-sm text-muted-foreground">{t("currentAccess", { role: t(organization.role) })}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{t("created", { date: new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(organization.createdAt)) })}</p>
         </CardContent>
       </Card>
     </div>

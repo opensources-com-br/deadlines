@@ -47,5 +47,24 @@
     "notifications": "Notifications",
     "signingOut": "Signing out...",
     "logout": "Log out"
+  },
+  "Organization": {
+    "details": "Organization details",
+    "detailsDescription": "The name and address people use to identify this workspace.",
+    "edit": "Edit details",
+    "name": "Organization name",
+    "workspaceUrl": "Workspace URL",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "save": "Save changes",
+    "updated": "Your organization has been updated.",
+    "updateError": "Unable to update your organization.",
+    "yourRole": "Your role",
+    "owner": "Owner",
+    "member": "Member",
+    "ownership": "Workspace ownership",
+    "ownershipDescription": "Owners can manage members, access control, and billing. Ownership transfer will be available in a future update.",
+    "currentAccess": "Your current access: {role}",
+    "created": "Created {date}"
   }
 }
