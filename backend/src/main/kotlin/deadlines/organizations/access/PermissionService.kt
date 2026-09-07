@@ -2,10 +2,8 @@ package deadlines.organizations.access
 
 import deadlines.organizations.audits.withAuditActor
 
-import deadlines.organizations.MembershipRole
-import deadlines.organizations.OrganizationAccessDeniedException
-import deadlines.organizations.OrganizationNotFoundException
-import deadlines.organizations.OrganizationRepository
+import deadlines.organizations.authorization.AuthorizationOperations
+import deadlines.organizations.authorization.PlatformPermission
 import java.time.Clock
 import java.util.UUID
 
@@ -22,24 +20,24 @@ interface PermissionOperations {
 }
 
 class PermissionService(
-    private val organizations: OrganizationRepository,
+    private val authorization: AuthorizationOperations,
     private val permissions: PermissionRepository,
     private val clock: Clock = Clock.systemUTC(),
     private val idGenerator: () -> UUID = UUID::randomUUID,
 ) : PermissionOperations {
     override suspend fun list(userId: UUID): PermissionListResponse {
-        val context = organizations.findCurrentByUser(userId) ?: throw OrganizationNotFoundException()
-        return PermissionListResponse(permissions.list(context.organization.id).map(Permission::toResponse))
+        val context = authorization.requirePermission(userId, PlatformPermission.PERMISSIONS_READ)
+        return PermissionListResponse(permissions.list(context.organizationId).map(Permission::toResponse))
     }
 
     override suspend fun get(userId: UUID, permissionId: UUID): PermissionResponse {
-        val context = organizations.findCurrentByUser(userId) ?: throw OrganizationNotFoundException()
-        return permissions.findById(context.organization.id, permissionId)?.toResponse()
+        val context = authorization.requirePermission(userId, PlatformPermission.PERMISSIONS_READ)
+        return permissions.findById(context.organizationId, permissionId)?.toResponse()
             ?: throw PermissionNotFoundException()
     }
 
     override suspend fun create(userId: UUID, request: CreatePermissionRequest): PermissionResponse = withAuditActor(userId) {
-        val organizationId = requireOwner(userId)
+        val organizationId = authorization.requirePermission(userId, PlatformPermission.PERMISSIONS_CREATE).organizationId
         val now = clock.instant()
         return@withAuditActor permissions.create(
             Permission(
@@ -60,7 +58,7 @@ class PermissionService(
         permissionId: UUID,
         request: UpdatePermissionRequest,
     ): PermissionResponse = withAuditActor(userId) {
-        val organizationId = requireOwner(userId)
+        val organizationId = authorization.requirePermission(userId, PlatformPermission.PERMISSIONS_UPDATE).organizationId
         if (request.key == null && request.name == null && request.description == null) {
             throw AccessValidationException(mapOf("body" to "must contain key, name, or description"))
         }
@@ -77,16 +75,10 @@ class PermissionService(
     }
 
     override suspend fun delete(userId: UUID, permissionId: UUID) = withAuditActor(userId) {
-        val organizationId = requireOwner(userId)
+        val organizationId = authorization.requirePermission(userId, PlatformPermission.PERMISSIONS_DELETE).organizationId
         val current = permissions.findById(organizationId, permissionId) ?: throw PermissionNotFoundException()
         if (current.isSystem) throw SystemPermissionImmutableException()
         if (!permissions.delete(organizationId, permissionId)) throw PermissionNotFoundException()
-    }
-
-    private suspend fun requireOwner(userId: UUID): UUID {
-        val context = organizations.findCurrentByUser(userId) ?: throw OrganizationNotFoundException()
-        if (context.membership.role != MembershipRole.OWNER) throw OrganizationAccessDeniedException()
-        return context.organization.id
     }
 
     private fun validateKey(value: String): String {
