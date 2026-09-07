@@ -15,23 +15,35 @@ type SessionsCardProps = {
   initialSessions: UserSession[];
 };
 
-function formatDate(value: string) {
+function parseDate(value: string | undefined) {
+  if (!value) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+function formatDate(value: string | undefined) {
+  const date = parseDate(value);
+  if (!date) return "Unknown date";
+
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(value));
+  }).format(date);
 }
 
-function formatLastActive(value: string, isCurrent: boolean) {
+function formatLastActive(value: string | undefined, fallbackValue: string, isCurrent: boolean) {
   if (isCurrent) return "Active now";
 
-  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
+  const lastActive = parseDate(value) ?? parseDate(fallbackValue);
+  if (!lastActive) return "Last activity unknown";
+
+  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - lastActive.getTime()) / 1000));
   if (elapsedSeconds < 60) return "Active less than a minute ago";
   const elapsedMinutes = Math.floor(elapsedSeconds / 60);
   if (elapsedMinutes < 60) return `Active ${elapsedMinutes} minute${elapsedMinutes === 1 ? "" : "s"} ago`;
   const elapsedHours = Math.floor(elapsedMinutes / 60);
   if (elapsedHours < 24) return `Active ${elapsedHours} hour${elapsedHours === 1 ? "" : "s"} ago`;
-  return `Last active ${formatDate(value)}`;
+  return `Last active ${formatDate(lastActive.toISOString())}`;
 }
 
 function sessionName(userAgent: string | null) {
@@ -107,7 +119,7 @@ export function SessionsCard({ initialSessions }: SessionsCardProps) {
                         ) : null}
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {session.ipAddress ?? "Unknown IP"} · {formatLastActive(session.lastSeenAt, session.isCurrent)}
+                        {session.ipAddress ?? "Unknown IP"} · {formatLastActive(session.lastSeenAt, session.createdAt, session.isCurrent)}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         Signed in {formatDate(session.createdAt)} · Expires {formatDate(session.expiresAt)}
