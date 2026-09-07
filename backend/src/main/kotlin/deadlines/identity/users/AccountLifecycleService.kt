@@ -2,6 +2,7 @@ package deadlines.identity.users
 
 import deadlines.organizations.MembershipRole
 import deadlines.organizations.OrganizationRepository
+import deadlines.organizations.audits.withAuditActor
 import java.time.Clock
 import java.time.Instant
 import java.util.UUID
@@ -25,14 +26,14 @@ class AccountLifecycleService(
     private val lifecycle: AccountLifecycleRepository,
     private val clock: Clock = Clock.systemUTC(),
 ) : AccountLifecycleOperations {
-    override suspend fun deactivate(userId: UUID, password: String) {
+    override suspend fun deactivate(userId: UUID, password: String) = withAuditActor(userId) {
         requireActiveAccount(userId)
         requireNotOwner(userId)
         passwords.verify(userId, password)
         if (!lifecycle.deactivate(userId, clock.instant())) throw UserNotFoundException()
     }
 
-    override suspend fun delete(userId: UUID, password: String) {
+    override suspend fun delete(userId: UUID, password: String) = withAuditActor(userId) {
         requireActiveAccount(userId)
         requireNotOwner(userId)
         passwords.verify(userId, password)
