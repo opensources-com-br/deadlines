@@ -131,5 +131,6 @@
   },
   "Register": {
     "title": "Create your account", "description": "Start organizing the work that matters.", "firstName": "First name", "lastName": "Last name", "email": "Email", "password": "Password", "passwordPlaceholder": "Create a password", "passwordHelp": "Use at least 12 characters.", "confirmPassword": "Confirm password", "confirmPlaceholder": "Repeat your password", "submitting": "Creating account...", "submit": "Create account", "hasAccount": "Already have an account?", "signin": "Sign in", "mismatch": "Passwords do not match.", "success": "Confirmation email sent."
-  }
+  },
+  "CheckEmail": {"title":"Check your inbox","description":"We sent a confirmation link to your email address.","standardHelp":"Your account will be ready once you confirm your email. The link expires after a limited time for your security.","invitationHelp":"Your account will be ready once you confirm your email. Then sign in and we will add you to the organization automatically.","missing":"Your email is missing. Create your account again to request a new confirmation link.","sent":"If an account exists, a confirmation email has been sent.","sending":"Sending confirmation email...","resend":"Resend confirmation email","confirmed":"Already confirmed your email?","signin":"Sign in"}
 }
