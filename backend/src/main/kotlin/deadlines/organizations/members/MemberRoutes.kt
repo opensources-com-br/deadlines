@@ -20,6 +20,10 @@ fun Route.memberRoutes(service: MemberOperations) {
             get {
                 call.respond(service.list(call.memberUserId()))
             }
+            delete("/me") {
+                service.leave(call.memberUserId())
+                call.respond(HttpStatusCode.NoContent)
+            }
             route("/{memberId}") {
                 get {
                     call.respond(service.get(call.memberUserId(), call.memberResourceId()))
