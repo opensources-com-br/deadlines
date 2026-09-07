@@ -34,6 +34,9 @@ import deadlines.organizations.access.PermissionService
 import deadlines.organizations.access.ExposedRoleRepository
 import deadlines.organizations.access.RoleOperations
 import deadlines.organizations.access.RoleService
+import deadlines.organizations.authorization.AuthorizationOperations
+import deadlines.organizations.authorization.AuthorizationService
+import deadlines.organizations.authorization.ExposedAuthorizationRepository
 import deadlines.organizations.invitations.ExposedInvitationRepository
 import deadlines.organizations.invitations.InvitationOperations
 import deadlines.organizations.invitations.InvitationService
@@ -65,6 +68,7 @@ fun main() {
         val sessionRepository = ExposedSessionRepository(query)
         val sessionService = SessionService(sessionRepository)
         val organizationRepository = ExposedOrganizationRepository(query)
+        val authorizationService = AuthorizationService(ExposedAuthorizationRepository(query))
         val planService = PlanService(ExposedPlanRepository(query))
         val subscriptionService = SubscriptionService(organizationRepository, ExposedSubscriptionRepository(query))
         val auditService = AuditService(organizationRepository, ExposedAuditRepository(query))
@@ -122,6 +126,7 @@ fun main() {
                 planService,
                 subscriptionService,
                 userPreferenceService,
+                authorizationService,
             )
         }.start(wait = true)
     }
@@ -143,6 +148,7 @@ fun Application.module(
     planService: PlanOperations? = null,
     subscriptionService: SubscriptionOperations? = null,
     userPreferenceService: UserPreferenceOperations? = null,
+    authorizationService: AuthorizationOperations? = null,
 ) {
     configurePlugins(tokenService)
     configureRoutes(
@@ -160,5 +166,6 @@ fun Application.module(
         planService,
         subscriptionService,
         userPreferenceService,
+        authorizationService,
     )
 }

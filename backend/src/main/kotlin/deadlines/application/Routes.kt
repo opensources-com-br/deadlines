@@ -21,6 +21,8 @@ import deadlines.organizations.access.PermissionOperations
 import deadlines.organizations.access.permissionRoutes
 import deadlines.organizations.access.RoleOperations
 import deadlines.organizations.access.roleRoutes
+import deadlines.organizations.authorization.AuthorizationOperations
+import deadlines.organizations.authorization.authorizationRoutes
 import deadlines.organizations.invitations.InvitationOperations
 import deadlines.organizations.invitations.invitationRoutes
 import deadlines.organizations.members.MemberOperations
@@ -55,11 +57,13 @@ fun Application.configureRoutes(
     planService: PlanOperations? = null,
     subscriptionService: SubscriptionOperations? = null,
     userPreferenceService: UserPreferenceOperations? = null,
+    authorizationService: AuthorizationOperations? = null,
 ) {
     routing {
         if (planService != null) planRoutes(planService)
         if (subscriptionService != null) subscriptionRoutes(subscriptionService)
         if (userPreferenceService != null) userPreferenceRoutes(userPreferenceService)
+        if (authorizationService != null) authorizationRoutes(authorizationService)
         if (auditService != null) auditRoutes(auditService)
         get("/health") {
             call.respond(HealthResponse(status = "ok"))
