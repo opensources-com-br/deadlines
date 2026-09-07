@@ -66,5 +66,24 @@
     "ownershipDescription": "Owners can manage members, access control, and billing. Ownership transfer will be available in a future update.",
     "currentAccess": "Your current access: {role}",
     "created": "Created {date}"
+  },
+  "Plans": {
+    "loading": "Loading plan details...",
+    "currentPlan": "Current plan: {plan}",
+    "subscription": "Your subscription is {status}. Billing and plan changes are not available yet.",
+    "usageSoon": "Usage tracking and limit enforcement arrive with the next product phase.",
+    "available": "Available plans",
+    "availableDescription": "Compare the plans that will become available when billing launches.",
+    "current": "Current",
+    "free": "Free",
+    "perMonth": "{price} / month",
+    "unlimited": "Unlimited",
+    "currentButton": "Current plan",
+    "comingSoon": "Coming soon",
+    "members": "members",
+    "projects": "projects",
+    "deadlines": "deadlines",
+    "active": "active",
+    "canceled": "canceled"
   }
 }

@@ -66,5 +66,24 @@
     "ownershipDescription": "Proprietários podem gerenciar membros, controle de acesso e cobrança. A transferência de propriedade estará disponível futuramente.",
     "currentAccess": "Seu acesso atual: {role}",
     "created": "Criada em {date}"
+  },
+  "Plans": {
+    "loading": "Carregando detalhes do plano...",
+    "currentPlan": "Plano atual: {plan}",
+    "subscription": "Sua assinatura está {status}. Cobrança e alterações de plano ainda não estão disponíveis.",
+    "usageSoon": "O acompanhamento de uso e a aplicação de limites chegam na próxima fase do produto.",
+    "available": "Planos disponíveis",
+    "availableDescription": "Compare os planos que estarão disponíveis quando a cobrança for lançada.",
+    "current": "Atual",
+    "free": "Grátis",
+    "perMonth": "{price} / mês",
+    "unlimited": "Ilimitado",
+    "currentButton": "Plano atual",
+    "comingSoon": "Em breve",
+    "members": "membros",
+    "projects": "projetos",
+    "deadlines": "deadlines",
+    "active": "ativa",
+    "canceled": "cancelada"
   }
 }
