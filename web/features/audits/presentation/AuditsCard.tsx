@@ -1,11 +1,14 @@
 "use client";
 
+import { CalendarIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { AuditPage } from "@/features/audits/domain/audit";
 import type { OrganizationMember } from "@/features/team/domain/team";
 
@@ -29,6 +32,59 @@ const actions: Record<string, string> = {
 
 type Filters = { action: string; actorId: string; resourceId: string; from: string; to: string };
 const emptyFilters: Filters = { action: "", actorId: "", resourceId: "", from: "", to: "" };
+
+function localDateValue(date: Date, endOfDay: boolean) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}T${endOfDay ? "23:59:59" : "00:00:00"}`;
+}
+
+function AuditDatePicker({ label, value, endOfDay, disabled, onChange }: {
+  label: string;
+  value: string;
+  endOfDay: boolean;
+  disabled: boolean;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = value ? new Date(value) : undefined;
+
+  return (
+    <Field>
+      <FieldLabel>{label}</FieldLabel>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          disabled={disabled}
+          render={<Button type="button" variant="outline" className="w-full justify-start font-normal" />}
+        >
+          <CalendarIcon className="text-muted-foreground" aria-hidden="true" />
+          {selected
+            ? new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(selected)
+            : <span className="text-muted-foreground">Select a date</span>}
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-auto p-0">
+          <Calendar
+            mode="single"
+            selected={selected}
+            onSelect={(date) => {
+              if (!date) return;
+              onChange(localDateValue(date, endOfDay));
+              setOpen(false);
+            }}
+          />
+          {value ? (
+            <div className="border-t p-2">
+              <Button type="button" variant="ghost" size="sm" className="w-full" onClick={() => { onChange(""); setOpen(false); }}>
+                Clear date
+              </Button>
+            </div>
+          ) : null}
+        </PopoverContent>
+      </Popover>
+    </Field>
+  );
+}
 
 export function AuditsCard({ members }: { members: OrganizationMember[] }) {
   const [page, setPage] = useState<AuditPage | null>(null);
@@ -97,14 +153,17 @@ export function AuditsCard({ members }: { members: OrganizationMember[] }) {
                   </SelectContent>
                 </Select>
               </Field>
-              {([ ["actorId", "Actor ID", "text"], ["resourceId", "Resource ID", "text"],
-                ["from", "From (local time)", "datetime-local"], ["to", "To (local time)", "datetime-local"]] as const).map(([key, label, type]) => (
+              {([ ["actorId", "Actor ID", "text"], ["resourceId", "Resource ID", "text"]] as const).map(([key, label, type]) => (
                 <Field key={key}>
                   <FieldLabel htmlFor={`audit-${key}`}>{label}</FieldLabel>
                   <Input id={`audit-${key}`} type={type} value={filters[key]}
                     onChange={(event) => setFilters({ ...filters, [key]: event.target.value })} />
                 </Field>
               ))}
+              <AuditDatePicker label="From (local time)" value={filters.from} endOfDay={false} disabled={isLoading}
+                onChange={(from) => setFilters({ ...filters, from })} />
+              <AuditDatePicker label="To (local time)" value={filters.to} endOfDay disabled={isLoading}
+                onChange={(to) => setFilters({ ...filters, to })} />
             </fieldset>
             <div className="flex flex-wrap gap-2">
               <Button type="submit" disabled={isLoading}>Apply filters</Button>
