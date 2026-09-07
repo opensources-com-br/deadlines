@@ -7,6 +7,7 @@ export type OrganizationMember = {
   firstName: string;
   lastName: string;
   role: Role;
+  status: "active" | "suspended";
   joinedAt: string;
 };
 

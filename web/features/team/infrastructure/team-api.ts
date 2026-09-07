@@ -31,6 +31,16 @@ export const teamApi = {
   updateMemberRole: (memberId: string, roleId: string) =>
     request<OrganizationMember>(`/api/members/${memberId}`, json("PATCH", { roleId })),
   removeMember: (memberId: string) => request<void>(`/api/members/${memberId}`, { method: "DELETE" }),
+  suspendMember: (memberId: string) =>
+    request<OrganizationMember>(`/api/members/${memberId}/suspend`, { method: "POST" }),
+  reactivateMember: (memberId: string) =>
+    request<OrganizationMember>(`/api/members/${memberId}/reactivate`, { method: "POST" }),
+  leaveOrganization: () => request<void>("/api/members/me", { method: "DELETE" }),
+  transferOwnership: (memberId: string, previousOwnerRoleId: string) =>
+    request<OrganizationMember>(
+      `/api/members/${memberId}/transfer-ownership`,
+      json("POST", { previousOwnerRoleId }),
+    ),
   listInvitations: () => request<TeamList<OrganizationInvitation>>("/api/invitations"),
   createInvitation: (email: string, roleId: string) =>
     request<OrganizationInvitation>("/api/invitations", json("POST", { email, roleId })),
