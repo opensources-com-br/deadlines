@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import { deviceCookieName, newDeviceId, setDeviceCookie } from "@/features/identity/infrastructure/device-session";
+import { isAppLocale, localeCookieName } from "@/i18n/config";
 
 const accessCookieName = "deadlines_access_token";
 const refreshCookieName = "deadlines_refresh_token";
@@ -55,10 +56,23 @@ export async function POST(request: NextRequest) {
   }
 
   const auth = data as AuthResponse;
+  const preferences = await fetch(backendApiUrl("/api/v1/users/me/preferences"), {
+    headers: { Authorization: `Bearer ${auth.accessToken}` },
+    cache: "no-store",
+  }).then((result) => result.ok ? result.json() as Promise<{ locale?: unknown }> : undefined).catch(() => undefined);
   const response = NextResponse.json({ user: auth.user });
   const secure = process.env.NODE_ENV === "production";
   const keepSignedIn = payload.keepSignedIn === true;
   setDeviceCookie(response, deviceId);
+  if (isAppLocale(preferences?.locale)) {
+    response.cookies.set(localeCookieName, preferences.locale, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure,
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+  }
   response.cookies.set(accessCookieName, auth.accessToken, {
     httpOnly: true,
     sameSite: "lax",
