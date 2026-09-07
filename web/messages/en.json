@@ -128,5 +128,8 @@
   },
   "Login": {
     "title": "Login to your account", "description": "Enter your email below to login to your account.", "email": "Email", "password": "Password", "forgot": "Forgot your password?", "keep": "Keep me signed in", "keepHelp": "Stay signed in on this device for up to 30 days.", "submitting": "Signing in...", "submit": "Login", "noAccount": "Don’t have an account?", "signup": "Sign up", "success": "Login successful."
+  },
+  "Register": {
+    "title": "Create your account", "description": "Start organizing the work that matters.", "firstName": "First name", "lastName": "Last name", "email": "Email", "password": "Password", "passwordPlaceholder": "Create a password", "passwordHelp": "Use at least 12 characters.", "confirmPassword": "Confirm password", "confirmPlaceholder": "Repeat your password", "submitting": "Creating account...", "submit": "Create account", "hasAccount": "Already have an account?", "signin": "Sign in", "mismatch": "Passwords do not match.", "success": "Confirmation email sent."
   }
 }

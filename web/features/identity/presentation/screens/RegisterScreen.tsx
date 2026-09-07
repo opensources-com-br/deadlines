@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup } from "@/components/ui/field";
@@ -17,6 +18,7 @@ type RegisterScreenProps = {
 };
 
 export function RegisterScreen({ initialEmail, nextPath }: RegisterScreenProps) {
+  const t = useTranslations("Register");
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -27,7 +29,7 @@ export function RegisterScreen({ initialEmail, nextPath }: RegisterScreenProps) 
     const passwordConfirmation = String(formData.get("passwordConfirmation"));
 
     if (password !== passwordConfirmation) {
-      toast.error("Passwords do not match.");
+      toast.error(t("mismatch"));
       return;
     }
 
@@ -40,7 +42,7 @@ export function RegisterScreen({ initialEmail, nextPath }: RegisterScreenProps) 
         firstName: String(formData.get("firstName")),
         lastName: String(formData.get("lastName")),
       });
-      toast.success("Confirmation email sent.");
+      toast.success(t("success"));
       const nextQuery = nextPath ? `&next=${encodeURIComponent(nextPath)}` : "";
       router.push(`/check-email?email=${encodeURIComponent(email)}${nextQuery}`);
     } catch (error) {
@@ -51,42 +53,40 @@ export function RegisterScreen({ initialEmail, nextPath }: RegisterScreenProps) 
   }
 
   return (
-    <AuthShell title="Create your account" description="Start organizing the work that matters.">
+    <AuthShell title={t("title")} description={t("description")}>
       <form onSubmit={handleSubmit}>
         <FieldGroup>
           <div className="grid gap-5 sm:grid-cols-2">
-            <AuthTextField id="first-name" name="firstName" label="First name" autoComplete="given-name" placeholder="First name" required />
-            <AuthTextField id="last-name" name="lastName" label="Last name" autoComplete="family-name" placeholder="Last name" required />
+            <AuthTextField id="first-name" name="firstName" label={t("firstName")} autoComplete="given-name" placeholder={t("firstName")} required /><AuthTextField id="last-name" name="lastName" label={t("lastName")} autoComplete="family-name" placeholder={t("lastName")} required />
           </div>
-          <AuthTextField id="email" name="email" label="Email" type="email" autoComplete="email" placeholder="you@example.com" defaultValue={initialEmail} readOnly={Boolean(initialEmail)} required />
+          <AuthTextField id="email" name="email" label={t("email")} type="email" autoComplete="email" placeholder="you@example.com" defaultValue={initialEmail} readOnly={Boolean(initialEmail)} required />
           <AuthTextField
             id="password"
             name="password"
-            label="Password"
+            label={t("password")}
             type="password"
             autoComplete="new-password"
-            placeholder="Create a password"
-            hint="Use at least 12 characters."
+            placeholder={t("passwordPlaceholder")} hint={t("passwordHelp")}
             required
           />
           <AuthTextField
             id="password-confirmation"
             name="passwordConfirmation"
-            label="Confirm password"
+            label={t("confirmPassword")}
             type="password"
             autoComplete="new-password"
-            placeholder="Repeat your password"
+            placeholder={t("confirmPlaceholder")}
             required
           />
           <Field>
             <Button className="w-full" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating account..." : "Create account"}
+              {isSubmitting ? t("submitting") : t("submit")}
             </Button>
           </Field>
           <FieldDescription className="text-center">
-            Already have an account?{" "}
+            {t("hasAccount")}{" "}
             <Link href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login"} className="font-medium text-foreground underline underline-offset-4">
-              Sign in
+              {t("signin")}
             </Link>
           </FieldDescription>
         </FieldGroup>

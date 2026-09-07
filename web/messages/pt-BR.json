@@ -128,5 +128,8 @@
   },
   "Login": {
     "title": "Entre na sua conta", "description": "Informe seu e-mail abaixo para acessar sua conta.", "email": "E-mail", "password": "Senha", "forgot": "Esqueceu sua senha?", "keep": "Continuar conectado", "keepHelp": "Permaneça conectado neste dispositivo por até 30 dias.", "submitting": "Entrando...", "submit": "Entrar", "noAccount": "Ainda não tem uma conta?", "signup": "Criar conta", "success": "Login realizado com sucesso."
+  },
+  "Register": {
+    "title": "Crie sua conta", "description": "Comece a organizar o trabalho que importa.", "firstName": "Nome", "lastName": "Sobrenome", "email": "E-mail", "password": "Senha", "passwordPlaceholder": "Crie uma senha", "passwordHelp": "Use pelo menos 12 caracteres.", "confirmPassword": "Confirmar senha", "confirmPlaceholder": "Repita sua senha", "submitting": "Criando conta...", "submit": "Criar conta", "hasAccount": "Já tem uma conta?", "signin": "Entrar", "mismatch": "As senhas não coincidem.", "success": "E-mail de confirmação enviado."
   }
 }
