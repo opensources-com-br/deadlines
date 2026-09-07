@@ -16,6 +16,10 @@ interface MemberOperations {
 
     suspend fun updateRole(userId: UUID, membershipId: UUID, request: UpdateMemberRoleRequest): MemberResponse
 
+    suspend fun suspend(userId: UUID, membershipId: UUID): MemberResponse
+
+    suspend fun reactivate(userId: UUID, membershipId: UUID): MemberResponse
+
     suspend fun remove(userId: UUID, membershipId: UUID)
 }
 
@@ -56,6 +60,22 @@ class MemberService(
         val member = requireMember(context.organizationId, membershipId)
         if (member.role.key == OWNER_ROLE_KEY) throw OwnerMembershipImmutableException()
         if (!members.remove(context.organizationId, membershipId, clock.instant())) throw MemberNotFoundException()
+    }
+
+    override suspend fun suspend(userId: UUID, membershipId: UUID): MemberResponse = withAuditActor(userId) {
+        val context = authorization.requirePermission(userId, PlatformPermission.MEMBERS_UPDATE)
+        val member = requireMember(context.organizationId, membershipId)
+        if (member.role.key == OWNER_ROLE_KEY) throw OwnerMembershipImmutableException()
+        if (!members.suspend(context.organizationId, membershipId)) throw MembershipStateConflictException()
+        return@withAuditActor requireMember(context.organizationId, membershipId).toResponse()
+    }
+
+    override suspend fun reactivate(userId: UUID, membershipId: UUID): MemberResponse = withAuditActor(userId) {
+        val context = authorization.requirePermission(userId, PlatformPermission.MEMBERS_UPDATE)
+        val member = requireMember(context.organizationId, membershipId)
+        if (member.role.key == OWNER_ROLE_KEY) throw OwnerMembershipImmutableException()
+        if (!members.reactivate(context.organizationId, membershipId)) throw MembershipStateConflictException()
+        return@withAuditActor requireMember(context.organizationId, membershipId).toResponse()
     }
 
     private suspend fun requireMember(organizationId: UUID, membershipId: UUID) =

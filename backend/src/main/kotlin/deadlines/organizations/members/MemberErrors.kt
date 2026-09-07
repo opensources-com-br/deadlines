@@ -10,6 +10,12 @@ class OwnerMembershipImmutableException : ApiException(
     "The organization owner cannot be reassigned or removed",
 )
 
+class MembershipStateConflictException : ApiException(
+    409,
+    "MEMBERSHIP_STATE_CONFLICT",
+    "The membership is not in the required state",
+)
+
 class MemberValidationException(
     violations: Map<String, String>,
 ) : ApiException(422, "VALIDATION_ERROR", "Invalid member data", violations)
