@@ -72,9 +72,10 @@
     "owner": "Owner",
     "member": "Member",
     "ownership": "Workspace ownership",
-    "ownershipDescription": "Owners can manage members, access control, and billing. Ownership transfer will be available in a future update.",
+    "ownershipDescription": "Owners can manage members, access control, billing, and the organization lifecycle.",
     "currentAccess": "Your current access: {role}",
-    "created": "Created {date}"
+    "created": "Created {date}",
+    "dangerZone": "Danger zone", "dangerDescription": "These actions affect access for the entire organization.", "suspend": "Suspend organization", "suspendDescription": "Temporarily block access for every member. The Owner can reactivate it.", "suspendConfirm": "Suspend this organization now?", "suspended": "Organization suspended.", "suspendError": "Unable to suspend the organization.", "delete": "Delete organization", "deleteDescription": "Remove access, revoke pending invitations, and release members permanently.", "deleteConfirm": "Permanently delete {name}? This action cannot be undone.", "deleted": "Organization deleted.", "deleteError": "Unable to delete the organization.", "suspendedTitle": "Organization suspended", "suspendedPageDescription": "Access to {name} is temporarily disabled.", "ownerCanReactivate": "As Owner, you can reactivate the organization and restore member access.", "memberWait": "Contact the organization Owner to restore access.", "reactivate": "Reactivate organization", "reactivating": "Reactivating...", "reactivateError": "Unable to reactivate the organization.", "logout": "Log out"
   },
   "Plans": {
     "loading": "Loading plan details...",
