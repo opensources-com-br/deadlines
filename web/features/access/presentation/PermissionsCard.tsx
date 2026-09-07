@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import type { Permission } from "@/features/access/domain/access";
 import { accessApi } from "@/features/access/infrastructure/access-api";
 
@@ -24,6 +23,11 @@ export function PermissionsCard({ initialPermissions, canManage, onPermissionsCh
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const permissionGroups = Object.entries(permissions.reduce<Record<string, Permission[]>>((groups, permission) => {
+    const key = permission.key.split(".")[0] || "general";
+    groups[key] = [...(groups[key] ?? []), permission];
+    return groups;
+  }, {}));
 
   function beginEdit(permission?: Permission) {
     setEditing(permission ?? "new");
@@ -117,10 +121,13 @@ export function PermissionsCard({ initialPermissions, canManage, onPermissionsCh
             </FieldGroup>
           </form>
         ) : (
-          <div className="space-y-4">
-            {permissions.map((permission, index) => (
-              <div key={permission.id}>
-                {index > 0 ? <Separator className="mb-4" /> : null}
+          <div className="space-y-5">
+            {permissionGroups.map(([group, groupPermissions]) => (
+              <section key={group} className="rounded-lg border">
+                <div className="border-b bg-muted/30 px-4 py-3"><h4 className="text-sm font-medium capitalize">{group}</h4><p className="text-xs text-muted-foreground">Permissions related to {group}.</p></div>
+                <div className="divide-y">
+                {groupPermissions.map((permission) => (
+                  <div key={permission.id} className="px-4 py-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -137,7 +144,10 @@ export function PermissionsCard({ initialPermissions, canManage, onPermissionsCh
                     </div>
                   ) : null}
                 </div>
-              </div>
+                  </div>
+                ))}
+                </div>
+              </section>
             ))}
           </div>
         )}

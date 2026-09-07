@@ -28,6 +28,11 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
   const [managingRole, setManagingRole] = useState<Role>();
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>([]);
   const [loadingRoleId, setLoadingRoleId] = useState<string>();
+  const permissionGroups = Object.entries(permissions.reduce<Record<string, Permission[]>>((groups, permission) => {
+    const key = permission.key.split(".")[0] || "general";
+    groups[key] = [...(groups[key] ?? []), permission];
+    return groups;
+  }, {}));
 
   function beginEdit(role?: Role) {
     setEditing(role ?? "new");
@@ -107,6 +112,11 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
     );
   }
 
+  function togglePermissionGroup(groupPermissions: Permission[], checked: boolean) {
+    const ids = groupPermissions.map((permission) => permission.id);
+    setSelectedPermissionIds((current) => checked ? [...new Set([...current, ...ids])] : current.filter((id) => !ids.includes(id)));
+  }
+
   return (
     <Card>
       <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
@@ -125,21 +135,24 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
                 {managingRole.key === "owner" ? "The owner always retains every permission." : "Select the capabilities assigned to this role."}
               </p>
             </div>
-            <div className="space-y-3">
-              {permissions.map((permission) => (
-                <label key={permission.id} className="flex cursor-pointer items-start gap-3 rounded-lg border p-3">
-                  <Checkbox
-                    className="mt-0.5"
-                    checked={selectedPermissionIds.includes(permission.id)}
-                    onCheckedChange={(checked) => togglePermission(permission.id, checked === true)}
-                    disabled={!canManage || managingRole.key === "owner"}
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium">{permission.name}</span>
-                    <span className="block font-mono text-xs text-muted-foreground">{permission.key}</span>
-                  </span>
-                </label>
-              ))}
+            <div className="space-y-5">
+              {permissionGroups.map(([group, groupPermissions]) => {
+                const allSelected = groupPermissions.every((permission) => selectedPermissionIds.includes(permission.id));
+                return <section key={group} className="rounded-lg border">
+                  <div className="flex items-center justify-between gap-4 border-b bg-muted/30 px-4 py-3">
+                    <div><h4 className="text-sm font-medium capitalize">{group}</h4><p className="text-xs text-muted-foreground">{groupPermissions.length} permission{groupPermissions.length === 1 ? "" : "s"}</p></div>
+                    <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground"><Checkbox checked={allSelected} onCheckedChange={(checked) => togglePermissionGroup(groupPermissions, checked === true)} disabled={!canManage || managingRole.key === "owner"} />Select all</label>
+                  </div>
+                  <div className="divide-y">
+                    {groupPermissions.map((permission) => (
+                      <label key={permission.id} className="flex cursor-pointer items-start gap-3 px-4 py-3">
+                        <Checkbox className="mt-0.5" checked={selectedPermissionIds.includes(permission.id)} onCheckedChange={(checked) => togglePermission(permission.id, checked === true)} disabled={!canManage || managingRole.key === "owner"} />
+                        <span className="min-w-0"><span className="block text-sm font-medium">{permission.name}</span><span className="block font-mono text-xs text-muted-foreground">{permission.key}</span>{permission.description ? <span className="mt-1 block text-xs text-muted-foreground">{permission.description}</span> : null}</span>
+                      </label>
+                    ))}
+                  </div>
+                </section>;
+              })}
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" type="button" onClick={() => setManagingRole(undefined)} disabled={isSaving}>Back</Button>
