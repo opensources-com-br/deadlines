@@ -24,6 +24,8 @@ data class Session(
     val ipAddress: String?,
     val expiresAt: Instant,
     val createdAt: Instant,
+    val deviceId: UUID = id,
+    val lastSeenAt: Instant = createdAt,
 )
 
 interface SessionRepository {
@@ -117,6 +119,8 @@ class ExposedSessionRepository(
             it[ipAddress] = session.ipAddress
             it[expiresAt] = session.expiresAt.atOffset(ZoneOffset.UTC)
             it[createdAt] = session.createdAt.atOffset(ZoneOffset.UTC)
+            it[deviceId] = session.deviceId
+            it[lastSeenAt] = session.lastSeenAt.atOffset(ZoneOffset.UTC)
         }
     }
 }
@@ -129,6 +133,8 @@ private object SessionsTable : Table("sessions") {
     val ipAddress = varchar("ip_address", 45).nullable()
     val expiresAt = timestampWithTimeZone("expires_at")
     val createdAt = timestampWithTimeZone("created_at")
+    val deviceId = javaUUID("device_id")
+    val lastSeenAt = timestampWithTimeZone("last_seen_at")
     val revokedAt = timestampWithTimeZone("revoked_at").nullable()
 
     override val primaryKey = PrimaryKey(id)
@@ -143,4 +149,6 @@ private fun org.jetbrains.exposed.v1.core.ResultRow.toSession() =
         ipAddress = this[SessionsTable.ipAddress],
         expiresAt = this[SessionsTable.expiresAt].toInstant(),
         createdAt = this[SessionsTable.createdAt].toInstant(),
+        deviceId = this[SessionsTable.deviceId],
+        lastSeenAt = this[SessionsTable.lastSeenAt].toInstant(),
     )

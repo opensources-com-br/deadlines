@@ -9,6 +9,8 @@ data class SessionResponse(
     val ipAddress: String? = null,
     val expiresAt: String,
     val createdAt: String,
+    val deviceId: String,
+    val lastSeenAt: String,
     val isCurrent: Boolean,
 )
 

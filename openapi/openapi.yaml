@@ -142,6 +142,8 @@ paths:
       tags: [Authentication]
       summary: Autentica um usuário
       operationId: login
+      parameters:
+        - $ref: "#/components/parameters/DeviceId"
       requestBody:
         required: true
         content:
@@ -162,6 +164,8 @@ paths:
       tags: [Authentication]
       summary: Rotaciona o refresh token e emite novos tokens
       operationId: refreshToken
+      parameters:
+        - $ref: "#/components/parameters/DeviceId"
       requestBody:
         required: true
         content:
@@ -214,6 +218,8 @@ paths:
       operationId: changePassword
       security:
         - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DeviceId"
       requestBody:
         required: true
         content:
@@ -1026,6 +1032,14 @@ components:
       scheme: bearer
       bearerFormat: JWT
   parameters:
+    DeviceId:
+      name: X-Device-Id
+      in: header
+      required: true
+      description: Identificador estável da instalação ou perfil do navegador.
+      schema:
+        type: string
+        format: uuid
     UserId:
       name: id
       in: path
@@ -1389,7 +1403,7 @@ components:
           type: integer
     Session:
       type: object
-      required: [id, expiresAt, createdAt, isCurrent]
+      required: [id, deviceId, expiresAt, createdAt, lastSeenAt, isCurrent]
       properties:
         id:
           type: string
@@ -1402,6 +1416,12 @@ components:
           type: string
           format: date-time
         createdAt:
+          type: string
+          format: date-time
+        deviceId:
+          type: string
+          format: uuid
+        lastSeenAt:
           type: string
           format: date-time
         isCurrent:

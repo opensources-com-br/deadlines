@@ -14,6 +14,7 @@ import java.util.UUID
 data class SessionContext(
     val userAgent: String?,
     val ipAddress: String?,
+    val deviceId: UUID? = null,
 )
 
 interface AuthOperations {
@@ -131,7 +132,17 @@ class AuthService(
     }
 
     private fun IssuedTokens.toSession(userId: UUID, context: SessionContext, now: java.time.Instant) =
-        Session(sessionId, userId, refreshTokenHash, context.userAgent, context.ipAddress, refreshExpiresAt, now)
+        Session(
+            id = sessionId,
+            userId = userId,
+            refreshTokenHash = refreshTokenHash,
+            userAgent = context.userAgent,
+            ipAddress = context.ipAddress,
+            expiresAt = refreshExpiresAt,
+            createdAt = now,
+            deviceId = context.deviceId ?: throw AuthValidationException(mapOf("X-Device-Id" to "is required and must be a UUID")),
+            lastSeenAt = now,
+        )
 
     private fun IssuedTokens.toResponse(user: User) =
         AuthResponse(accessToken, refreshToken, expiresIn = accessExpiresIn, user = user.toResponse())

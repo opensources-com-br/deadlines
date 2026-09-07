@@ -48,4 +48,11 @@ private fun io.ktor.server.application.ApplicationCall.sessionContext() =
     SessionContext(
         userAgent = request.headers[HttpHeaders.UserAgent],
         ipAddress = request.origin.remoteHost,
+        deviceId = request.headers[DEVICE_ID_HEADER]?.let { value ->
+            runCatching { UUID.fromString(value) }.getOrElse {
+                throw AuthValidationException(mapOf(DEVICE_ID_HEADER to "must be a UUID"))
+            }
+        },
     )
+
+private const val DEVICE_ID_HEADER = "X-Device-Id"

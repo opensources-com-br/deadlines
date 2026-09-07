@@ -16,6 +16,8 @@ class SessionService(
                     ipAddress = session.ipAddress,
                     expiresAt = session.expiresAt.toString(),
                     createdAt = session.createdAt.toString(),
+                    deviceId = session.deviceId.toString(),
+                    lastSeenAt = session.lastSeenAt.toString(),
                     isCurrent = session.id == currentSessionId,
                 )
             },
