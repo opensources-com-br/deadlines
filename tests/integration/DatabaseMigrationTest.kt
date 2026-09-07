@@ -412,6 +412,33 @@ class DatabaseMigrationTest {
         }
 
     @Test
+    fun `authorization repository resolves current tenant role and permissions`() =
+        runTest {
+            DatabaseFactory.open(databaseConfig()).use { database ->
+                val query = DatabaseQuery(database.database)
+                val users = ExposedUserRepository(query)
+                val organizations = ExposedOrganizationRepository(query)
+                val roles = ExposedRoleRepository(query)
+                val permissions = ExposedPermissionRepository(query)
+                val authorization = ExposedAuthorizationRepository(query)
+                val now = Instant.now()
+                val user = testUser("authorization-owner", now)
+                val context = organizationContext(user.id, "authorization-${UUID.randomUUID()}", now)
+                users.create(user)
+                organizations.createWithOwner(context)
+
+                val resolved = authorization.findByUserId(user.id)!!
+                val ownerRole = roles.list(context.organization.id).single { it.key == "owner" }
+                val expectedPermissions = permissions.list(context.organization.id).map { it.key }.toSet()
+
+                assertEquals(context.organization.id, resolved.organizationId)
+                assertEquals(context.membership.id, resolved.membershipId)
+                assertEquals(ownerRole.id, resolved.roleId)
+                assertEquals(expectedPermissions, resolved.permissions)
+            }
+        }
+
+    @Test
     fun `invitation acceptance atomically creates an organization member`() =
         runTest {
             DatabaseFactory.open(databaseConfig()).use { database ->
