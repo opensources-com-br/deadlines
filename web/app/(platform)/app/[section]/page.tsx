@@ -7,10 +7,20 @@ import type { Organization } from "@/features/organizations/domain/organization"
 import type { SessionList } from "@/features/platform/domain/session";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { PlatformHome } from "@/features/platform/presentation/PlatformHome";
-import type { PlatformNavigationItem } from "@/features/platform/presentation/PlatformSidebar";
+import type { PlatformNavigationItem, SettingsSection } from "@/features/platform/presentation/PlatformSidebar";
 import type { OrganizationInvitation, OrganizationMember, TeamList } from "@/features/team/domain/team";
 
 const sections = new Set<PlatformNavigationItem>([
+  "organization",
+  "plans",
+  "team",
+  "access-control",
+  "security",
+  "account",
+  "settings",
+]);
+
+const settingsSections = new Set<SettingsSection>([
   "organization",
   "plans",
   "team",
@@ -21,10 +31,12 @@ const sections = new Set<PlatformNavigationItem>([
 
 type PlatformSectionPageProps = {
   params: Promise<{ section: string }>;
+  searchParams: Promise<{ section?: string }>;
 };
 
-export default async function PlatformSectionPage({ params }: PlatformSectionPageProps) {
+export default async function PlatformSectionPage({ params, searchParams }: PlatformSectionPageProps) {
   const { section } = await params;
+  const { section: settingsSection } = await searchParams;
   if (!sections.has(section as PlatformNavigationItem)) notFound();
 
   const cookieStore = await cookies();
@@ -67,6 +79,7 @@ export default async function PlatformSectionPage({ params }: PlatformSectionPag
       members={members}
       invitations={invitations}
       section={section as PlatformNavigationItem}
+      settingsSection={settingsSections.has(settingsSection as SettingsSection) ? settingsSection as SettingsSection : undefined}
     />
   );
 }

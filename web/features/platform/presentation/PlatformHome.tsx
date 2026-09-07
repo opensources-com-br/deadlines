@@ -16,7 +16,7 @@ import type { UserSession } from "@/features/platform/domain/session";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { changePassword, updateUserProfile } from "@/features/platform/infrastructure/profile-api";
 import { SessionsCard } from "@/features/platform/presentation/SessionsCard";
-import { PlatformSidebar, type PlatformNavigationItem } from "@/features/platform/presentation/PlatformSidebar";
+import { PlatformSidebar, type PlatformNavigationItem, type SettingsSection } from "@/features/platform/presentation/PlatformSidebar";
 import type { Organization } from "@/features/organizations/domain/organization";
 import { OrganizationCard } from "@/features/organizations/presentation/OrganizationCard";
 import type { Permission, Role } from "@/features/access/domain/access";
@@ -36,9 +36,10 @@ type PlatformHomeProps = {
   members: OrganizationMember[];
   invitations: OrganizationInvitation[];
   section: PlatformNavigationItem;
+  settingsSection?: SettingsSection;
 };
 
-const sectionDetails: Record<PlatformNavigationItem, { eyebrow: string; title: string; description: string }> = {
+const sectionDetails: Record<SettingsSection, { eyebrow: string; title: string; description: string }> = {
   organization: { eyebrow: "Workspace", title: "Organization", description: "Manage your organization and its workspace details." },
   plans: { eyebrow: "Workspace", title: "Plans", description: "Review your organization’s current subscription." },
   team: { eyebrow: "Management", title: "Team", description: "Manage members and invitations for your organization." },
@@ -47,7 +48,16 @@ const sectionDetails: Record<PlatformNavigationItem, { eyebrow: string; title: s
   account: { eyebrow: "Account", title: "Your account", description: "Manage your personal information and password." },
 };
 
-export function PlatformHome({ user, organization, sessions, permissions, roles, members, invitations, section }: PlatformHomeProps) {
+const settingsNavigation: Array<{ key: SettingsSection; label: string }> = [
+  { key: "organization", label: "Organization" },
+  { key: "plans", label: "Plans" },
+  { key: "team", label: "Team" },
+  { key: "access-control", label: "Access control" },
+  { key: "security", label: "Security" },
+  { key: "account", label: "Your account" },
+];
+
+export function PlatformHome({ user, organization, sessions, permissions, roles, members, invitations, section, settingsSection }: PlatformHomeProps) {
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -60,7 +70,14 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
   const [newPassword, setNewPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [availablePermissions, setAvailablePermissions] = useState(permissions);
-  const details = sectionDetails[section];
+  const initialSettingsSection = settingsSection ?? (section === "settings" ? "organization" : section);
+  const [activeSettingsSection, setActiveSettingsSection] = useState<SettingsSection>(initialSettingsSection);
+  const details = sectionDetails[activeSettingsSection];
+
+  function handleSettingsNavigation(nextSection: SettingsSection) {
+    setActiveSettingsSection(nextSection);
+    router.push(`/app/settings?section=${nextSection}`, { scroll: false });
+  }
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -126,7 +143,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
 
   return (
     <SidebarProvider>
-      <PlatformSidebar user={user} activeItem={section} />
+      <PlatformSidebar activeItem="settings" />
       <SidebarInset className="min-h-svh bg-background text-foreground">
       <header className="w-full py-4">
         <div className="flex w-full items-center justify-between px-[30px]">
@@ -137,29 +154,39 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
         </div>
       </header>
 
-      <section className="grid w-full items-start gap-8 px-[30px] pb-[34px] pt-[22px] lg:grid-cols-[minmax(16rem,0.65fr)_minmax(0,1fr)] lg:gap-10">
-        <div className="max-w-xl">
-          <p className="text-sm font-medium text-muted-foreground">{details.eyebrow}</p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-            {details.title}
-          </h1>
-          <p className="mt-5 text-lg leading-8 text-muted-foreground">
-            {details.description}
-          </p>
-        </div>
+      <section className="grid w-full items-start gap-8 px-[30px] pb-[34px] pt-[22px] lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-10">
+        <nav aria-label="Settings" className="space-y-1">
+          <h1 className="sr-only">Settings</h1>
+          {settingsNavigation.map((item) => (
+            <Button
+              key={item.key}
+              variant={activeSettingsSection === item.key ? "secondary" : "ghost"}
+              className="w-full justify-start"
+              type="button"
+              onClick={() => handleSettingsNavigation(item.key)}
+            >
+              {item.label}
+            </Button>
+          ))}
+        </nav>
 
         <div className="space-y-6">
-        {section === "organization" && <OrganizationCard organization={organization} />}
-        {section === "plans" && <SubscriptionCard />}
-        {section === "team" && <MembersCard initialMembers={members} roles={roles} canManage={organization.role === "owner"} />}
-        {section === "team" && <InvitationsCard initialInvitations={invitations} roles={roles} canManage={organization.role === "owner"} />}
-        {section === "access-control" && <PermissionsCard
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">{details.eyebrow}</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight">{details.title}</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{details.description}</p>
+        </div>
+        {activeSettingsSection === "organization" && <OrganizationCard organization={organization} />}
+        {activeSettingsSection === "plans" && <SubscriptionCard />}
+        {activeSettingsSection === "team" && <MembersCard initialMembers={members} roles={roles} canManage={organization.role === "owner"} />}
+        {activeSettingsSection === "team" && <InvitationsCard initialInvitations={invitations} roles={roles} canManage={organization.role === "owner"} />}
+        {activeSettingsSection === "access-control" && <PermissionsCard
           initialPermissions={availablePermissions}
           canManage={organization.role === "owner"}
           onPermissionsChange={setAvailablePermissions}
         />}
-        {section === "access-control" && <RolesCard initialRoles={roles} permissions={availablePermissions} canManage={organization.role === "owner"} />}
-        {section === "account" && <Card>
+        {activeSettingsSection === "access-control" && <RolesCard initialRoles={roles} permissions={availablePermissions} canManage={organization.role === "owner"} />}
+        {activeSettingsSection === "account" && <Card>
           <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
             <div>
               <CardTitle>Your account</CardTitle>
@@ -288,8 +315,8 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
             )}
           </CardContent>
         </Card>}
-        {section === "security" && organization.role === "owner" && <AuditsCard key={organization.id} members={members} />}
-        {section === "security" && <SessionsCard initialSessions={sessions} />}
+        {activeSettingsSection === "security" && organization.role === "owner" && <AuditsCard key={organization.id} members={members} />}
+        {activeSettingsSection === "security" && <SessionsCard initialSessions={sessions} />}
         </div>
       </section>
       </SidebarInset>
