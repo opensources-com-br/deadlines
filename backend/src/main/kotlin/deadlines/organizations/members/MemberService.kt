@@ -2,12 +2,10 @@ package deadlines.organizations.members
 
 import deadlines.organizations.audits.withAuditActor
 
-import deadlines.organizations.MembershipRole
-import deadlines.organizations.OrganizationAccessDeniedException
-import deadlines.organizations.OrganizationNotFoundException
-import deadlines.organizations.OrganizationRepository
 import deadlines.organizations.access.RoleNotFoundException
 import deadlines.organizations.access.RoleRepository
+import deadlines.organizations.authorization.AuthorizationOperations
+import deadlines.organizations.authorization.PlatformPermission
 import java.time.Clock
 import java.util.UUID
 
@@ -22,18 +20,18 @@ interface MemberOperations {
 }
 
 class MemberService(
-    private val organizations: OrganizationRepository,
+    private val authorization: AuthorizationOperations,
     private val members: MemberRepository,
     private val roles: RoleRepository,
     private val clock: Clock = Clock.systemUTC(),
 ) : MemberOperations {
     override suspend fun list(userId: UUID): MemberListResponse {
-        val organizationId = currentOrganization(userId).organization.id
+        val organizationId = authorization.requirePermission(userId, PlatformPermission.MEMBERS_READ).organizationId
         return MemberListResponse(members.list(organizationId).map(OrganizationMember::toResponse))
     }
 
     override suspend fun get(userId: UUID, membershipId: UUID): MemberResponse {
-        val organizationId = currentOrganization(userId).organization.id
+        val organizationId = authorization.requirePermission(userId, PlatformPermission.MEMBERS_READ).organizationId
         return requireMember(organizationId, membershipId).toResponse()
     }
 
@@ -42,31 +40,23 @@ class MemberService(
         membershipId: UUID,
         request: UpdateMemberRoleRequest,
     ): MemberResponse = withAuditActor(userId) {
-        val context = requireOwner(userId)
-        val member = requireMember(context.organization.id, membershipId)
+        val context = authorization.requirePermission(userId, PlatformPermission.MEMBERS_UPDATE)
+        val member = requireMember(context.organizationId, membershipId)
         if (member.role.key == OWNER_ROLE_KEY) throw OwnerMembershipImmutableException()
 
         val roleId = request.roleId.toUuid("roleId")
-        val role = roles.findById(context.organization.id, roleId) ?: throw RoleNotFoundException()
+        val role = roles.findById(context.organizationId, roleId) ?: throw RoleNotFoundException()
         if (role.key == OWNER_ROLE_KEY) throw OwnerMembershipImmutableException()
-        if (!members.updateRole(context.organization.id, membershipId, role.id)) throw MemberNotFoundException()
-        return@withAuditActor requireMember(context.organization.id, membershipId).toResponse()
+        if (!members.updateRole(context.organizationId, membershipId, role.id)) throw MemberNotFoundException()
+        return@withAuditActor requireMember(context.organizationId, membershipId).toResponse()
     }
 
     override suspend fun remove(userId: UUID, membershipId: UUID) = withAuditActor(userId) {
-        val context = requireOwner(userId)
-        val member = requireMember(context.organization.id, membershipId)
+        val context = authorization.requirePermission(userId, PlatformPermission.MEMBERS_REMOVE)
+        val member = requireMember(context.organizationId, membershipId)
         if (member.role.key == OWNER_ROLE_KEY) throw OwnerMembershipImmutableException()
-        if (!members.remove(context.organization.id, membershipId, clock.instant())) throw MemberNotFoundException()
+        if (!members.remove(context.organizationId, membershipId, clock.instant())) throw MemberNotFoundException()
     }
-
-    private suspend fun currentOrganization(userId: UUID) =
-        organizations.findCurrentByUser(userId) ?: throw OrganizationNotFoundException()
-
-    private suspend fun requireOwner(userId: UUID) =
-        currentOrganization(userId).also {
-            if (it.membership.role != MembershipRole.OWNER) throw OrganizationAccessDeniedException()
-        }
 
     private suspend fun requireMember(organizationId: UUID, membershipId: UUID) =
         members.findById(organizationId, membershipId) ?: throw MemberNotFoundException()
