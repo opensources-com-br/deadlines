@@ -76,7 +76,7 @@ fun main() {
         val permissionRepository = ExposedPermissionRepository(query)
         val permissionService = PermissionService(authorizationService, permissionRepository)
         val roleRepository = ExposedRoleRepository(query)
-        val roleService = RoleService(organizationRepository, roleRepository, permissionRepository)
+        val roleService = RoleService(authorizationService, roleRepository, permissionRepository)
         val memberRepository = ExposedMemberRepository(query)
         val memberService = MemberService(authorizationService, memberRepository, roleRepository)
         val passwordHasher = BcryptPasswordHasher()
