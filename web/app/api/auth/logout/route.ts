@@ -17,6 +17,7 @@ export async function POST() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
       cache: "no-store",
+      signal: AbortSignal.timeout(1_500),
     }).catch(() => undefined);
   }
 
