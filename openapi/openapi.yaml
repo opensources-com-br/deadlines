@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.15.0
+  version: 0.16.0
   description: API local do Deadlines. O cadastro exige confirmação de e-mail antes da ativação e do login; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
@@ -679,19 +679,31 @@ paths:
   /api/v1/members:
     get:
       tags: [Members]
-      summary: Lista membros ativos da organização atual
+      summary: Lista memberships ativas e suspensas da organização atual
       operationId: listMembers
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: Membros ativos
+          description: Memberships atuais
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/MemberList"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /api/v1/members/me:
+    delete:
+      tags: [Members]
+      summary: Sai da organização atual
+      operationId: leaveOrganization
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Membership removida
+        "409":
+          description: O proprietário deve transferir a organização antes de sair
   /api/v1/members/{memberId}:
     parameters:
       - $ref: "#/components/parameters/MemberId"
@@ -748,6 +760,68 @@ paths:
           description: Apenas o proprietário pode remover membros
         "409":
           description: O proprietário não pode ser removido
+  /api/v1/members/{memberId}/suspend:
+    parameters:
+      - $ref: "#/components/parameters/MemberId"
+    post:
+      tags: [Members]
+      summary: Suspende uma membership ativa
+      operationId: suspendMember
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Membership suspensa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/v1/members/{memberId}/reactivate:
+    parameters:
+      - $ref: "#/components/parameters/MemberId"
+    post:
+      tags: [Members]
+      summary: Reativa uma membership suspensa
+      operationId: reactivateMember
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Membership reativada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/v1/members/{memberId}/transfer-ownership:
+    parameters:
+      - $ref: "#/components/parameters/MemberId"
+    post:
+      tags: [Members]
+      summary: Transfere a propriedade para um membro ativo
+      operationId: transferOwnership
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferOwnershipRequest"
+      responses:
+        "200":
+          description: Novo proprietário
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "403":
+          description: Apenas o proprietário pode transferir ownership
+        "409":
+          $ref: "#/components/responses/Conflict"
   /api/v1/invitations:
     get:
       tags: [Invitations]
@@ -1718,9 +1792,17 @@ components:
         roleId:
           type: string
           format: uuid
+    TransferOwnershipRequest:
+      type: object
+      additionalProperties: false
+      required: [previousOwnerRoleId]
+      properties:
+        previousOwnerRoleId:
+          type: string
+          format: uuid
     Member:
       type: object
-      required: [id, userId, email, firstName, lastName, role, joinedAt]
+      required: [id, userId, email, firstName, lastName, role, status, joinedAt]
       properties:
         id:
           type: string
@@ -1737,6 +1819,9 @@ components:
           type: string
         role:
           $ref: "#/components/schemas/Role"
+        status:
+          type: string
+          enum: [active, suspended]
         joinedAt:
           type: string
           format: date-time
