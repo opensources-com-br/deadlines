@@ -72,7 +72,11 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
     ...(accessItems.length ? [{ key: "access", label: t("access"), items: accessItems }] : []),
     { key: "personal", label: t("personal"), items: [{ key: "account", label: t("account") }, { key: "notifications", label: t("notifications") }, { key: "security", label: t("security") }] },
   ];
-  const activeSettingsSection = settingsSection ?? (section === "settings" ? "organization" : section);
+  const requestedSettingsSection = settingsSection ?? (section === "settings" ? "organization" : section);
+  const visibleSettingsSections = settingsNavigation.flatMap((group) => group.items.map((item) => item.key));
+  const activeSettingsSection = visibleSettingsSections.includes(requestedSettingsSection)
+    ? requestedSettingsSection
+    : (visibleSettingsSections[0] ?? "account");
   const details = sectionDetails[activeSettingsSection];
   const activeGroup = settingsNavigation.find((group) => group.items.some((item) => item.key === activeSettingsSection)) ?? settingsNavigation[0];
 
