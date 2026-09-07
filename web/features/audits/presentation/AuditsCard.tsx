@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { AuditPage } from "@/features/audits/domain/audit";
 import type { OrganizationMember } from "@/features/team/domain/team";
 
@@ -82,12 +83,19 @@ export function AuditsCard({ members }: { members: OrganizationMember[] }) {
             <fieldset disabled={isLoading} className="grid min-w-0 gap-4 sm:grid-cols-2">
               <legend className="sr-only">Filter organization history</legend>
               <Field className="sm:col-span-2">
-                <FieldLabel htmlFor="audit-action">Action</FieldLabel>
-                <select id="audit-action" className="h-9 w-full rounded-md border bg-background px-3 text-sm" value={filters.action}
-                  onChange={(event) => setFilters({ ...filters, action: event.target.value })}>
-                  <option value="">All actions</option>
-                  {Object.entries(actions).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
+                <FieldLabel>Action</FieldLabel>
+                <Select
+                  value={filters.action || "all"}
+                  onValueChange={(value) => setFilters({ ...filters, action: value === "all" || value === null ? "" : value })}
+                >
+                  <SelectTrigger className="w-full" aria-label="Action">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent align="start">
+                    <SelectItem value="all">All actions</SelectItem>
+                    {Object.entries(actions).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </Field>
               {([ ["actorId", "Actor ID", "text"], ["resourceId", "Resource ID", "text"],
                 ["from", "From (local time)", "datetime-local"], ["to", "To (local time)", "datetime-local"]] as const).map(([key, label, type]) => (
