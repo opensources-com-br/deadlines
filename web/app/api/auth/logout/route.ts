@@ -5,6 +5,7 @@ import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 
 const accessCookieName = "deadlines_access_token";
 const refreshCookieName = "deadlines_refresh_token";
+const activityCookieName = "deadlines_last_activity";
 
 export async function POST() {
   const cookieStore = await cookies();
@@ -22,6 +23,7 @@ export async function POST() {
   const response = new NextResponse(null, { status: 204 });
   response.cookies.delete(accessCookieName);
   response.cookies.delete(refreshCookieName);
+  response.cookies.delete(activityCookieName);
   response.headers.set("Cache-Control", "private, no-store, no-cache, must-revalidate, max-age=0");
   response.headers.set("Clear-Site-Data", '"cache"');
   return response;

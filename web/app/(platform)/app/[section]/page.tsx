@@ -44,8 +44,9 @@ export default async function PlatformSectionPage({ params, searchParams }: Plat
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("deadlines_access_token")?.value;
   const refreshToken = cookieStore.get("deadlines_refresh_token")?.value;
+  const recentActivity = cookieStore.get("deadlines_last_activity")?.value;
   const returnTo = `/app/${section}`;
-  if (!accessToken) redirect(refreshToken ? `/api/auth/refresh?returnTo=${encodeURIComponent(returnTo)}` : "/login");
+  if (!accessToken) redirect(refreshToken && recentActivity ? `/api/auth/refresh?returnTo=${encodeURIComponent(returnTo)}` : "/login");
 
   const authenticatedRequest = {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -61,7 +62,7 @@ export default async function PlatformSectionPage({ params, searchParams }: Plat
     fetch(backendApiUrl("/api/v1/invitations"), authenticatedRequest).catch(() => undefined),
   ]);
 
-  if (!response?.ok) redirect(refreshToken && response?.status === 401 ? `/api/auth/refresh?returnTo=${encodeURIComponent(returnTo)}` : "/login");
+  if (!response?.ok) redirect(refreshToken && recentActivity && response?.status === 401 ? `/api/auth/refresh?returnTo=${encodeURIComponent(returnTo)}` : "/login");
   if (organizationResponse?.status === 404) redirect("/onboarding/organization");
   if (!organizationResponse?.ok) redirect("/login");
 

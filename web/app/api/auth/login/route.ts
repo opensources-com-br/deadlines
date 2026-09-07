@@ -4,6 +4,7 @@ import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 
 const accessCookieName = "deadlines_access_token";
 const refreshCookieName = "deadlines_refresh_token";
+const activityCookieName = "deadlines_last_activity";
 
 type AuthResponse = {
   accessToken: string;
@@ -66,6 +67,13 @@ export async function POST(request: Request) {
     secure,
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
+  });
+  response.cookies.set(activityCookieName, "active", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure,
+    path: "/",
+    maxAge: auth.expiresIn,
   });
 
   return response;

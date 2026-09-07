@@ -5,6 +5,7 @@ import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 
 const accessCookieName = "deadlines_access_token";
 const refreshCookieName = "deadlines_refresh_token";
+const activityCookieName = "deadlines_last_activity";
 
 type RefreshResponse = { accessToken: string; refreshToken: string; expiresIn: number };
 
@@ -15,6 +16,7 @@ function safeReturnTo(value: string | null) {
 function clearSession(response: NextResponse) {
   response.cookies.delete(accessCookieName);
   response.cookies.delete(refreshCookieName);
+  response.cookies.delete(activityCookieName);
   return response;
 }
 
@@ -22,6 +24,7 @@ function setSessionCookies(response: NextResponse, auth: RefreshResponse) {
   const secure = process.env.NODE_ENV === "production";
   response.cookies.set(accessCookieName, auth.accessToken, { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: auth.expiresIn });
   response.cookies.set(refreshCookieName, auth.refreshToken, { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: 60 * 60 * 24 * 30 });
+  response.cookies.set(activityCookieName, "active", { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: auth.expiresIn });
   return response;
 }
 
