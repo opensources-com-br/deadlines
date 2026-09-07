@@ -1,48 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Deadlines Web
 
-## Getting Started
+The Deadlines web application provides the public site, authentication flows, organization onboarding, and the initial authenticated platform experience.
 
-First, run the development server:
+## Technology
+
+- Next.js 16 with the App Router
+- React 19 and TypeScript
+- Tailwind CSS 4
+- Base UI and shadcn components
+- Lucide icons
+
+## Requirements
+
+- Node.js 22 or newer
+- npm
+- The Deadlines backend running locally on port `8080`
+
+## Local development
+
+Start PostgreSQL and the backend from the repository root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
+docker compose up -d --build backend
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Install the frontend dependencies and start Next.js:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd web
+npm ci
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Learn More
+## Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+The server-side API handlers use `BACKEND_API_URL` to reach the Kotlin API. It defaults to `http://localhost:8080` during local development.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+BACKEND_API_URL=http://localhost:8080
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The browser sends requests only to same-origin `/api/*` handlers. Those handlers forward authenticated requests to the backend, keeping access and refresh tokens in HTTP-only cookies and avoiding direct browser-to-backend communication.
 
-## Deploy on Vercel
+## Available commands
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run dev     # Start the development server
+npm run build   # Create a production build
+npm run start   # Run the production build
+npm run lint    # Run ESLint
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Application areas
 
-## Talking to the API
+- `/`: public landing page
+- `/login` and `/register`: authentication
+- `/forgot-password` and `/reset-password`: password recovery
+- `/verify-email`: email verification
+- `/onboarding/organization`: organization setup
+- `/app`: authenticated platform home
+- `/app/settings`: organization and account settings
 
-Requests to `/api/*` are rewritten to the Kotlin API, so the browser only ever calls this origin and no CORS setup is needed.
+Authenticated platform routes validate the access token on the server. Logging out revokes the refresh session, removes the authentication cookies, and prevents protected pages from being restored from browser history.
 
-`API_URL` selects the target and is read **at build time**, because Next.js bakes rewrite destinations into the build output:
+## Project structure
 
-| Environment      | Value                    |
-|------------------|--------------------------|
-| local `npm run dev` | `http://localhost:8080` (default) |
-| `docker compose --profile full` | `http://api:8080` (build arg) |
-| Vercel           | the public API URL, set as a project environment variable |
+```text
+web/
+├── app/          routes, layouts, and server-side API handlers
+├── components/   shared UI components
+├── features/     feature-specific domain, infrastructure, and presentation code
+├── hooks/        shared React hooks
+├── lib/          shared utilities
+└── public/       static assets
+```
+
+Feature code is grouped by responsibility:
+
+```text
+features/<feature>/
+├── domain/          types and business models
+├── infrastructure/  API clients and request helpers
+└── presentation/    screens and UI components
+```
+
+## Production
+
+The application uses Next.js standalone output. Build it with:
+
+```bash
+npm run build
+npm run start
+```
+
+Set `BACKEND_API_URL` to the reachable production API before starting the server.
+
+For repository-wide setup, backend documentation, and the OpenAPI contract, see the [main project README](../README.md).
