@@ -48,3 +48,7 @@ JOIN permissions granular ON granular.key IN (
 )
 WHERE legacy.key IN ('members.manage', 'roles.manage', 'permissions.manage')
 ON CONFLICT DO NOTHING;
+
+DELETE FROM permissions
+WHERE is_system = TRUE
+  AND key IN ('members.manage', 'roles.manage', 'permissions.manage');
