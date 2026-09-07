@@ -29,6 +29,7 @@ enum class MembershipRole {
 
 enum class MembershipStatus {
     ACTIVE,
+    SUSPENDED,
     REMOVED,
 }
 

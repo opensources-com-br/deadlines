@@ -17,6 +17,7 @@ data class MemberResponse(
     val firstName: String,
     val lastName: String,
     val role: RoleResponse,
+    val status: String,
     val joinedAt: String,
 )
 
@@ -33,5 +34,6 @@ fun OrganizationMember.toResponse() =
         firstName = firstName,
         lastName = lastName,
         role = role.toResponse(),
+        status = status.name.lowercase(),
         joinedAt = joinedAt.toString(),
     )

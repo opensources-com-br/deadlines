@@ -1,6 +1,7 @@
 package deadlines.organizations.members
 
 import deadlines.organizations.access.Role
+import deadlines.organizations.MembershipStatus
 import deadlines.shared.database.DatabaseQuery
 import java.time.Instant
 import java.time.ZoneOffset
@@ -148,5 +149,6 @@ private fun org.jetbrains.exposed.v1.core.ResultRow.toMember() =
                 createdAt = this[RolesTable.createdAt].toInstant(),
                 updatedAt = this[RolesTable.updatedAt].toInstant(),
             ),
+        status = MembershipStatus.valueOf(this[MembershipsTable.status].uppercase()),
         joinedAt = this[MembershipsTable.joinedAt].toInstant(),
     )
