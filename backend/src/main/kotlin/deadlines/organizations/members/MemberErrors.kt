@@ -16,6 +16,12 @@ class MembershipStateConflictException : ApiException(
     "The membership is not in the required state",
 )
 
+class OwnerCannotLeaveException : ApiException(
+    409,
+    "OWNER_CANNOT_LEAVE",
+    "Transfer organization ownership before leaving",
+)
+
 class MemberValidationException(
     violations: Map<String, String>,
 ) : ApiException(422, "VALIDATION_ERROR", "Invalid member data", violations)

@@ -20,6 +20,8 @@ interface MemberOperations {
 
     suspend fun reactivate(userId: UUID, membershipId: UUID): MemberResponse
 
+    suspend fun leave(userId: UUID)
+
     suspend fun remove(userId: UUID, membershipId: UUID)
 }
 
@@ -76,6 +78,15 @@ class MemberService(
         if (member.role.key == OWNER_ROLE_KEY) throw OwnerMembershipImmutableException()
         if (!members.reactivate(context.organizationId, membershipId)) throw MembershipStateConflictException()
         return@withAuditActor requireMember(context.organizationId, membershipId).toResponse()
+    }
+
+    override suspend fun leave(userId: UUID) = withAuditActor(userId) {
+        val context = authorization.context(userId)
+        val member = requireMember(context.organizationId, context.membershipId)
+        if (member.role.key == OWNER_ROLE_KEY) throw OwnerCannotLeaveException()
+        if (!members.remove(context.organizationId, context.membershipId, clock.instant())) {
+            throw MembershipStateConflictException()
+        }
     }
 
     private suspend fun requireMember(organizationId: UUID, membershipId: UUID) =
