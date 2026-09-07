@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { changePassword, updateUserProfile } from "@/features/platform/infrastructure/profile-api";
 
 export function AccountSettings({ user }: { user: UserProfile }) {
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -22,7 +24,7 @@ export function AccountSettings({ user }: { user: UserProfile }) {
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setIsSaving(true);
-    try { const updated = await updateUserProfile({ firstName, lastName }); setFirstName(updated.profile.firstName); setLastName(updated.profile.lastName); setIsEditing(false); toast.success("Your profile has been updated."); }
+    try { const updated = await updateUserProfile({ firstName, lastName }); setFirstName(updated.profile.firstName); setLastName(updated.profile.lastName); setIsEditing(false); router.refresh(); toast.success("Your profile has been updated."); }
     catch (error) { toast.error(error instanceof Error ? error.message : "Unable to update your profile."); }
     finally { setIsSaving(false); }
   }
@@ -42,7 +44,7 @@ export function AccountSettings({ user }: { user: UserProfile }) {
     </Card>
     <Card>
       <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4"><div><CardTitle>Password</CardTitle><CardDescription>Choose a strong password to protect your account.</CardDescription></div>{!isChangingPassword ? <Button variant="outline" onClick={() => setIsChangingPassword(true)}>Change password</Button> : null}</CardHeader>
-      {isChangingPassword ? <CardContent><form onSubmit={savePassword}><FieldGroup><Field><FieldLabel htmlFor="current-password">Current password</FieldLabel><Input id="current-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></Field><Field><FieldLabel htmlFor="new-password">New password</FieldLabel><Input id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={12} maxLength={72} required /><p className="text-xs text-muted-foreground">Use between 12 and 72 characters.</p></Field><Field><FieldLabel htmlFor="password-confirmation">Confirm new password</FieldLabel><Input id="password-confirmation" type="password" autoComplete="new-password" value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} minLength={12} maxLength={72} required /></Field><Field orientation="horizontal" className="justify-end"><Button variant="outline" type="button" disabled={isSaving} onClick={() => setIsChangingPassword(false)}>Cancel</Button><Button type="submit" disabled={isSaving}>{isSaving ? "Changing..." : "Update password"}</Button></Field></FieldGroup></form></CardContent> : null}
+      {isChangingPassword ? <CardContent><form onSubmit={savePassword}><FieldGroup><Field><FieldLabel htmlFor="current-password">Current password</FieldLabel><Input id="current-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></Field><Field><FieldLabel htmlFor="new-password">New password</FieldLabel><Input id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={12} maxLength={72} required /><p className="text-xs text-muted-foreground">Use between 12 and 72 characters.</p></Field><Field><FieldLabel htmlFor="password-confirmation">Confirm new password</FieldLabel><Input id="password-confirmation" type="password" autoComplete="new-password" value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} minLength={12} maxLength={72} required /></Field><Field orientation="horizontal" className="justify-end"><Button variant="outline" type="button" disabled={isSaving} onClick={() => { setCurrentPassword(""); setNewPassword(""); setPasswordConfirmation(""); setIsChangingPassword(false); }}>Cancel</Button><Button type="submit" disabled={isSaving}>{isSaving ? "Changing..." : "Update password"}</Button></Field></FieldGroup></form></CardContent> : null}
     </Card>
   </div>;
 }
