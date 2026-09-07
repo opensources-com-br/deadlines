@@ -90,6 +90,7 @@ fun main() {
         val invitationService =
             InvitationService(
                 organizationRepository,
+                authorizationService,
                 ExposedInvitationRepository(query),
                 roleRepository,
                 memberRepository,

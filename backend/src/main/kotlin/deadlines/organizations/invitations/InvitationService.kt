@@ -10,12 +10,12 @@ import deadlines.identity.email.SecureEmailTokenGenerator
 import deadlines.identity.users.UserRepository
 import deadlines.identity.users.UserStatus
 import deadlines.organizations.ActiveMembershipAlreadyExistsException
-import deadlines.organizations.MembershipRole
-import deadlines.organizations.OrganizationAccessDeniedException
 import deadlines.organizations.OrganizationNotFoundException
 import deadlines.organizations.OrganizationRepository
 import deadlines.organizations.access.RoleNotFoundException
 import deadlines.organizations.access.RoleRepository
+import deadlines.organizations.authorization.AuthorizationOperations
+import deadlines.organizations.authorization.PlatformPermission
 import deadlines.organizations.members.MemberRepository
 import deadlines.organizations.members.MemberResponse
 import deadlines.organizations.members.toResponse
@@ -40,6 +40,7 @@ interface InvitationOperations {
 
 class InvitationService(
     private val organizations: OrganizationRepository,
+    private val authorization: AuthorizationOperations,
     private val invitations: InvitationRepository,
     private val roles: RoleRepository,
     private val members: MemberRepository,
@@ -51,17 +52,17 @@ class InvitationService(
     private val idGenerator: () -> UUID = UUID::randomUUID,
 ) : InvitationOperations {
     override suspend fun list(userId: UUID): InvitationListResponse {
-        val context = currentOrganization(userId)
+        val context = authorizedOrganization(userId)
         return InvitationListResponse(invitations.list(context.organization.id, clock.instant()).map(OrganizationInvitation::toResponse))
     }
 
     override suspend fun get(userId: UUID, invitationId: UUID): InvitationResponse {
-        val context = currentOrganization(userId)
+        val context = authorizedOrganization(userId)
         return requireInvitation(context.organization.id, invitationId).toResponse()
     }
 
     override suspend fun create(userId: UUID, request: CreateInvitationRequest): InvitationResponse = withAuditActor(userId) {
-        val context = requireOwner(userId)
+        val context = authorizedOrganization(userId)
         val normalizedEmail = validateEmail(request.email)
         val role = requireAssignableRole(context.organization.id, request.roleId)
         val existingUser = users.findByEmail(normalizedEmail)
@@ -96,7 +97,7 @@ class InvitationService(
     }
 
     override suspend fun resend(userId: UUID, invitationId: UUID): InvitationResponse = withAuditActor(userId) {
-        val context = requireOwner(userId)
+        val context = authorizedOrganization(userId)
         val invitation = requireInvitation(context.organization.id, invitationId)
         if (invitation.status !in setOf(InvitationStatus.PENDING, InvitationStatus.EXPIRED)) {
             throw InvitationInvalidException()
@@ -119,7 +120,7 @@ class InvitationService(
     }
 
     override suspend fun revoke(userId: UUID, invitationId: UUID) = withAuditActor(userId) {
-        val context = requireOwner(userId)
+        val context = authorizedOrganization(userId)
         requireInvitation(context.organization.id, invitationId)
         if (!invitations.revoke(context.organization.id, invitationId, clock.instant())) throw InvitationInvalidException()
     }
@@ -166,9 +167,9 @@ class InvitationService(
     private suspend fun currentOrganization(userId: UUID) =
         organizations.findCurrentByUser(userId) ?: throw OrganizationNotFoundException()
 
-    private suspend fun requireOwner(userId: UUID) =
-        currentOrganization(userId).also {
-            if (it.membership.role != MembershipRole.OWNER) throw OrganizationAccessDeniedException()
+    private suspend fun authorizedOrganization(userId: UUID) =
+        authorization.requirePermission(userId, PlatformPermission.MEMBERS_INVITE).let {
+            currentOrganization(userId)
         }
 
     private suspend fun requireAssignableRole(organizationId: UUID, rawRoleId: String) =
