@@ -12,6 +12,7 @@ import org.jetbrains.exposed.v1.javatime.timestampWithTimeZone
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.upsert
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
@@ -32,6 +33,8 @@ interface SessionRepository {
     suspend fun create(session: Session)
 
     suspend fun findActive(refreshTokenHash: String, now: Instant): Session?
+
+    suspend fun findByDevice(userId: UUID, deviceId: UUID): Session?
 
     suspend fun rotate(currentHash: String, replacement: Session, now: Instant): Boolean
 
@@ -63,11 +66,27 @@ class ExposedSessionRepository(
                 ?.toSession()
         }
 
+    override suspend fun findByDevice(userId: UUID, deviceId: UUID): Session? =
+        query {
+            SessionsTable.selectAll()
+                .where { (SessionsTable.userId eq userId) and (SessionsTable.deviceId eq deviceId) }
+                .singleOrNull()
+                ?.toSession()
+        }
+
     override suspend fun rotate(currentHash: String, replacement: Session, now: Instant): Boolean =
         query {
-            val revoked = revokeActive(currentHash, now)
-            if (revoked == 1) insert(replacement)
-            revoked == 1
+            SessionsTable.update({
+                (SessionsTable.refreshTokenHash eq currentHash) and
+                    SessionsTable.revokedAt.isNull() and
+                    (SessionsTable.expiresAt greater now.atOffset(ZoneOffset.UTC))
+            }) {
+                it[refreshTokenHash] = replacement.refreshTokenHash
+                it[userAgent] = replacement.userAgent
+                it[ipAddress] = replacement.ipAddress
+                it[expiresAt] = replacement.expiresAt.atOffset(ZoneOffset.UTC)
+                it[lastSeenAt] = replacement.lastSeenAt.atOffset(ZoneOffset.UTC)
+            } == 1
         }
 
     override suspend fun revoke(refreshTokenHash: String, now: Instant): Boolean =
@@ -111,7 +130,7 @@ class ExposedSessionRepository(
         }
 
     private fun insert(session: Session) {
-        SessionsTable.insert {
+        SessionsTable.upsert(SessionsTable.userId, SessionsTable.deviceId) {
             it[id] = session.id
             it[userId] = session.userId
             it[refreshTokenHash] = session.refreshTokenHash
@@ -121,6 +140,7 @@ class ExposedSessionRepository(
             it[createdAt] = session.createdAt.atOffset(ZoneOffset.UTC)
             it[deviceId] = session.deviceId
             it[lastSeenAt] = session.lastSeenAt.atOffset(ZoneOffset.UTC)
+            it[revokedAt] = null
         }
     }
 }

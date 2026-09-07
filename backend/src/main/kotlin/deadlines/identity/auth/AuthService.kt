@@ -77,8 +77,14 @@ class AuthService(
         val user = users.findById(current.userId)
         if (user == null || user.status != UserStatus.ACTIVE) throw InvalidRefreshTokenException()
 
-        val issued = tokens.issue(user.id)
-        val replacement = issued.toSession(user.id, context, now)
+        val issued = tokens.issue(user.id, current.id)
+        val replacement = issued.toSession(
+            userId = user.id,
+            context = context,
+            now = now,
+            deviceId = current.deviceId,
+            createdAt = current.createdAt,
+        )
         if (!sessions.rotate(currentHash, replacement, now)) throw InvalidRefreshTokenException()
         return issued.toResponse(user)
     }
@@ -117,7 +123,10 @@ class AuthService(
 
     private suspend fun createSession(user: User, context: SessionContext): AuthResponse {
         val now = clock.instant()
-        val issued = tokens.issue(user.id)
+        val deviceId = context.deviceId
+            ?: throw AuthValidationException(mapOf("X-Device-Id" to "is required and must be a UUID"))
+        val existing = sessions.findByDevice(user.id, deviceId)
+        val issued = tokens.issue(user.id, existing?.id ?: UUID.randomUUID())
         sessions.create(issued.toSession(user.id, context, now))
         return issued.toResponse(user)
     }
@@ -131,7 +140,14 @@ class AuthService(
         if (violations.isNotEmpty()) throw AuthValidationException(violations)
     }
 
-    private fun IssuedTokens.toSession(userId: UUID, context: SessionContext, now: java.time.Instant) =
+    private fun IssuedTokens.toSession(
+        userId: UUID,
+        context: SessionContext,
+        now: java.time.Instant,
+        deviceId: UUID = context.deviceId
+            ?: throw AuthValidationException(mapOf("X-Device-Id" to "is required and must be a UUID")),
+        createdAt: java.time.Instant = now,
+    ) =
         Session(
             id = sessionId,
             userId = userId,
@@ -139,8 +155,8 @@ class AuthService(
             userAgent = context.userAgent,
             ipAddress = context.ipAddress,
             expiresAt = refreshExpiresAt,
-            createdAt = now,
-            deviceId = context.deviceId ?: throw AuthValidationException(mapOf("X-Device-Id" to "is required and must be a UUID")),
+            createdAt = createdAt,
+            deviceId = deviceId,
             lastSeenAt = now,
         )
 

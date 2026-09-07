@@ -27,9 +27,8 @@ class TokenService(
 ) {
     private val algorithm = Algorithm.HMAC256(config.jwtSecret)
 
-    fun issue(userId: UUID): IssuedTokens {
+    fun issue(userId: UUID, sessionId: UUID = UUID.randomUUID()): IssuedTokens {
         val now = clock.instant()
-        val sessionId = UUID.randomUUID()
         val accessExpiresAt = now.plusSeconds(config.accessTokenExpirationSeconds)
         val refreshToken = ByteArray(32).also(secureRandom::nextBytes).toBase64Url()
 
