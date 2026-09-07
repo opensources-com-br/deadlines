@@ -101,17 +101,19 @@ export function PlatformSidebar({ activeItem, user, onSignOut, onSettingsSelect,
                 <EllipsisVertical className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="min-w-56" side={isMobile ? "bottom" : "right"} align="end" sideOffset={4}>
-                <DropdownMenuLabel className="p-1 font-normal">
-                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <Avatar className="rounded-lg">
-                      <AvatarFallback className="rounded-lg">{userInitials(user)}</AvatarFallback>
-                    </Avatar>
-                    <div className="grid flex-1 leading-tight">
-                      <span className="truncate font-medium">{name}</span>
-                      <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="p-1 font-normal">
+                    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                      <Avatar className="rounded-lg">
+                        <AvatarFallback className="rounded-lg">{userInitials(user)}</AvatarFallback>
+                      </Avatar>
+                      <div className="grid flex-1 leading-tight">
+                        <span className="truncate font-medium">{name}</span>
+                        <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                      </div>
                     </div>
-                  </div>
-                </DropdownMenuLabel>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem onClick={() => onSettingsSelect("account")}>
