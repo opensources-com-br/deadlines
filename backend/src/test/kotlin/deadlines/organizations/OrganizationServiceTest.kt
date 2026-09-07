@@ -1,5 +1,7 @@
 package deadlines.organizations
 
+import deadlines.organizations.authorization.PlatformPermission
+import deadlines.organizations.authorization.testAuthorization
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -20,7 +22,12 @@ class OrganizationServiceTest {
         runTest {
             val repository = MemoryOrganizationRepository()
             val ids = ArrayDeque(listOf(organizationId, membershipId))
-            val service = OrganizationService(repository, fixedClock(), ids::removeFirst)
+            val service = OrganizationService(
+                repository,
+                testAuthorization(userId, organizationId),
+                fixedClock(),
+                ids::removeFirst,
+            )
 
             val response = service.create(userId, CreateOrganizationRequest("  Acme Inc  ", "  ACME-INC  "))
 
@@ -35,7 +42,7 @@ class OrganizationServiceTest {
     fun `rejects creation when the user already has an active membership`() =
         runTest {
             val repository = MemoryOrganizationRepository(context(userId, MembershipRole.OWNER))
-            val service = OrganizationService(repository, fixedClock())
+            val service = OrganizationService(repository, testAuthorization(userId, organizationId), fixedClock())
 
             assertFailsWith<ActiveMembershipAlreadyExistsException> {
                 service.create(userId, CreateOrganizationRequest("Another", "another"))
@@ -46,7 +53,11 @@ class OrganizationServiceTest {
     fun `returns current organization and reports missing onboarding`() =
         runTest {
             val repository = MemoryOrganizationRepository(context(userId, MembershipRole.OWNER))
-            val service = OrganizationService(repository, fixedClock())
+            val service = OrganizationService(
+                repository,
+                testAuthorization(userId, organizationId, PlatformPermission.ORGANIZATION_READ),
+                fixedClock(),
+            )
 
             assertEquals(organizationId.toString(), service.current(userId).id)
             assertFailsWith<OrganizationNotFoundException> {
@@ -55,25 +66,37 @@ class OrganizationServiceTest {
         }
 
     @Test
-    fun `only an owner can update a valid organization`() =
+    fun `organization update requires its permission`() =
         runTest {
             val repository = MemoryOrganizationRepository(context(userId, MembershipRole.OWNER))
-            val service = OrganizationService(repository, fixedClock())
+            val service = OrganizationService(
+                repository,
+                testAuthorization(userId, organizationId, PlatformPermission.ORGANIZATION_UPDATE),
+                fixedClock(),
+            )
 
             val updated = service.update(userId, UpdateOrganizationRequest(name = "Updated", slug = "NEW-SLUG"))
             assertEquals("Updated", updated.name)
             assertEquals("new-slug", updated.slug)
 
-            repository.context = context(userId, MembershipRole.MEMBER)
+            val deniedService = OrganizationService(
+                repository,
+                testAuthorization(userId, organizationId),
+                fixedClock(),
+            )
             assertFailsWith<OrganizationAccessDeniedException> {
-                service.update(userId, UpdateOrganizationRequest(name = "Denied"))
+                deniedService.update(userId, UpdateOrganizationRequest(name = "Denied"))
             }
         }
 
     @Test
     fun `validates organization names slugs and empty updates`() =
         runTest {
-            val service = OrganizationService(MemoryOrganizationRepository(context(userId, MembershipRole.OWNER)), fixedClock())
+            val service = OrganizationService(
+                MemoryOrganizationRepository(context(userId, MembershipRole.OWNER)),
+                testAuthorization(userId, organizationId, PlatformPermission.ORGANIZATION_UPDATE),
+                fixedClock(),
+            )
 
             assertFailsWith<OrganizationValidationException> {
                 service.create(UUID.randomUUID(), CreateOrganizationRequest("A", "valid"))
