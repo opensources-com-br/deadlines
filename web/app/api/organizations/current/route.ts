@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
+import { forwardAccessRequest } from "@/features/access/infrastructure/forward-access-request";
 
 const accessCookieName = "deadlines_access_token";
 
@@ -45,4 +46,8 @@ export async function PATCH(request: Request) {
     data ?? { error: { code: "ORGANIZATION_UPDATE_FAILED", message: "Unable to update your organization" } },
     { status: backendResponse.status },
   );
+}
+
+export async function DELETE() {
+  return forwardAccessRequest("/api/v1/organizations/current", "DELETE");
 }
