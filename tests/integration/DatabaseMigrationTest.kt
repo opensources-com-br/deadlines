@@ -4,6 +4,8 @@ import deadlines.organizations.audits.*
 import deadlines.organizations.OrganizationService
 import deadlines.organizations.UpdateOrganizationRequest
 import deadlines.organizations.access.*
+import deadlines.organizations.authorization.AuthorizationService
+import deadlines.organizations.authorization.ExposedAuthorizationRepository
 import deadlines.organizations.members.MemberService
 import deadlines.organizations.members.UpdateMemberRoleRequest
 import kotlin.test.assertTrue
@@ -74,7 +76,7 @@ class DatabaseMigrationTest {
                 ).use { statement ->
                     statement.executeQuery().use { result ->
                         result.next()
-                        assertEquals(16, result.getInt(1))
+                        assertEquals(17, result.getInt(1))
                     }
                 }
             }
@@ -464,6 +466,7 @@ class DatabaseMigrationTest {
             val invitations = ExposedInvitationRepository(query)
             val members = ExposedMemberRepository(query)
             val audits = ExposedAuditRepository(query)
+            val authorization = AuthorizationService(ExposedAuthorizationRepository(query))
             val now = Instant.now()
             val owner = testUser("audit-owner", now)
             val invitee = testUser("audit-invitee", now)
@@ -472,13 +475,13 @@ class DatabaseMigrationTest {
             val context = organizationContext(owner.id, "audit-${UUID.randomUUID()}", now)
             organizations.createWithOwner(context)
             val org = context.organization.id
-            val organizationService = OrganizationService(organizations)
+            val organizationService = OrganizationService(organizations, authorization)
             organizationService.update(owner.id, UpdateOrganizationRequest(name = "Do not copy this secret into metadata"))
-            val permissionService = PermissionService(organizations, permissions)
-            val permission = permissionService.create(owner.id, CreatePermissionRequest("audit.read", "Audit test", "sensitive description"))
+            val permissionService = PermissionService(authorization, permissions)
+            val permission = permissionService.create(owner.id, CreatePermissionRequest("records.read", "Audit test", "sensitive description"))
             val permissionId = UUID.fromString(permission.id)
             permissionService.update(owner.id, permissionId, UpdatePermissionRequest(name = "Changed permission"))
-            val roleService = RoleService(organizations, roles, permissions)
+            val roleService = RoleService(authorization, roles, permissions)
             val role = roleService.create(owner.id, CreateRoleRequest("auditor", "Auditor", "sensitive description"))
             val roleId = UUID.fromString(role.id)
             roleService.update(owner.id, roleId, UpdateRoleRequest(name = "Changed role"))
@@ -497,7 +500,7 @@ class DatabaseMigrationTest {
             }
             withAuditActor(invitee.id) { assertTrue(invitations.accept(invitation, invitee.id, UUID.randomUUID(), now)) }
             val member = members.findByUserId(org, invitee.id)!!
-            val memberService = MemberService(organizations, members, roles)
+            val memberService = MemberService(authorization, members, roles)
             memberService.updateRole(owner.id, member.membershipId, UpdateMemberRoleRequest(role.id))
             memberService.remove(owner.id, member.membershipId)
             val revoked = invitation.copy(id = UUID.randomUUID(), tokenHash = "v".repeat(64))
