@@ -16,6 +16,8 @@ import deadlines.organizations.OrganizationMembership
 import deadlines.organizations.OrganizationRepository
 import deadlines.organizations.access.MemoryRoleRepository
 import deadlines.organizations.access.Role
+import deadlines.organizations.authorization.PlatformPermission
+import deadlines.organizations.authorization.testAuthorization
 import deadlines.organizations.members.MemberRepository
 import deadlines.organizations.members.OrganizationMember
 import java.time.Clock
@@ -116,6 +118,7 @@ class InvitationServiceTest {
         val service =
             InvitationService(
                 organizations,
+                testAuthorization(ownerId, organizationId, PlatformPermission.MEMBERS_INVITE),
                 invitations,
                 MemoryRoleRepository(listOf(memberRole)),
                 members,
