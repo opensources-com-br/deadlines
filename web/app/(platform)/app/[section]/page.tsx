@@ -7,6 +7,7 @@ import { platformPermission } from "@/features/access/domain/authorization";
 import { AuthorizationProvider } from "@/features/access/presentation/AuthorizationProvider";
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import type { Organization } from "@/features/organizations/domain/organization";
+import { SuspendedOrganizationScreen } from "@/features/organizations/presentation/SuspendedOrganizationScreen";
 import type { SessionList } from "@/features/platform/domain/session";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { PlatformHome } from "@/features/platform/presentation/PlatformHome";
@@ -63,7 +64,19 @@ export default async function PlatformSectionPage({ params, searchParams }: Plat
   ]);
 
   if (!response?.ok) redirect(refreshToken && (recentActivity || persistentSession) && response?.status === 401 ? `/api/auth/refresh?returnTo=${encodeURIComponent(returnTo)}` : "/login");
-  if (authorizationResponse?.status === 404) redirect("/onboarding/organization");
+  if (authorizationResponse?.status === 404) {
+    const retainedResponse = await fetch(
+      backendApiUrl("/api/v1/organizations/retained"),
+      authenticatedRequest,
+    ).catch(() => undefined);
+    if (retainedResponse?.ok) {
+      const retainedOrganization = (await retainedResponse.json()) as Organization;
+      if (retainedOrganization.status === "suspended") {
+        return <SuspendedOrganizationScreen organization={retainedOrganization} />;
+      }
+    }
+    redirect("/onboarding/organization");
+  }
   if (!authorizationResponse?.ok) redirect("/login");
 
   const user = (await response.json()) as UserProfile;
