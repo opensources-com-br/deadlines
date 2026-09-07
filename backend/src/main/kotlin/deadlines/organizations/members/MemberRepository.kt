@@ -132,6 +132,7 @@ class ExposedMemberRepository(
                     (MembershipsTable.status eq ACTIVE_STATUS)
             }) {
                 it[roleId] = ownerRoleId
+                it[legacyRole] = OWNER_ROLE
             }
             val previousOwnerUpdated = MembershipsTable.update({
                 (MembershipsTable.organizationId eq organizationId) and
@@ -139,6 +140,7 @@ class ExposedMemberRepository(
                     (MembershipsTable.status eq ACTIVE_STATUS)
             }) {
                 it[roleId] = previousOwnerRoleId
+                it[legacyRole] = MEMBER_ROLE
             }
             nextOwnerUpdated == 1 && previousOwnerUpdated == 1
         }
@@ -163,6 +165,8 @@ class ExposedMemberRepository(
 
 private const val ACTIVE_STATUS = "active"
 private const val SUSPENDED_STATUS = "suspended"
+private const val OWNER_ROLE = "owner"
+private const val MEMBER_ROLE = "member"
 private val RETAINED_STATUSES = listOf(ACTIVE_STATUS, SUSPENDED_STATUS)
 
 private object MemberOrganizationsTable : Table("organizations") {
@@ -196,6 +200,7 @@ private object MembershipsTable : Table("organization_memberships") {
     val organizationId = javaUUID("organization_id").references(MemberOrganizationsTable.id)
     val userId = javaUUID("user_id").references(UsersTable.id)
     val roleId = javaUUID("role_id").references(RolesTable.id)
+    val legacyRole = varchar("role", 32)
     val status = varchar("status", 32)
     val joinedAt = timestampWithTimeZone("joined_at")
     val removedAt = timestampWithTimeZone("removed_at").nullable()
