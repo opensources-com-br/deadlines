@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { AuthShell } from "@/features/identity/presentation/components/AuthShell";
@@ -16,9 +17,10 @@ type AcceptInvitationScreenProps = {
 };
 
 export function AcceptInvitationScreen({ token, authenticated }: AcceptInvitationScreenProps) {
+  const t = useTranslations("Invitation");
   const router = useRouter();
   const [preview, setPreview] = useState<InvitationPreview>();
-  const [error, setError] = useState<string | undefined>(token ? undefined : "This invitation link is invalid.");
+  const [error, setError] = useState<string | undefined>(token ? undefined : t("invalid"));
   const [acceptanceError, setAcceptanceError] = useState<string>();
   const [isAccepting, setIsAccepting] = useState(false);
   const hasStartedAcceptance = useRef(false);
@@ -34,8 +36,8 @@ export function AcceptInvitationScreen({ token, authenticated }: AcceptInvitatio
     }).catch(() => undefined);
     teamApi.previewInvitation(token)
       .then(setPreview)
-      .catch((reason) => setError(reason instanceof Error ? reason.message : "Unable to load this invitation."));
-  }, [token]);
+      .catch((reason) => setError(reason instanceof Error ? reason.message : t("loadError")));
+  }, [t, token]);
 
   const acceptInvitation = useCallback(async () => {
     if (!token) return;
@@ -43,18 +45,18 @@ export function AcceptInvitationScreen({ token, authenticated }: AcceptInvitatio
     setAcceptanceError(undefined);
     try {
       await teamApi.acceptInvitation(token);
-      toast.success("Invitation accepted. Welcome to the organization.");
+      toast.success(t("accepted"));
       router.replace("/app");
       router.refresh();
     } catch (reason) {
-      const message = reason instanceof Error ? reason.message : "Unable to join this organization.";
+      const message = reason instanceof Error ? reason.message : t("acceptError");
       setAcceptanceError(message);
       toast.error(message);
       hasStartedAcceptance.current = false;
     } finally {
       setIsAccepting(false);
     }
-  }, [router, token]);
+  }, [router, t, token]);
 
   useEffect(() => {
     if (!authenticated || preview?.status !== "pending" || acceptanceError || hasStartedAcceptance.current) return;
@@ -64,14 +66,14 @@ export function AcceptInvitationScreen({ token, authenticated }: AcceptInvitatio
 
   if (error) {
     return (
-      <AuthShell title="Invitation unavailable" description={error}>
-        <Link href="/" className={buttonVariants({ variant: "outline" }) + " w-full"}>Return home</Link>
+      <AuthShell title={t("unavailable")} description={error}>
+        <Link href="/" className={buttonVariants({ variant: "outline" }) + " w-full"}>{t("home")}</Link>
       </AuthShell>
     );
   }
 
   if (!preview) {
-    return <AuthShell title="Loading invitation" description="Checking your invitation details...">&nbsp;</AuthShell>;
+    return <AuthShell title={t("loading")} description={t("checking")}>&nbsp;</AuthShell>;
   }
 
   const nextPath = `/invitations/accept?token=${encodeURIComponent(token ?? "")}`;
@@ -79,23 +81,22 @@ export function AcceptInvitationScreen({ token, authenticated }: AcceptInvitatio
 
   return (
     <AuthShell
-      title={`Join ${preview.organizationName}`}
-      description={`Create an account to join as ${preview.roleName}.`}
+      title={t("join", { organization: preview.organizationName })}
+      description={t("joinDescription", { role: preview.roleName })}
     >
       <div className="rounded-xl border bg-muted/50 p-5 text-sm leading-6 text-muted-foreground">
-        This invitation was sent to <span className="font-medium text-foreground">{preview.email}</span>.
-        {!canAccept ? ` Its current status is ${preview.status}.` : null}
+        {t("sentTo", { email: preview.email })}{!canAccept ? ` ${t("status", { status: t(preview.status === "accepted" ? "acceptedStatus" : preview.status as "pending" | "expired" | "revoked") })}` : null}
       </div>
       {canAccept && authenticated ? (
         acceptanceError ? (
           <div className="mt-5 space-y-3">
             <p className="text-sm text-destructive">{acceptanceError}</p>
             <Button className="w-full" type="button" onClick={() => void acceptInvitation()} disabled={isAccepting}>
-              Try again
+              {t("retry")}
             </Button>
           </div>
         ) : (
-          <p className="mt-5 text-center text-sm text-muted-foreground">{isAccepting ? "Joining organization..." : "Preparing your organization..."}</p>
+          <p className="mt-5 text-center text-sm text-muted-foreground">{isAccepting ? t("joining") : t("preparing")}</p>
         )
       ) : canAccept ? (
         <div className="mt-5 space-y-3">
@@ -103,12 +104,12 @@ export function AcceptInvitationScreen({ token, authenticated }: AcceptInvitatio
             href={`/register?email=${encodeURIComponent(preview.email)}&next=${encodeURIComponent(nextPath)}`}
             className={buttonVariants() + " w-full"}
           >
-            Create invited account
+            {t("create")}
           </Link>
           <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
+            {t("hasAccount")}{" "}
             <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="font-medium text-foreground underline underline-offset-4">
-              Sign in
+              {t("signin")}
             </Link>
           </p>
         </div>
