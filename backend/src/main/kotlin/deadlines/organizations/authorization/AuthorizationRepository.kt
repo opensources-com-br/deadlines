@@ -18,11 +18,12 @@ class ExposedAuthorizationRepository(
     override suspend fun findByUserId(userId: UUID): AuthorizationContext? =
         query {
             val membership =
-                AuthorizationMembershipsTable
+                (AuthorizationMembershipsTable innerJoin AuthorizationOrganizationsTable)
                     .selectAll()
                     .where {
                         (AuthorizationMembershipsTable.userId eq userId) and
-                            (AuthorizationMembershipsTable.status eq "active")
+                            (AuthorizationMembershipsTable.status eq "active") and
+                            (AuthorizationOrganizationsTable.status eq "active")
                     }
                     .singleOrNull()
                     ?: return@query null
@@ -46,6 +47,7 @@ class ExposedAuthorizationRepository(
 
 private object AuthorizationOrganizationsTable : Table("organizations") {
     val id = javaUUID("id")
+    val status = varchar("status", 32)
 }
 
 private object AuthorizationUsersTable : Table("users") {

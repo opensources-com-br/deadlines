@@ -58,7 +58,8 @@ class ExposedOrganizationRepository(
             organizationContextQuery()
                 .where {
                     (OrganizationMembershipsTable.userId eq userId) and
-                        (OrganizationMembershipsTable.status eq MembershipStatus.ACTIVE.name.lowercase())
+                        (OrganizationMembershipsTable.status eq MembershipStatus.ACTIVE.name.lowercase()) and
+                        (OrganizationsTable.status eq OrganizationStatus.ACTIVE.name.lowercase())
                 }
                 .singleOrNull()
                 ?.toOrganizationContext()
@@ -69,7 +70,8 @@ class ExposedOrganizationRepository(
             organizationContextQuery()
                 .where {
                     (OrganizationMembershipsTable.userId eq userId) and
-                        (OrganizationMembershipsTable.status inList listOf("active", "suspended"))
+                        (OrganizationMembershipsTable.status inList listOf("active", "suspended")) and
+                        (OrganizationsTable.status inList listOf("active", "suspended"))
                 }
                 .singleOrNull()
                 ?.toOrganizationContext()
