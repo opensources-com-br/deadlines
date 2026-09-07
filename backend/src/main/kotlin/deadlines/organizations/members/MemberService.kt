@@ -1,6 +1,7 @@
 package deadlines.organizations.members
 
 import deadlines.organizations.audits.withAuditActor
+import deadlines.organizations.MembershipStatus
 
 import deadlines.organizations.access.RoleNotFoundException
 import deadlines.organizations.access.RoleRepository
@@ -21,6 +22,12 @@ interface MemberOperations {
     suspend fun reactivate(userId: UUID, membershipId: UUID): MemberResponse
 
     suspend fun leave(userId: UUID)
+
+    suspend fun transferOwnership(
+        userId: UUID,
+        nextOwnerMembershipId: UUID,
+        request: TransferOwnershipRequest,
+    ): MemberResponse
 
     suspend fun remove(userId: UUID, membershipId: UUID)
 }
@@ -87,6 +94,37 @@ class MemberService(
         if (!members.remove(context.organizationId, context.membershipId, clock.instant())) {
             throw MembershipStateConflictException()
         }
+    }
+
+    override suspend fun transferOwnership(
+        userId: UUID,
+        nextOwnerMembershipId: UUID,
+        request: TransferOwnershipRequest,
+    ): MemberResponse = withAuditActor(userId) {
+        val context = authorization.requirePermission(userId, PlatformPermission.MEMBERS_UPDATE)
+        val currentOwner = requireMember(context.organizationId, context.membershipId)
+        if (currentOwner.role.key != OWNER_ROLE_KEY) throw OwnershipTransferDeniedException()
+
+        val nextOwner = requireMember(context.organizationId, nextOwnerMembershipId)
+        if (nextOwner.status != MembershipStatus.ACTIVE || nextOwner.membershipId == currentOwner.membershipId) {
+            throw OwnershipTransferTargetException()
+        }
+
+        val previousOwnerRoleId = request.previousOwnerRoleId.toUuid("previousOwnerRoleId")
+        val previousOwnerRole = roles.findById(context.organizationId, previousOwnerRoleId) ?: throw RoleNotFoundException()
+        if (previousOwnerRole.key == OWNER_ROLE_KEY) throw OwnershipTransferRoleException()
+        val ownerRole = roles.list(context.organizationId).singleOrNull { it.key == OWNER_ROLE_KEY }
+            ?: throw OwnershipInvariantException()
+
+        if (!members.transferOwnership(
+                context.organizationId,
+                currentOwner.membershipId,
+                nextOwner.membershipId,
+                ownerRole.id,
+                previousOwnerRole.id,
+            )
+        ) throw OwnershipTransferTargetException()
+        return@withAuditActor requireMember(context.organizationId, nextOwnerMembershipId).toResponse()
     }
 
     private suspend fun requireMember(organizationId: UUID, membershipId: UUID) =

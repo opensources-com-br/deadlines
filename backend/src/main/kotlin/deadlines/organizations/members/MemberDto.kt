@@ -10,6 +10,11 @@ data class UpdateMemberRoleRequest(
 )
 
 @Serializable
+data class TransferOwnershipRequest(
+    val previousOwnerRoleId: String,
+)
+
+@Serializable
 data class MemberResponse(
     val id: String,
     val userId: String,
