@@ -21,7 +21,7 @@ interface MemberOperations {
 
     suspend fun reactivate(userId: UUID, membershipId: UUID): MemberResponse = throw UnsupportedOperationException()
 
-    suspend fun leave(userId: UUID) = throw UnsupportedOperationException()
+    suspend fun leave(userId: UUID): Unit = throw UnsupportedOperationException()
 
     suspend fun transferOwnership(
         userId: UUID,
