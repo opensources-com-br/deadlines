@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   Building2,
   CreditCard,
@@ -25,24 +26,27 @@ import {
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 
 const workspaceNavigation = [
-  { label: "Organization", href: "#organization", icon: Building2 },
-  { label: "Plans", href: "#plans", icon: CreditCard },
+  { key: "organization", label: "Organization", href: "/app/organization", icon: Building2 },
+  { key: "plans", label: "Plans", href: "/app/plans", icon: CreditCard },
 ];
 
 const managementNavigation = [
-  { label: "Team", href: "#team", icon: UsersRound },
-  { label: "Access control", href: "#access-control", icon: Shield },
+  { key: "team", label: "Team", href: "/app/team", icon: UsersRound },
+  { key: "access-control", label: "Access control", href: "/app/access-control", icon: Shield },
 ];
 
 const securityNavigation = [
-  { label: "Security", href: "#security", icon: History },
+  { key: "security", label: "Security", href: "/app/security", icon: History },
 ];
 
 type PlatformSidebarProps = {
   user: UserProfile;
+  activeItem: PlatformNavigationItem;
 };
 
-export function PlatformSidebar({ user }: PlatformSidebarProps) {
+export type PlatformNavigationItem = "organization" | "plans" | "team" | "access-control" | "security" | "account";
+
+export function PlatformSidebar({ user, activeItem }: PlatformSidebarProps) {
   return (
     <Sidebar variant="floating" collapsible="icon">
       <SidebarHeader className="p-3">
@@ -56,12 +60,12 @@ export function PlatformSidebar({ user }: PlatformSidebarProps) {
           <SidebarGroupLabel>Workspace</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {workspaceNavigation.map((item, index) => (
+              {workspaceNavigation.map((item) => (
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton
-                    isActive={index === 0}
+                    isActive={item.key === activeItem}
                     tooltip={item.label}
-                    render={<a href={item.href} />}
+                    render={<Link href={item.href} />}
                   >
                     <item.icon />
                     <span>{item.label}</span>
@@ -77,7 +81,7 @@ export function PlatformSidebar({ user }: PlatformSidebarProps) {
             <SidebarMenu>
               {managementNavigation.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton tooltip={item.label} render={<a href={item.href} />}>
+                  <SidebarMenuButton isActive={item.key === activeItem} tooltip={item.label} render={<Link href={item.href} />}>
                     <item.icon />
                     <span>{item.label}</span>
                   </SidebarMenuButton>
@@ -92,7 +96,7 @@ export function PlatformSidebar({ user }: PlatformSidebarProps) {
             <SidebarMenu>
               {securityNavigation.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton tooltip={item.label} render={<a href={item.href} />}>
+                  <SidebarMenuButton isActive={item.key === activeItem} tooltip={item.label} render={<Link href={item.href} />}>
                     <item.icon />
                     <span>{item.label}</span>
                   </SidebarMenuButton>
@@ -105,7 +109,7 @@ export function PlatformSidebar({ user }: PlatformSidebarProps) {
       <SidebarFooter className="p-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Your account" render={<a href="#account" />}>
+            <SidebarMenuButton isActive={activeItem === "account"} tooltip="Your account" render={<Link href="/app/account" />}>
               <UserRound />
               <span>Your account</span>
             </SidebarMenuButton>

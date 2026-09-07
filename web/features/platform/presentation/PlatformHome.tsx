@@ -16,7 +16,7 @@ import type { UserSession } from "@/features/platform/domain/session";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { changePassword, updateUserProfile } from "@/features/platform/infrastructure/profile-api";
 import { SessionsCard } from "@/features/platform/presentation/SessionsCard";
-import { PlatformSidebar } from "@/features/platform/presentation/PlatformSidebar";
+import { PlatformSidebar, type PlatformNavigationItem } from "@/features/platform/presentation/PlatformSidebar";
 import type { Organization } from "@/features/organizations/domain/organization";
 import { OrganizationCard } from "@/features/organizations/presentation/OrganizationCard";
 import type { Permission, Role } from "@/features/access/domain/access";
@@ -35,9 +35,19 @@ type PlatformHomeProps = {
   roles: Role[];
   members: OrganizationMember[];
   invitations: OrganizationInvitation[];
+  section: PlatformNavigationItem;
 };
 
-export function PlatformHome({ user, organization, sessions, permissions, roles, members, invitations }: PlatformHomeProps) {
+const sectionDetails: Record<PlatformNavigationItem, { eyebrow: string; title: string; description: string }> = {
+  organization: { eyebrow: "Workspace", title: "Organization", description: "Manage your organization and its workspace details." },
+  plans: { eyebrow: "Workspace", title: "Plans", description: "Review your organization’s current subscription." },
+  team: { eyebrow: "Management", title: "Team", description: "Manage members and invitations for your organization." },
+  "access-control": { eyebrow: "Management", title: "Access control", description: "Manage roles and permissions for your organization." },
+  security: { eyebrow: "Security", title: "Security", description: "Review organization history and active sessions." },
+  account: { eyebrow: "Account", title: "Your account", description: "Manage your personal information and password." },
+};
+
+export function PlatformHome({ user, organization, sessions, permissions, roles, members, invitations, section }: PlatformHomeProps) {
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -50,6 +60,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
   const [newPassword, setNewPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [availablePermissions, setAvailablePermissions] = useState(permissions);
+  const details = sectionDetails[section];
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -115,7 +126,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
 
   return (
     <SidebarProvider>
-      <PlatformSidebar user={user} />
+      <PlatformSidebar user={user} activeItem={section} />
       <SidebarInset className="min-h-svh bg-background text-foreground">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
         <SidebarTrigger variant="ghost" size="icon" aria-label="Toggle sidebar" />
@@ -126,27 +137,27 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
 
       <section className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[minmax(0,0.8fr)_minmax(420px,1fr)] lg:py-20">
         <div className="max-w-xl">
-          <p className="text-sm font-medium text-muted-foreground">Platform</p>
+          <p className="text-sm font-medium text-muted-foreground">{details.eyebrow}</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-            Welcome, {profile.firstName}.
+            {details.title}
           </h1>
           <p className="mt-5 text-lg leading-8 text-muted-foreground">
-            Your account is active. You can review and update your profile here.
+            {details.description}
           </p>
         </div>
 
         <div className="space-y-6">
-        <OrganizationCard organization={organization} />
-        <SubscriptionCard />
-        <MembersCard initialMembers={members} roles={roles} canManage={organization.role === "owner"} />
-        <InvitationsCard initialInvitations={invitations} roles={roles} canManage={organization.role === "owner"} />
-        <PermissionsCard
+        {section === "organization" && <OrganizationCard organization={organization} />}
+        {section === "plans" && <SubscriptionCard />}
+        {section === "team" && <MembersCard initialMembers={members} roles={roles} canManage={organization.role === "owner"} />}
+        {section === "team" && <InvitationsCard initialInvitations={invitations} roles={roles} canManage={organization.role === "owner"} />}
+        {section === "access-control" && <PermissionsCard
           initialPermissions={availablePermissions}
           canManage={organization.role === "owner"}
           onPermissionsChange={setAvailablePermissions}
-        />
-        <RolesCard initialRoles={roles} permissions={availablePermissions} canManage={organization.role === "owner"} />
-        <Card>
+        />}
+        {section === "access-control" && <RolesCard initialRoles={roles} permissions={availablePermissions} canManage={organization.role === "owner"} />}
+        {section === "account" && <Card>
           <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
             <div>
               <CardTitle>Your account</CardTitle>
@@ -274,9 +285,9 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
               </div>
             )}
           </CardContent>
-        </Card>
-        {organization.role === "owner" && <AuditsCard key={organization.id} members={members} />}
-        <SessionsCard initialSessions={sessions} />
+        </Card>}
+        {section === "security" && organization.role === "owner" && <AuditsCard key={organization.id} members={members} />}
+        {section === "security" && <SessionsCard initialSessions={sessions} />}
         </div>
       </section>
       </SidebarInset>
