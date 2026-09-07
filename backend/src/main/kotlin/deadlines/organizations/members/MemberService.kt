@@ -17,17 +17,17 @@ interface MemberOperations {
 
     suspend fun updateRole(userId: UUID, membershipId: UUID, request: UpdateMemberRoleRequest): MemberResponse
 
-    suspend fun suspend(userId: UUID, membershipId: UUID): MemberResponse
+    suspend fun suspend(userId: UUID, membershipId: UUID): MemberResponse = throw UnsupportedOperationException()
 
-    suspend fun reactivate(userId: UUID, membershipId: UUID): MemberResponse
+    suspend fun reactivate(userId: UUID, membershipId: UUID): MemberResponse = throw UnsupportedOperationException()
 
-    suspend fun leave(userId: UUID)
+    suspend fun leave(userId: UUID) = throw UnsupportedOperationException()
 
     suspend fun transferOwnership(
         userId: UUID,
         nextOwnerMembershipId: UUID,
         request: TransferOwnershipRequest,
-    ): MemberResponse
+    ): MemberResponse = throw UnsupportedOperationException()
 
     suspend fun remove(userId: UUID, membershipId: UUID)
 }

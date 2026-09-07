@@ -22,8 +22,8 @@ data class MemberResponse(
     val firstName: String,
     val lastName: String,
     val role: RoleResponse,
-    val status: String,
     val joinedAt: String,
+    val status: String = "active",
 )
 
 @Serializable
