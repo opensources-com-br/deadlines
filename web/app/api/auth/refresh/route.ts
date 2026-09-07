@@ -45,12 +45,18 @@ async function refreshSession() {
 
 export async function POST() {
   const { status, auth } = await refreshSession();
-  if (!auth) return clearSession(NextResponse.json({ error: { code: "SESSION_REFRESH_FAILED", message: "Your session has ended. Please sign in again." } }, { status }));
+  if (!auth) {
+    const response = NextResponse.json({ error: { code: "SESSION_REFRESH_FAILED", message: status === 503 ? "Unable to refresh your session right now." : "Your session has ended. Please sign in again." } }, { status });
+    return status === 401 ? clearSession(response) : response;
+  }
   return setSessionCookies(NextResponse.json({ expiresIn: auth.expiresIn }), auth);
 }
 
 export async function GET(request: Request) {
   const { status, auth } = await refreshSession();
-  if (!auth) return clearSession(NextResponse.redirect(new URL("/login", request.url), status === 503 ? 307 : 302));
+  if (!auth) {
+    if (status === 401) return clearSession(NextResponse.redirect(new URL("/login", request.url), 302));
+    return NextResponse.json({ error: { code: "SESSION_REFRESH_UNAVAILABLE", message: "Unable to refresh your session right now." } }, { status: 503 });
+  }
   return setSessionCookies(NextResponse.redirect(new URL(safeReturnTo(new URL(request.url).searchParams.get("returnTo")), request.url)), auth);
 }
