@@ -128,11 +128,13 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
     <SidebarProvider>
       <PlatformSidebar user={user} activeItem={section} />
       <SidebarInset className="min-h-svh bg-background text-foreground">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-        <SidebarTrigger variant="ghost" size="icon" aria-label="Toggle sidebar" />
-        <Button variant="outline" type="button" onClick={handleSignOut} disabled={isSigningOut}>
-          {isSigningOut ? "Signing out..." : "Log out"}
-        </Button>
+      <header className="w-full px-6 py-4">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between">
+          <SidebarTrigger variant="ghost" size="icon-sm" aria-label="Toggle sidebar" />
+          <Button variant="outline" size="sm" type="button" onClick={handleSignOut} disabled={isSigningOut}>
+            {isSigningOut ? "Signing out..." : "Log out"}
+          </Button>
+        </div>
       </header>
 
       <section className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[minmax(0,0.8fr)_minmax(420px,1fr)] lg:py-20">
