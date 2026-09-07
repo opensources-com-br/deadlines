@@ -13,6 +13,8 @@ import deadlines.identity.email.PasswordResetOperations
 import deadlines.identity.email.emailRoutes
 import deadlines.identity.users.UserService
 import deadlines.identity.users.userRoutes
+import deadlines.identity.preferences.UserPreferenceOperations
+import deadlines.identity.preferences.userPreferenceRoutes
 import deadlines.organizations.OrganizationOperations
 import deadlines.organizations.organizationRoutes
 import deadlines.organizations.access.PermissionOperations
@@ -52,10 +54,12 @@ fun Application.configureRoutes(
     auditService: AuditService? = null,
     planService: PlanOperations? = null,
     subscriptionService: SubscriptionOperations? = null,
+    userPreferenceService: UserPreferenceOperations? = null,
 ) {
     routing {
         if (planService != null) planRoutes(planService)
         if (subscriptionService != null) subscriptionRoutes(subscriptionService)
+        if (userPreferenceService != null) userPreferenceRoutes(userPreferenceService)
         if (auditService != null) auditRoutes(auditService)
         get("/health") {
             call.respond(HealthResponse(status = "ok"))

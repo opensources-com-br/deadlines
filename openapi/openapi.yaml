@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.13.0
+  version: 0.14.0
   description: API local do Deadlines. O cadastro exige confirmação de e-mail antes da ativação e do login; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
@@ -971,6 +971,45 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "422":
           $ref: "#/components/responses/ValidationError"
+  /api/v1/users/me/preferences:
+    get:
+      tags: [Users]
+      summary: Busca as preferências do usuário autenticado
+      operationId: getOwnPreferences
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Preferências atuais
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPreference"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      tags: [Users]
+      summary: Atualiza as preferências do usuário autenticado
+      operationId: updateOwnPreferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserPreferenceRequest"
+      responses:
+        "200":
+          description: Preferências atualizadas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPreference"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
   /api/v1/users/{id}:
     parameters:
       - $ref: "#/components/parameters/UserId"
@@ -1341,6 +1380,35 @@ components:
           type: string
           minLength: 1
           maxLength: 100
+    UserPreference:
+      type: object
+      required: [locale, timezone, theme, updatedAt]
+      properties:
+        locale:
+          type: string
+          enum: [pt-BR, en]
+        timezone:
+          type: string
+          example: America/Sao_Paulo
+        theme:
+          type: string
+          enum: [light, dark, system]
+        updatedAt:
+          type: string
+          format: date-time
+    UpdateUserPreferenceRequest:
+      type: object
+      minProperties: 1
+      properties:
+        locale:
+          type: string
+          enum: [pt-BR, en]
+        timezone:
+          type: string
+          example: America/Sao_Paulo
+        theme:
+          type: string
+          enum: [light, dark, system]
     User:
       type: object
       required: [id, email, status, profile, createdAt, updatedAt]

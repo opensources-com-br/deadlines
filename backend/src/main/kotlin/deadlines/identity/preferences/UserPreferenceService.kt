@@ -23,6 +23,9 @@ class UserPreferenceService(
         val timezone = request.timezone ?: current.timezone
         val theme = request.theme ?: current.theme
         val violations = buildMap {
+            if (request.locale == null && request.timezone == null && request.theme == null) {
+                put("request", "must contain at least one field")
+            }
             if (locale !in supportedLocales) put("locale", "must be one of: ${supportedLocales.joinToString()}")
             if (theme !in supportedThemes) put("theme", "must be one of: ${supportedThemes.joinToString()}")
             try {

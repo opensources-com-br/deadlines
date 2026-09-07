@@ -1,6 +1,7 @@
 package deadlines.identity.preferences
 
 import kotlinx.serialization.Serializable
+import deadlines.shared.errors.ApiException
 import java.time.Instant
 import java.util.UUID
 
@@ -30,5 +31,6 @@ data class UpdateUserPreferenceRequest(
 
 fun UserPreference.toResponse() = UserPreferenceResponse(locale, timezone, theme, updatedAt.toString())
 
-class UserPreferenceValidationException(val violations: Map<String, String>) : RuntimeException("User preferences are invalid")
-class UserPreferenceNotFoundException : RuntimeException("User preferences were not found")
+class UserPreferenceValidationException(violations: Map<String, String>) :
+    ApiException(422, "VALIDATION_ERROR", "Invalid user preferences", violations)
+class UserPreferenceNotFoundException : ApiException(404, "USER_PREFERENCES_NOT_FOUND", "User preferences were not found")

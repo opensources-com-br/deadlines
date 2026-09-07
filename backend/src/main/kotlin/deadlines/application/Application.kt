@@ -22,6 +22,9 @@ import deadlines.identity.email.PasswordResetService
 import deadlines.identity.users.ExposedUserCredentialsRepository
 import deadlines.identity.users.ExposedUserRepository
 import deadlines.identity.users.UserService
+import deadlines.identity.preferences.ExposedUserPreferenceRepository
+import deadlines.identity.preferences.UserPreferenceOperations
+import deadlines.identity.preferences.UserPreferenceService
 import deadlines.organizations.ExposedOrganizationRepository
 import deadlines.organizations.OrganizationOperations
 import deadlines.organizations.OrganizationService
@@ -57,6 +60,7 @@ fun main() {
         val userRepository = ExposedUserRepository(query)
         val tokenService = TokenService(config.auth)
         val userService = UserService(userRepository)
+        val userPreferenceService = UserPreferenceService(ExposedUserPreferenceRepository(query))
         val credentialsRepository = ExposedUserCredentialsRepository(query)
         val sessionRepository = ExposedSessionRepository(query)
         val sessionService = SessionService(sessionRepository)
@@ -117,6 +121,7 @@ fun main() {
                 auditService,
                 planService,
                 subscriptionService,
+                userPreferenceService,
             )
         }.start(wait = true)
     }
@@ -137,6 +142,7 @@ fun Application.module(
     auditService: AuditService? = null,
     planService: PlanOperations? = null,
     subscriptionService: SubscriptionOperations? = null,
+    userPreferenceService: UserPreferenceOperations? = null,
 ) {
     configurePlugins(tokenService)
     configureRoutes(
@@ -153,5 +159,6 @@ fun Application.module(
         auditService,
         planService,
         subscriptionService,
+        userPreferenceService,
     )
 }
