@@ -483,6 +483,44 @@ class DatabaseMigrationTest {
         }
 
     @Test
+    fun `suspended membership reserves the user until removal`() = runTest {
+        DatabaseFactory.open(databaseConfig()).use { database ->
+            val query = DatabaseQuery(database.database)
+            val users = ExposedUserRepository(query)
+            val organizations = ExposedOrganizationRepository(query)
+            val roles = ExposedRoleRepository(query)
+            val invitations = ExposedInvitationRepository(query)
+            val members = ExposedMemberRepository(query)
+            val now = Instant.now()
+            val owner = testUser("lifecycle-owner", now)
+            val invitee = testUser("lifecycle-member", now)
+            val context = organizationContext(owner.id, "lifecycle-${UUID.randomUUID()}", now)
+            users.create(owner)
+            users.create(invitee)
+            organizations.createWithOwner(context)
+            val memberRole = roles.list(context.organization.id).single { it.key == "member" }
+            val invitation = OrganizationInvitation(
+                UUID.randomUUID(), context.organization.id, context.organization.name, invitee.email, memberRole,
+                owner.id, "e".repeat(64), InvitationStatus.PENDING, now.plusSeconds(3600), now, now,
+            )
+            invitations.create(invitation)
+            assertTrue(invitations.accept(invitation, invitee.id, UUID.randomUUID(), now))
+            val member = members.findByUserId(context.organization.id, invitee.id)!!
+
+            assertTrue(members.suspend(context.organization.id, member.membershipId))
+            assertEquals(MembershipStatus.SUSPENDED, members.findByUserId(context.organization.id, invitee.id)?.status)
+            assertFailsWith<ActiveMembershipAlreadyExistsException> {
+                organizations.createWithOwner(organizationContext(invitee.id, "blocked-${UUID.randomUUID()}", now))
+            }
+
+            assertTrue(members.remove(context.organization.id, member.membershipId, now.plusSeconds(1)))
+            assertEquals(invitee.id, organizations.createWithOwner(
+                organizationContext(invitee.id, "released-${UUID.randomUUID()}", now),
+            ).membership.userId)
+        }
+    }
+
+    @Test
     fun `audits persist safe events atomically and retain deleted resource history`() = runTest {
         DatabaseFactory.open(databaseConfig()).use { database ->
             val query = DatabaseQuery(database.database)
