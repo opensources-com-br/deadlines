@@ -110,7 +110,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
         </div>
         {activeSettingsSection === "organization" && <OrganizationCard organization={organization} />}
         {activeSettingsSection === "plans" && <PlansCard />}
-        {activeSettingsSection === "team" && <MembersCard initialMembers={members} roles={roles} canManage={organization.role === "owner"} />}
+        {activeSettingsSection === "team" && <MembersCard initialMembers={members} roles={roles} />}
         {activeSettingsSection === "team" && <InvitationsCard initialInvitations={invitations} roles={roles} canManage={organization.role === "owner"} />}
         {activeSettingsSection === "access-control" && <PermissionsCard
           initialPermissions={availablePermissions}

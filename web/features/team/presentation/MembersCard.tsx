@@ -10,6 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Role } from "@/features/access/domain/access";
+import { platformPermission } from "@/features/access/domain/authorization";
+import { usePermission } from "@/features/access/presentation/AuthorizationProvider";
 import type { OrganizationMember } from "@/features/team/domain/team";
 import { teamApi } from "@/features/team/infrastructure/team-api";
 import { useLocalizedFormatters } from "@/features/platform/presentation/useLocalizedFormatters";
@@ -17,11 +19,12 @@ import { useLocalizedFormatters } from "@/features/platform/presentation/useLoca
 type MembersCardProps = {
   initialMembers: OrganizationMember[];
   roles: Role[];
-  canManage: boolean;
 };
 
-export function MembersCard({ initialMembers, roles, canManage }: MembersCardProps) {
+export function MembersCard({ initialMembers, roles }: MembersCardProps) {
   const t = useTranslations("Team");
+  const canUpdate = usePermission(platformPermission.membersUpdate);
+  const canRemove = usePermission(platformPermission.membersRemove);
   const { formatDate } = useLocalizedFormatters();
   const [members, setMembers] = useState(initialMembers);
   const [busyMemberId, setBusyMemberId] = useState<string>();
@@ -74,7 +77,7 @@ export function MembersCard({ initialMembers, roles, canManage }: MembersCardPro
               <tr key={member.id}>
                   <td className="px-4 py-3"><div className="flex min-w-0 items-center gap-3"><Avatar className="size-8"><AvatarFallback>{`${member.firstName[0] ?? ""}${member.lastName[0] ?? ""}`.toUpperCase()}</AvatarFallback></Avatar><div className="min-w-0"><p className="truncate font-medium">{member.firstName} {member.lastName}</p><p className="truncate text-xs text-muted-foreground">{member.email}</p></div></div></td>
                   <td className="px-4 py-3">
-                    {canManage && !isOwner ? (
+                    {canUpdate && !isOwner ? (
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           disabled={busyMemberId === member.id}
@@ -94,7 +97,7 @@ export function MembersCard({ initialMembers, roles, canManage }: MembersCardPro
                   </td>
                   <td className="px-4 py-3"><span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">{t("active")}</span></td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground"><time dateTime={member.joinedAt}>{formatDate(member.joinedAt) ?? "—"}</time></td>
-                  <td className="px-4 py-3 text-right">{canManage && !isOwner ? <Button variant="ghost" size="sm" type="button" onClick={() => removeMember(member)} disabled={busyMemberId === member.id}>{t("remove")}</Button> : null}</td>
+                  <td className="px-4 py-3 text-right">{canRemove && !isOwner ? <Button variant="ghost" size="sm" type="button" onClick={() => removeMember(member)} disabled={busyMemberId === member.id}>{t("remove")}</Button> : null}</td>
               </tr>
             );
           })}
