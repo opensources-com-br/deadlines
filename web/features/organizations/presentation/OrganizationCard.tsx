@@ -27,6 +27,7 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
   const [slug, setSlug] = useState(initialOrganization.slug);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [lifecycleAction, setLifecycleAction] = useState<"suspend" | "delete">();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -49,6 +50,32 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
     setName(organization.name);
     setSlug(organization.slug);
     setIsEditing(false);
+  }
+
+  async function suspendOrganization() {
+    if (!window.confirm(t("suspendConfirm"))) return;
+    setLifecycleAction("suspend");
+    try {
+      await organizationApi.suspend();
+      toast.success(t("suspended"));
+      window.location.replace("/app/organization");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("suspendError"));
+      setLifecycleAction(undefined);
+    }
+  }
+
+  async function deleteOrganization() {
+    if (!window.confirm(t("deleteConfirm", { name: organization.name }))) return;
+    setLifecycleAction("delete");
+    try {
+      await organizationApi.delete();
+      toast.success(t("deleted"));
+      window.location.replace("/onboarding/organization");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("deleteError"));
+      setLifecycleAction(undefined);
+    }
   }
 
   return (
@@ -130,6 +157,22 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
           <p className="mt-2 text-xs text-muted-foreground">{t("created", { date: formatDate(organization.createdAt) ?? "—" })}</p>
         </CardContent>
       </Card>
+      {canUpdate && organization.role === "owner" ? <Card className="border-destructive/40">
+        <CardHeader>
+          <CardTitle>{t("dangerZone")}</CardTitle>
+          <CardDescription>{t("dangerDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent className="divide-y">
+          <div className="flex flex-col gap-4 py-4 first:pt-0 sm:flex-row sm:items-center sm:justify-between">
+            <div><p className="text-sm font-medium">{t("suspend")}</p><p className="mt-1 text-sm text-muted-foreground">{t("suspendDescription")}</p></div>
+            <Button variant="outline" onClick={suspendOrganization} disabled={lifecycleAction !== undefined}>{t("suspend")}</Button>
+          </div>
+          <div className="flex flex-col gap-4 py-4 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+            <div><p className="text-sm font-medium">{t("delete")}</p><p className="mt-1 text-sm text-muted-foreground">{t("deleteDescription")}</p></div>
+            <Button variant="destructive" onClick={deleteOrganization} disabled={lifecycleAction !== undefined}>{t("delete")}</Button>
+          </div>
+        </CardContent>
+      </Card> : null}
     </div>
   );
 }
