@@ -109,6 +109,49 @@ class OrganizationServiceTest {
             }
         }
 
+    @Test
+    fun `owner suspends and reactivates the organization`() = runTest {
+        val repository = MemoryOrganizationRepository(context(userId, MembershipRole.OWNER))
+        val service = OrganizationService(
+            repository,
+            testAuthorization(userId, organizationId, PlatformPermission.ORGANIZATION_UPDATE),
+            fixedClock(),
+        )
+
+        assertEquals("suspended", service.suspend(userId).status)
+        assertFailsWith<OrganizationNotFoundException> { service.current(userId) }
+        assertEquals("active", service.reactivate(userId).status)
+    }
+
+    @Test
+    fun `non owner cannot change organization lifecycle`() = runTest {
+        val repository = MemoryOrganizationRepository(context(userId, MembershipRole.MEMBER))
+        val service = OrganizationService(
+            repository,
+            testAuthorization(userId, organizationId, PlatformPermission.ORGANIZATION_UPDATE),
+            fixedClock(),
+        )
+
+        assertFailsWith<OrganizationAccessDeniedException> { service.suspend(userId) }
+        assertFailsWith<OrganizationAccessDeniedException> { service.delete(userId) }
+    }
+
+    @Test
+    fun `deleting organization removes retained membership`() = runTest {
+        val repository = MemoryOrganizationRepository(context(userId, MembershipRole.OWNER))
+        val service = OrganizationService(
+            repository,
+            testAuthorization(userId, organizationId, PlatformPermission.ORGANIZATION_UPDATE),
+            fixedClock(),
+        )
+
+        service.delete(userId)
+
+        assertEquals(OrganizationStatus.DELETED, repository.context?.organization?.status)
+        assertEquals(MembershipStatus.REMOVED, repository.context?.membership?.status)
+        assertEquals(null, repository.findRetainedByUser(userId))
+    }
+
     private fun fixedClock() = Clock.fixed(now, ZoneOffset.UTC)
 
     private fun context(userId: UUID, role: MembershipRole): OrganizationContext =
@@ -135,10 +178,45 @@ private class MemoryOrganizationRepository(
     }
 
     override suspend fun findCurrentByUser(userId: UUID): OrganizationContext? =
-        context?.takeIf { it.membership.userId == userId && it.membership.status == MembershipStatus.ACTIVE }
+        context?.takeIf {
+            it.membership.userId == userId && it.membership.status == MembershipStatus.ACTIVE &&
+                it.organization.status == OrganizationStatus.ACTIVE
+        }
+
+    override suspend fun findRetainedByUser(userId: UUID): OrganizationContext? =
+        context?.takeIf {
+            it.membership.userId == userId && it.membership.status != MembershipStatus.REMOVED &&
+                it.organization.status != OrganizationStatus.DELETED
+        }
 
     override suspend fun update(organization: Organization): Organization {
         context = context?.copy(organization = organization)
         return organization
+    }
+
+    override suspend fun suspend(organizationId: UUID, updatedAt: Instant): Boolean {
+        val current = context?.takeIf { it.organization.id == organizationId && it.organization.status == OrganizationStatus.ACTIVE }
+            ?: return false
+        context = current.copy(organization = current.organization.copy(status = OrganizationStatus.SUSPENDED, updatedAt = updatedAt))
+        return true
+    }
+
+    override suspend fun reactivateOwnedBy(userId: UUID, updatedAt: Instant): OrganizationContext? {
+        val current = context?.takeIf {
+            it.membership.userId == userId && it.membership.role == MembershipRole.OWNER &&
+                it.organization.status == OrganizationStatus.SUSPENDED
+        } ?: return null
+        return current.copy(organization = current.organization.copy(status = OrganizationStatus.ACTIVE, updatedAt = updatedAt))
+            .also { context = it }
+    }
+
+    override suspend fun delete(organizationId: UUID, deletedAt: Instant): Boolean {
+        val current = context?.takeIf { it.organization.id == organizationId && it.organization.status == OrganizationStatus.ACTIVE }
+            ?: return false
+        context = current.copy(
+            organization = current.organization.copy(status = OrganizationStatus.DELETED, deletedAt = deletedAt),
+            membership = current.membership.copy(status = MembershipStatus.REMOVED, removedAt = deletedAt),
+        )
+        return true
     }
 }
