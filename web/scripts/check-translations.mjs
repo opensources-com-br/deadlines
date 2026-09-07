@@ -11,9 +11,24 @@ function keys(value, prefix = "") {
   });
 }
 
+function dottedKeys(value, prefix = "") {
+  return Object.entries(value).flatMap(([key, child]) => {
+    const path = prefix ? `${prefix}.${key}` : key;
+    const invalid = key.includes(".") ? [path] : [];
+    return child && typeof child === "object" ? [...invalid, ...dottedKeys(child, path)] : invalid;
+  });
+}
+
 const [referenceLocale, reference] = catalogs[0];
 const referenceKeys = new Set(keys(reference));
 let failed = false;
+for (const [locale, catalog] of catalogs) {
+  const invalid = dottedKeys(catalog);
+  if (invalid.length) {
+    failed = true;
+    console.error(`${locale} contains keys with dots: ${invalid.join(", ")}`);
+  }
+}
 for (const [locale, catalog] of catalogs.slice(1)) {
   const localeKeys = new Set(keys(catalog));
   const missing = [...referenceKeys].filter((key) => !localeKeys.has(key));
