@@ -18,6 +18,7 @@ import deadlines.identity.email.EmailToken
 import deadlines.identity.email.ExposedEmailTokenRepository
 import deadlines.identity.users.ExposedUserRepository
 import deadlines.identity.users.ExposedUserCredentialsRepository
+import deadlines.identity.users.ExposedAccountLifecycleRepository
 import deadlines.identity.users.User
 import deadlines.identity.users.UserAlreadyExistsException
 import deadlines.identity.users.UserProfile
@@ -77,7 +78,7 @@ class DatabaseMigrationTest {
                 ).use { statement ->
                     statement.executeQuery().use { result ->
                         result.next()
-                        assertEquals(19, result.getInt(1))
+                        assertEquals(20, result.getInt(1))
                     }
                 }
             }
@@ -126,7 +127,8 @@ class DatabaseMigrationTest {
                 assertEquals(1, repository.count())
                 assertEquals(listOf(user), repository.list(offset = 0, limit = 20))
 
-                val updated = user.copy(status = UserStatus.DISABLED, updatedAt = now.plusSeconds(60))
+                val disabledAt = now.plusSeconds(60)
+                val updated = user.copy(status = UserStatus.DISABLED, disabledAt = disabledAt, updatedAt = disabledAt)
                 repository.update(updated)
                 assertEquals(updated, repository.findById(user.id))
             }
@@ -214,6 +216,40 @@ class DatabaseMigrationTest {
                 assertEquals("dark", updated?.theme)
             }
         }
+
+    @Test
+    fun `account lifecycle revokes sessions and removes personal data`() = runTest {
+        DatabaseFactory.open(databaseConfig()).use { database ->
+            val query = DatabaseQuery(database.database)
+            val users = ExposedUserRepository(query)
+            val credentials = ExposedUserCredentialsRepository(query)
+            val sessions = ExposedSessionRepository(query)
+            val preferences = ExposedUserPreferenceRepository(query)
+            val lifecycle = ExposedAccountLifecycleRepository(query)
+            val now = Instant.now()
+
+            val disabled = testUser("disabled-account", now)
+            credentials.create(disabled, "disabled-password-hash")
+            sessions.create(Session(UUID.randomUUID(), disabled.id, "e".repeat(64), null, null, now.plusSeconds(600), now))
+            assertTrue(lifecycle.deactivate(disabled.id, now.plusSeconds(1)))
+            assertEquals(UserStatus.DISABLED, users.findById(disabled.id)?.status)
+            assertTrue(sessions.listActive(disabled.id, now.plusSeconds(2)).isEmpty())
+
+            val deleted = testUser("deleted-account", now)
+            credentials.create(deleted, "deleted-password-hash")
+            sessions.create(Session(UUID.randomUUID(), deleted.id, "f".repeat(64), null, null, now.plusSeconds(600), now))
+            assertTrue(lifecycle.delete(deleted.id, now.plusSeconds(1)))
+
+            val anonymized = users.findById(deleted.id)
+            assertEquals(UserStatus.DELETED, anonymized?.status)
+            assertEquals("deleted-${deleted.id}@internal.invalid", anonymized?.email)
+            assertEquals("Deleted", anonymized?.profile?.firstName)
+            assertEquals("User", anonymized?.profile?.lastName)
+            assertNull(credentials.findByUserId(deleted.id))
+            assertNull(preferences.findByUserId(deleted.id))
+            assertTrue(sessions.listActive(deleted.id, now.plusSeconds(2)).isEmpty())
+        }
+    }
 
     @Test
     fun `session repository rotates a refresh token atomically`() =
