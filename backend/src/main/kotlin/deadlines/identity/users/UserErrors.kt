@@ -20,5 +20,17 @@ class UserValidationException(
         status = 422,
         code = "VALIDATION_ERROR",
         message = "Invalid user data",
-        details = violations,
-    )
+    details = violations,
+)
+
+class AccountNotActiveException : ApiException(
+    status = 409,
+    code = "ACCOUNT_NOT_ACTIVE",
+    message = "Only an active account can perform this action",
+)
+
+class AccountOwnerConflictException : ApiException(
+    status = 409,
+    code = "ACCOUNT_OWNER_CONFLICT",
+    message = "Transfer organization ownership or delete the organization first",
+)
