@@ -9,16 +9,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import type { Permission } from "@/features/access/domain/access";
+import { platformPermission } from "@/features/access/domain/authorization";
 import { accessApi } from "@/features/access/infrastructure/access-api";
+import { usePermission } from "@/features/access/presentation/AuthorizationProvider";
 
 type PermissionsCardProps = {
   initialPermissions: Permission[];
-  canManage: boolean;
   onPermissionsChange: (permissions: Permission[]) => void;
 };
 
-export function PermissionsCard({ initialPermissions, canManage, onPermissionsChange }: PermissionsCardProps) {
+export function PermissionsCard({ initialPermissions, onPermissionsChange }: PermissionsCardProps) {
   const t = useTranslations("AccessControl");
+  const canCreate = usePermission(platformPermission.permissionsCreate);
+  const canUpdate = usePermission(platformPermission.permissionsUpdate);
+  const canDelete = usePermission(platformPermission.permissionsDelete);
   const [permissions, setPermissions] = useState(initialPermissions);
   const [editing, setEditing] = useState<Permission | "new">();
   const [key, setKey] = useState("");
@@ -86,7 +90,7 @@ export function PermissionsCard({ initialPermissions, canManage, onPermissionsCh
         <div>
           <CardTitle>{t("permissions")}</CardTitle><CardDescription className="mt-1">{t("permissionsDescription")}</CardDescription>
         </div>
-        {canManage && !editing ? (
+        {canCreate && !editing ? (
           <Button variant="outline" type="button" onClick={() => beginEdit()}>
             {t("newPermission")}
           </Button>
@@ -138,9 +142,10 @@ export function PermissionsCard({ initialPermissions, canManage, onPermissionsCh
                     <p className="mt-1 font-mono text-xs text-muted-foreground">{permission.key}</p>
                     {permission.description ? <p className="mt-1 text-xs text-muted-foreground">{permission.description}</p> : null}
                   </div>
-                  {canManage && !permission.isSystem ? (
+                  {(canUpdate || canDelete) && !permission.isSystem ? (
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" type="button" onClick={() => beginEdit(permission)}>{t("edit")}</Button><Button variant="ghost" size="sm" type="button" onClick={() => handleDelete(permission)}>{t("delete")}</Button>
+                      {canUpdate ? <Button variant="ghost" size="sm" type="button" onClick={() => beginEdit(permission)}>{t("edit")}</Button> : null}
+                      {canDelete ? <Button variant="ghost" size="sm" type="button" onClick={() => handleDelete(permission)}>{t("delete")}</Button> : null}
                     </div>
                   ) : null}
                 </div>

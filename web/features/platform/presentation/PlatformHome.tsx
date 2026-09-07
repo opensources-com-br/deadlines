@@ -114,7 +114,6 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
         {activeSettingsSection === "team" && <InvitationsCard initialInvitations={invitations} roles={roles} />}
         {activeSettingsSection === "access-control" && <PermissionsCard
           initialPermissions={availablePermissions}
-          canManage={organization.role === "owner"}
           onPermissionsChange={setAvailablePermissions}
         />}
         {activeSettingsSection === "access-control" && <RolesCard initialRoles={roles} permissions={availablePermissions} canManage={organization.role === "owner"} />}
