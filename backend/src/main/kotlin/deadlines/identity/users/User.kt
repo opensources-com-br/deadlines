@@ -11,6 +11,8 @@ data class User(
     val createdAt: Instant,
     val updatedAt: Instant,
     val emailVerifiedAt: Instant? = null,
+    val disabledAt: Instant? = null,
+    val deletedAt: Instant? = null,
 )
 
 data class UserProfile(
@@ -24,4 +26,5 @@ enum class UserStatus {
     PENDING,
     ACTIVE,
     DISABLED,
+    DELETED,
 }

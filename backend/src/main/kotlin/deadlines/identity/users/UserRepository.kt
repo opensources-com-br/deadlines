@@ -55,6 +55,8 @@ class ExposedUserRepository(
                     it[status] = user.status.name.lowercase()
                     it[createdAt] = user.createdAt.atOffset(ZoneOffset.UTC)
                     it[updatedAt] = user.updatedAt.atOffset(ZoneOffset.UTC)
+                    it[disabledAt] = user.disabledAt?.atOffset(ZoneOffset.UTC)
+                    it[deletedAt] = user.deletedAt?.atOffset(ZoneOffset.UTC)
                 }
                 UserProfilesTable.insert {
                     it[userId] = user.id
@@ -103,6 +105,8 @@ class ExposedUserRepository(
                     it[email] = user.email
                     it[status] = user.status.name.lowercase()
                     it[updatedAt] = user.updatedAt.atOffset(ZoneOffset.UTC)
+                    it[disabledAt] = user.disabledAt?.atOffset(ZoneOffset.UTC)
+                    it[deletedAt] = user.deletedAt?.atOffset(ZoneOffset.UTC)
                 }
                 UserProfilesTable.update({ UserProfilesTable.userId eq user.id }) {
                     it[firstName] = user.profile.firstName
@@ -139,6 +143,8 @@ class ExposedUserCredentialsRepository(
                     it[UsersTable.passwordHash] = passwordHash
                     it[createdAt] = user.createdAt.atOffset(ZoneOffset.UTC)
                     it[updatedAt] = user.updatedAt.atOffset(ZoneOffset.UTC)
+                    it[disabledAt] = user.disabledAt?.atOffset(ZoneOffset.UTC)
+                    it[deletedAt] = user.deletedAt?.atOffset(ZoneOffset.UTC)
                 }
                 UserProfilesTable.insert {
                     it[userId] = user.id
@@ -199,6 +205,8 @@ private object UsersTable : Table("users") {
     val emailVerifiedAt = timestampWithTimeZone("email_verified_at").nullable()
     val createdAt = timestampWithTimeZone("created_at")
     val updatedAt = timestampWithTimeZone("updated_at")
+    val disabledAt = timestampWithTimeZone("disabled_at").nullable()
+    val deletedAt = timestampWithTimeZone("deleted_at").nullable()
 
     override val primaryKey = PrimaryKey(id)
 }
@@ -234,4 +242,6 @@ private fun org.jetbrains.exposed.v1.core.ResultRow.toUser() =
         createdAt = this[UsersTable.createdAt].toInstant(),
         updatedAt = this[UsersTable.updatedAt].toInstant(),
         emailVerifiedAt = this[UsersTable.emailVerifiedAt]?.toInstant(),
+        disabledAt = this[UsersTable.disabledAt]?.toInstant(),
+        deletedAt = this[UsersTable.deletedAt]?.toInstant(),
     )

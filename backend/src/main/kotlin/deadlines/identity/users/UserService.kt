@@ -64,10 +64,12 @@ class UserService(
         val current = get(id)
         val email = request.email?.normalizeEmail() ?: current.email
         val status = request.status?.parseStatus() ?: current.status
+        val now = clock.instant()
         val updated =
             current.copy(
                 email = email,
                 status = status,
+                disabledAt = if (status == UserStatus.DISABLED) current.disabledAt ?: now else null,
                 profile =
                     current.profile.copy(
                         firstName = request.firstName?.trim() ?: current.profile.firstName,
@@ -75,7 +77,7 @@ class UserService(
                         avatarUrl = request.avatarUrl?.normalizeOptional() ?: current.profile.avatarUrl,
                         phone = request.phone?.normalizeOptional() ?: current.profile.phone,
                     ),
-                updatedAt = clock.instant(),
+                updatedAt = now,
             )
 
         validate(updated.toCreateRequest())
@@ -98,7 +100,8 @@ class UserService(
     suspend fun disable(id: UUID) {
         val current = get(id)
         if (current.status != UserStatus.DISABLED) {
-            repository.update(current.copy(status = UserStatus.DISABLED, updatedAt = clock.instant()))
+            val now = clock.instant()
+            repository.update(current.copy(status = UserStatus.DISABLED, disabledAt = now, updatedAt = now))
         }
     }
 
@@ -135,6 +138,7 @@ class UserService(
 
     private fun String.parseStatus(): UserStatus =
         UserStatus.entries.firstOrNull { it.name.equals(trim(), ignoreCase = true) }
+            ?.takeUnless { it == UserStatus.DELETED }
             ?: throw UserValidationException(mapOf("status" to "must be pending, active or disabled"))
 
     private fun User.toCreateRequest() =
