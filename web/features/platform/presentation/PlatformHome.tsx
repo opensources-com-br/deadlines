@@ -19,6 +19,8 @@ import { OrganizationCard } from "@/features/organizations/presentation/Organiza
 import type { Permission, Role } from "@/features/access/domain/access";
 import { PermissionsCard } from "@/features/access/presentation/PermissionsCard";
 import { RolesCard } from "@/features/access/presentation/RolesCard";
+import { platformPermission } from "@/features/access/domain/authorization";
+import { Can } from "@/features/access/presentation/Can";
 import type { OrganizationInvitation, OrganizationMember } from "@/features/team/domain/team";
 import { InvitationsCard } from "@/features/team/presentation/InvitationsCard";
 import { MembersCard } from "@/features/team/presentation/MembersCard";
@@ -108,18 +110,18 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
           <h3 className="mt-2 text-2xl font-semibold tracking-tight">{details.title}</h3>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{details.description}</p>
         </div>
-        {activeSettingsSection === "organization" && <OrganizationCard organization={organization} />}
-        {activeSettingsSection === "plans" && <PlansCard />}
-        {activeSettingsSection === "team" && <MembersCard initialMembers={members} roles={roles} />}
-        {activeSettingsSection === "team" && <InvitationsCard initialInvitations={invitations} roles={roles} />}
-        {activeSettingsSection === "access-control" && <PermissionsCard
+        {activeSettingsSection === "organization" && <Can permission={platformPermission.organizationRead}><OrganizationCard organization={organization} /></Can>}
+        {activeSettingsSection === "plans" && <Can permission={platformPermission.billingRead}><PlansCard /></Can>}
+        {activeSettingsSection === "team" && <Can permission={platformPermission.membersRead}><MembersCard initialMembers={members} roles={roles} /></Can>}
+        {activeSettingsSection === "team" && <Can permission={platformPermission.membersInvite}><InvitationsCard initialInvitations={invitations} roles={roles} /></Can>}
+        {activeSettingsSection === "access-control" && <Can permission={platformPermission.permissionsRead}><PermissionsCard
           initialPermissions={availablePermissions}
           onPermissionsChange={setAvailablePermissions}
-        />}
-        {activeSettingsSection === "access-control" && <RolesCard initialRoles={roles} permissions={availablePermissions} />}
+        /></Can>}
+        {activeSettingsSection === "access-control" && <Can permission={platformPermission.rolesRead}><RolesCard initialRoles={roles} permissions={availablePermissions} /></Can>}
         {activeSettingsSection === "account" && <AccountSettings user={user} />}
         {activeSettingsSection === "notifications" && <NotificationsCard />}
-        {activeSettingsSection === "security" && organization.role === "owner" && <AuditsCard key={organization.id} members={members} />}
+        {activeSettingsSection === "security" && <Can permission={platformPermission.auditRead}><AuditsCard key={organization.id} members={members} /></Can>}
         {activeSettingsSection === "security" && <SessionsCard initialSessions={sessions} />}
         </div>
         </div>
