@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { AuthShell } from "@/features/identity/presentation/components/AuthShell";
@@ -15,6 +16,7 @@ type VerifyEmailScreenProps = {
 };
 
 export function VerifyEmailScreen({ token, hasInvitation }: VerifyEmailScreenProps) {
+  const t = useTranslations("VerifyEmail");
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -26,7 +28,7 @@ export function VerifyEmailScreen({ token, hasInvitation }: VerifyEmailScreenPro
     setIsSubmitting(true);
     try {
       await identityApi.verifyEmail(token);
-      toast.success(hasInvitation ? "Your email has been confirmed. Sign in to join the organization." : "Your email has been confirmed. You can now sign in.");
+      toast.success(hasInvitation ? t("invitationSuccess") : t("success"));
       router.push(hasInvitation ? "/invitations/continue" : "/login");
     } catch (error) {
       toast.error(identityErrorMessage(error));
@@ -37,24 +39,24 @@ export function VerifyEmailScreen({ token, hasInvitation }: VerifyEmailScreenPro
 
   if (!token) {
     return (
-      <AuthShell title="This link is invalid" description="Request a new confirmation email and try again.">
+      <AuthShell title={t("invalidTitle")} description={t("invalidDescription")}>
         <Link
           href="/check-email"
           className={buttonVariants({ size: "lg" })}
         >
-          Send a new link
+          {t("newLink")}
         </Link>
       </AuthShell>
     );
   }
 
   return (
-    <AuthShell title="Confirm your email" description={hasInvitation ? "Confirm your email address to join the organization." : "Confirm your email address to activate your Deadlines account."}>
+    <AuthShell title={t("title")} description={hasInvitation ? t("invitationDescription") : t("standardDescription")}>
       <div className="rounded-xl border bg-muted/50 p-5 text-sm leading-6 text-muted-foreground">
-        {hasInvitation ? "Once confirmed, sign in and we will add you to the organization automatically." : "Your confirmation link is ready. Once confirmed, you can sign in to your account."}
+        {hasInvitation ? t("invitationHelp") : t("standardHelp")}
       </div>
       <Button className="mt-5 w-full" type="button" onClick={handleVerification} disabled={isSubmitting}>
-        {isSubmitting ? "Confirming email..." : "Confirm email"}
+        {isSubmitting ? t("submitting") : t("submit")}
       </Button>
     </AuthShell>
   );
