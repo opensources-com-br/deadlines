@@ -41,6 +41,15 @@ fun Route.memberRoutes(service: MemberOperations) {
                 post("/reactivate") {
                     call.respond(service.reactivate(call.memberUserId(), call.memberResourceId()))
                 }
+                post("/transfer-ownership") {
+                    call.respond(
+                        service.transferOwnership(
+                            call.memberUserId(),
+                            call.memberResourceId(),
+                            call.receive(),
+                        ),
+                    )
+                }
             }
         }
     }
