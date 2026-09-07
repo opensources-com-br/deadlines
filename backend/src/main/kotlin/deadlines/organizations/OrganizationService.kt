@@ -12,6 +12,8 @@ interface OrganizationOperations {
 
     suspend fun current(userId: UUID): OrganizationResponse
 
+    suspend fun retained(userId: UUID): OrganizationResponse = throw UnsupportedOperationException()
+
     suspend fun update(userId: UUID, request: UpdateOrganizationRequest): OrganizationResponse
 
     suspend fun suspend(userId: UUID): OrganizationResponse = throw UnsupportedOperationException()
@@ -62,6 +64,9 @@ class OrganizationService(
         authorization.requirePermission(userId, PlatformPermission.ORGANIZATION_READ)
         return repository.findCurrentByUser(userId)?.toResponse() ?: throw OrganizationNotFoundException()
     }
+
+    override suspend fun retained(userId: UUID): OrganizationResponse =
+        repository.findRetainedByUser(userId)?.toResponse() ?: throw OrganizationNotFoundException()
 
     override suspend fun update(userId: UUID, request: UpdateOrganizationRequest): OrganizationResponse = withAuditActor(userId) {
         if (request.name == null && request.slug == null) {

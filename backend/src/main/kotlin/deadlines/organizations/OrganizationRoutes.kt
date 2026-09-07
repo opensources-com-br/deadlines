@@ -25,6 +25,10 @@ fun Route.organizationRoutes(service: OrganizationOperations) {
                 call.respond(HttpStatusCode.Created, organization)
             }
 
+            get("/retained") {
+                call.respond(service.retained(call.authenticatedUserId()))
+            }
+
             route("/current") {
                 get {
                     call.respond(service.current(call.authenticatedUserId()))
