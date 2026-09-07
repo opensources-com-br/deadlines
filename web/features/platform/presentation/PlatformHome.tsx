@@ -21,6 +21,7 @@ import { PermissionsCard } from "@/features/access/presentation/PermissionsCard"
 import { RolesCard } from "@/features/access/presentation/RolesCard";
 import { platformPermission } from "@/features/access/domain/authorization";
 import { Can } from "@/features/access/presentation/Can";
+import { usePermission } from "@/features/access/presentation/AuthorizationProvider";
 import type { OrganizationInvitation, OrganizationMember } from "@/features/team/domain/team";
 import { InvitationsCard } from "@/features/team/presentation/InvitationsCard";
 import { MembersCard } from "@/features/team/presentation/MembersCard";
@@ -42,6 +43,11 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
   const t = useTranslations("SettingsShell");
   const tPublic = useTranslations("Public");
   const router = useRouter();
+  const canReadOrganization = usePermission(platformPermission.organizationRead);
+  const canReadBilling = usePermission(platformPermission.billingRead);
+  const canReadMembers = usePermission(platformPermission.membersRead);
+  const canReadRoles = usePermission(platformPermission.rolesRead);
+  const canReadPermissions = usePermission(platformPermission.permissionsRead);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [availablePermissions, setAvailablePermissions] = useState(permissions);
   const sectionDetails: Record<SettingsSection, { eyebrow: string; title: string; description: string }> = {
@@ -53,9 +59,17 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
     account: { eyebrow: t("account"), title: t("accountTitle"), description: t("accountDescription") },
     notifications: { eyebrow: t("account"), title: t("notifications"), description: t("notificationsDescription") },
   };
+  const workspaceItems: Array<{ key: SettingsSection; label: string }> = [
+    ...(canReadOrganization ? [{ key: "organization" as const, label: t("general") }] : []),
+    ...(canReadBilling ? [{ key: "plans" as const, label: t("plans") }] : []),
+    ...(canReadMembers ? [{ key: "team" as const, label: t("users") }] : []),
+  ];
+  const accessItems: Array<{ key: SettingsSection; label: string }> = canReadRoles || canReadPermissions
+    ? [{ key: "access-control", label: t("roles") }]
+    : [];
   const settingsNavigation: Array<{ key: string; label: string; items: Array<{ key: SettingsSection; label: string }> }> = [
-    { key: "organization", label: t("organization"), items: [{ key: "organization", label: t("general") }, { key: "plans", label: t("plans") }, { key: "team", label: t("users") }] },
-    { key: "access", label: t("access"), items: [{ key: "access-control", label: t("roles") }] },
+    ...(workspaceItems.length ? [{ key: "organization", label: t("organization"), items: workspaceItems }] : []),
+    ...(accessItems.length ? [{ key: "access", label: t("access"), items: accessItems }] : []),
     { key: "personal", label: t("personal"), items: [{ key: "account", label: t("account") }, { key: "notifications", label: t("notifications") }, { key: "security", label: t("security") }] },
   ];
   const activeSettingsSection = settingsSection ?? (section === "settings" ? "organization" : section);
