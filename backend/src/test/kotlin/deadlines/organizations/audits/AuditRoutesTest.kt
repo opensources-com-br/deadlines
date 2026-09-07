@@ -3,9 +3,11 @@ package deadlines.organizations.audits
 import deadlines.application.module
 import deadlines.config.AuthConfig
 import deadlines.identity.auth.TokenService
-import deadlines.organizations.MembershipRole
-import deadlines.organizations.access.TestOrganizationRepository
-import deadlines.organizations.access.accessContext
+import deadlines.organizations.authorization.AuthorizationContext
+import deadlines.organizations.authorization.AuthorizationRepository
+import deadlines.organizations.authorization.AuthorizationService
+import deadlines.organizations.authorization.PlatformPermission
+import deadlines.organizations.authorization.testAuthorization
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
@@ -18,17 +20,18 @@ class AuditRoutesTest {
     private val tokens = TokenService(AuthConfig("a-local-test-secret-with-32-characters", "issuer", "audience", 900, 3600))
 
     @Test
-    fun `authentication owner access and current organization are enforced`() = testApplication {
+    fun `authentication permission and current organization are enforced`() = testApplication {
         val owner = UUID.randomUUID()
-        val organizations = TestOrganizationRepository(accessContext(owner))
+        val organizationId = UUID.randomUUID()
+        val authorization = MutableAuthorizationRepository(context(owner, organizationId, setOf(PlatformPermission.AUDIT_READ)))
         val repository = CapturingAudits()
-        application { module(tokenService = tokens, auditService = AuditService(organizations, repository)) }
+        application { module(tokenService = tokens, auditService = AuditService(AuthorizationService(authorization), repository)) }
         assertEquals(HttpStatusCode.Unauthorized, client.get("/api/v1/audits").status)
         assertEquals(HttpStatusCode.OK, client.get("/api/v1/audits") { bearerAuth(tokens.issue(owner).accessToken) }.status)
-        assertEquals(organizations.context!!.organization.id, repository.organizationId)
-        organizations.context = accessContext(owner, membershipRole = MembershipRole.MEMBER)
+        assertEquals(organizationId, repository.organizationId)
+        authorization.context = context(owner, organizationId, emptySet())
         assertEquals(HttpStatusCode.Forbidden, client.get("/api/v1/audits") { bearerAuth(tokens.issue(owner).accessToken) }.status)
-        organizations.context = null
+        authorization.context = null
         assertEquals(HttpStatusCode.NotFound, client.get("/api/v1/audits") { bearerAuth(tokens.issue(owner).accessToken) }.status)
         assertEquals(1, repository.calls)
     }
@@ -37,7 +40,7 @@ class AuditRoutesTest {
     fun `rejects malformed filters before reading history`() = testApplication {
         val owner = UUID.randomUUID()
         val repository = CapturingAudits()
-        application { module(tokenService = tokens, auditService = AuditService(TestOrganizationRepository(accessContext(owner)), repository)) }
+        application { module(tokenService = tokens, auditService = AuditService(testAuthorization(owner, UUID.randomUUID(), PlatformPermission.AUDIT_READ), repository)) }
         for (query in listOf("limit=0", "limit=101", "offset=-1", "offset=9223372036854775808", "limit=no",
             "actorId=invalid", "actorId=1-1-1-1-1", "from=%2B1000000000-12-31T23:59:59.999999999Z", "resourceId=invalid", "from=yesterday", "to=tomorrow", "action=", "resource=",
             "from=2026-09-07T00:00:00Z&to=2026-09-06T00:00:00Z", "organizationId=${UUID.randomUUID()}", "limit=1&limit=2")) {
@@ -53,7 +56,7 @@ class AuditRoutesTest {
         val owner = UUID.randomUUID()
         val resource = UUID.randomUUID()
         val repository = CapturingAudits()
-        application { module(tokenService = tokens, auditService = AuditService(TestOrganizationRepository(accessContext(owner)), repository)) }
+        application { module(tokenService = tokens, auditService = AuditService(testAuthorization(owner, UUID.randomUUID(), PlatformPermission.AUDIT_READ), repository)) }
         assertEquals(HttpStatusCode.OK, client.get("/api/v1/audits?limit=3&offset=6&action=role.created&resource=role&actorId=$owner&resourceId=$resource&from=2026-09-06T00:00:00Z") {
             bearerAuth(tokens.issue(owner).accessToken)
         }.status)
@@ -65,6 +68,13 @@ class AuditRoutesTest {
         assertEquals("role", repository.filter!!.resource)
         assertEquals("2026-09-06T00:00:00Z", repository.filter!!.from.toString())
     }
+}
+
+private fun context(userId: UUID, organizationId: UUID, permissions: Set<String>) =
+    AuthorizationContext(userId, organizationId, UUID.randomUUID(), UUID.randomUUID(), permissions)
+
+private class MutableAuthorizationRepository(var context: AuthorizationContext?) : AuthorizationRepository {
+    override suspend fun findByUserId(userId: UUID) = context?.takeIf { it.userId == userId }
 }
 
 private class CapturingAudits : AuditRepository {
