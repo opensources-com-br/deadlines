@@ -119,7 +119,7 @@ class OrganizationServiceTest {
         )
 
         assertEquals("suspended", service.suspend(userId).status)
-        assertFailsWith<OrganizationNotFoundException> { service.current(userId) }
+        assertEquals(null, repository.findCurrentByUser(userId))
         assertEquals("active", service.reactivate(userId).status)
     }
 
