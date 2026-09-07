@@ -172,6 +172,10 @@ GET   /api/v1/members
 GET   /api/v1/members/{memberId}
 PATCH /api/v1/members/{memberId}
 DELETE /api/v1/members/{memberId}
+DELETE /api/v1/members/me
+POST  /api/v1/members/{memberId}/suspend
+POST  /api/v1/members/{memberId}/reactivate
+POST  /api/v1/members/{memberId}/transfer-ownership
 GET   /api/v1/invitations
 POST  /api/v1/invitations
 GET   /api/v1/invitations/preview?token={token}
@@ -181,7 +185,7 @@ POST  /api/v1/invitations/{invitationId}/resend
 DELETE /api/v1/invitations/{invitationId}
 ```
 
-Creating an organization also creates the owner's membership and Free subscription in the same transaction. Each user can have only one active organization membership. Access to organization operations is determined by the permissions assigned to the membership role.
+Creating an organization also creates the owner's membership and Free subscription in the same transaction. Each user can have only one active or suspended organization membership. Suspended users remain attached to that organization, while removed users may join another one. Ownership transfer changes both roles atomically, and the database requires exactly one active Owner after every transaction. Access to organization operations is determined by the permissions assigned to the membership role.
 
 Invitations expire after seven days by default. Invitation tokens are stored as hashes, and the authenticated account must use the invited email address.
 
