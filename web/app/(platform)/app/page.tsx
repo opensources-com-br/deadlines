@@ -10,7 +10,8 @@ export default async function PlatformPage() {
   const accessToken = cookieStore.get("deadlines_access_token")?.value;
   const refreshToken = cookieStore.get("deadlines_refresh_token")?.value;
   const recentActivity = cookieStore.get("deadlines_last_activity")?.value;
-  if (!accessToken) redirect(refreshToken && recentActivity ? "/api/auth/refresh?returnTo=/app" : "/login");
+  const persistentSession = cookieStore.get("deadlines_persistent_session")?.value === "true";
+  if (!accessToken) redirect(refreshToken && (recentActivity || persistentSession) ? "/api/auth/refresh?returnTo=/app" : "/login");
 
   const authenticatedRequest = {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -21,7 +22,7 @@ export default async function PlatformPage() {
     fetch(backendApiUrl("/api/v1/organizations/current"), authenticatedRequest).catch(() => undefined),
   ]);
 
-  if (!userResponse?.ok) redirect(refreshToken && recentActivity && userResponse?.status === 401 ? "/api/auth/refresh?returnTo=/app" : "/login");
+  if (!userResponse?.ok) redirect(refreshToken && (recentActivity || persistentSession) && userResponse?.status === 401 ? "/api/auth/refresh?returnTo=/app" : "/login");
   if (organizationResponse?.status === 404) redirect("/onboarding/organization");
   if (!organizationResponse?.ok) redirect("/login");
 

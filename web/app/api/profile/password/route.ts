@@ -5,11 +5,13 @@ import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 
 const accessCookieName = "deadlines_access_token";
 const refreshCookieName = "deadlines_refresh_token";
+const persistentCookieName = "deadlines_persistent_session";
 
 export async function PATCH(request: Request) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get(accessCookieName)?.value;
   const refreshToken = cookieStore.get(refreshCookieName)?.value;
+  const persistentSession = cookieStore.get(persistentCookieName)?.value === "true";
   if (!accessToken || !refreshToken) {
     return NextResponse.json(
       { error: { code: "UNAUTHORIZED", message: "Authentication is required" } },
@@ -66,7 +68,7 @@ export async function PATCH(request: Request) {
     sameSite: "lax",
     secure,
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    ...(persistentSession ? { maxAge: 60 * 60 * 24 * 30 } : {}),
   });
   return response;
 }

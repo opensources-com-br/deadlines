@@ -6,6 +6,7 @@ import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 const accessCookieName = "deadlines_access_token";
 const refreshCookieName = "deadlines_refresh_token";
 const activityCookieName = "deadlines_last_activity";
+const persistentCookieName = "deadlines_persistent_session";
 
 function revokeSessionAfterResponse(refreshToken: string | undefined) {
   if (!refreshToken) return;
@@ -25,6 +26,7 @@ function clearSessionCookies(response: NextResponse) {
   response.cookies.delete(accessCookieName);
   response.cookies.delete(refreshCookieName);
   response.cookies.delete(activityCookieName);
+  response.cookies.delete(persistentCookieName);
   response.headers.set("Cache-Control", "private, no-store, no-cache, must-revalidate, max-age=0");
   return response;
 }

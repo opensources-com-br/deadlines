@@ -7,7 +7,7 @@ const refreshIntervalMs = 14 * 60 * 1000;
 const inactivityTimeoutMs = 15 * 60 * 1000;
 const activitySyncIntervalMs = 60 * 1000;
 
-export function PlatformSessionGuard() {
+export function PlatformSessionGuard({ persistentSession }: { persistentSession: boolean }) {
   const router = useRouter();
 
   useEffect(() => {
@@ -29,6 +29,10 @@ export function PlatformSessionGuard() {
 
     function recordActivity() {
       lastActivityAt = Date.now();
+      if (persistentSession && lastActivityAt - lastRefreshAt >= refreshIntervalMs) {
+        void refreshSession();
+        return;
+      }
       if (lastActivityAt - lastActivitySyncAt < activitySyncIntervalMs) return;
       lastActivitySyncAt = lastActivityAt;
       void fetch("/api/auth/activity", { method: "POST", cache: "no-store" }).then((response) => {
@@ -39,7 +43,7 @@ export function PlatformSessionGuard() {
     async function refreshSession() {
       if (refreshing) return;
       if (Date.now() - lastActivityAt >= inactivityTimeoutMs) {
-        signOutForInactivity();
+        if (!persistentSession) signOutForInactivity();
         return;
       }
       if (Date.now() - lastRefreshAt < refreshIntervalMs) return;
@@ -71,7 +75,7 @@ export function PlatformSessionGuard() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       activityEvents.forEach((event) => window.removeEventListener(event, recordActivity));
     };
-  }, [router]);
+  }, [persistentSession, router]);
 
   return null;
 }
