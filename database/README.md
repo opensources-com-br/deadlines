@@ -76,6 +76,9 @@ The default migration location is `filesystem:../database/migrations` and can be
 | `V012` | `create_plan_catalog` | Creates plans and resource limits |
 | `V013` | `activate_free_plan_only` | Keeps only the Free plan active |
 | `V014` | `create_organization_subscriptions` | Adds organization subscriptions and Free-plan provisioning |
+| `V015` | `add_device_identity_to_sessions` | Reuses one refresh session per user device |
+| `V016` | `create_user_preferences` | Stores locale, timezone, and theme preferences |
+| `V017` | `define_platform_permissions` | Adds granular permissions for platform operations |
 
 ## Schema areas
 
@@ -87,7 +90,7 @@ The identity schema stores users, profiles, password hashes, email-verification 
 
 Organizations contain memberships, roles, permissions, role-permission assignments, and invitations. Database constraints prevent a role from another organization from being assigned to a membership or invitation.
 
-Each new organization receives protected `Owner` and `Member` roles through a database trigger. New custom permissions are automatically granted to the organization owner.
+Each new organization receives protected `Owner` and `Member` roles through a database trigger. New custom permissions are automatically granted to the organization owner. Platform permissions are granular, and legacy management grants are expanded during migration so existing custom roles retain their capabilities.
 
 ### Audit history
 
