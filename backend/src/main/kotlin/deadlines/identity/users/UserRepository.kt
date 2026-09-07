@@ -40,6 +40,8 @@ interface UserCredentialsRepository {
 
     suspend fun findByEmail(email: String): UserCredentials?
 
+    suspend fun findByUserId(userId: UUID): UserCredentials? = null
+
     suspend fun updatePassword(userId: UUID, passwordHash: String, updatedAt: java.time.Instant): Boolean
 }
 
@@ -163,6 +165,18 @@ class ExposedUserCredentialsRepository(
         query {
             userQuery()
                 .where { UsersTable.email.lowerCase() eq email.lowercase() }
+                .singleOrNull()
+                ?.let { row ->
+                    row[UsersTable.passwordHash]?.let { hash ->
+                        UserCredentials(row.toUser(), hash)
+                    }
+                }
+        }
+
+    override suspend fun findByUserId(userId: UUID): UserCredentials? =
+        query {
+            userQuery()
+                .where { UsersTable.id eq userId }
                 .singleOrNull()
                 ?.let { row ->
                     row[UsersTable.passwordHash]?.let { hash ->
