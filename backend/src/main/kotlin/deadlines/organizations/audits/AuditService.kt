@@ -1,9 +1,7 @@
 package deadlines.organizations.audits
 
-import deadlines.organizations.MembershipRole
-import deadlines.organizations.OrganizationAccessDeniedException
-import deadlines.organizations.OrganizationNotFoundException
-import deadlines.organizations.OrganizationRepository
+import deadlines.organizations.authorization.AuthorizationOperations
+import deadlines.organizations.authorization.PlatformPermission
 import deadlines.shared.errors.ApiException
 import java.time.Instant
 import java.util.UUID
@@ -12,10 +10,9 @@ class AuditValidationException(field: String) : ApiException(
     422, "VALIDATION_ERROR", "Invalid audit filter", mapOf(field to "invalid value"),
 )
 
-class AuditService(private val organizations: OrganizationRepository, private val audits: AuditRepository) {
+class AuditService(private val authorization: AuthorizationOperations, private val audits: AuditRepository) {
     suspend fun list(userId: UUID, parameters: Map<String, String>): AuditListResponse {
-        val context = organizations.findCurrentByUser(userId) ?: throw OrganizationNotFoundException()
-        if (context.membership.role != MembershipRole.OWNER) throw OrganizationAccessDeniedException()
+        val context = authorization.requirePermission(userId, PlatformPermission.AUDIT_READ)
         val allowed = setOf("offset", "limit", "action", "resource", "actorId", "resourceId", "from", "to")
         parameters.keys.firstOrNull { it !in allowed }?.let { throw AuditValidationException(it) }
         fun number(key: String, default: Long, range: LongRange): Long = parameters[key]?.let {
@@ -40,6 +37,6 @@ class AuditService(private val organizations: OrganizationRepository, private va
             from = instant("from"), to = instant("to"),
         )
         if (filter.from != null && filter.to != null && filter.from > filter.to) throw AuditValidationException("to")
-        return audits.list(context.organization.id, filter)
+        return audits.list(context.organizationId, filter)
     }
 }
