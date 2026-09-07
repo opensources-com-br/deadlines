@@ -4,6 +4,7 @@ import deadlines.application.module
 import deadlines.config.AuthConfig
 import deadlines.identity.auth.TokenService
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
@@ -33,6 +34,7 @@ class OrganizationRoutesTest {
             assertEquals(HttpStatusCode.Unauthorized, client.post("/api/v1/organizations").status)
             assertEquals(HttpStatusCode.Unauthorized, client.get("/api/v1/organizations/current").status)
             assertEquals(HttpStatusCode.Unauthorized, client.patch("/api/v1/organizations/current").status)
+            assertEquals(HttpStatusCode.Unauthorized, client.post("/api/v1/organizations/current/suspend").status)
         }
 
     @Test
@@ -66,6 +68,10 @@ class OrganizationRoutesTest {
                 }
             assertEquals(HttpStatusCode.OK, updated.status)
             assertEquals("Updated", service.updateRequest?.name)
+            assertEquals(HttpStatusCode.OK, client.get("/api/v1/organizations/retained") { bearerAuth(token) }.status)
+            assertEquals(HttpStatusCode.OK, client.post("/api/v1/organizations/current/suspend") { bearerAuth(token) }.status)
+            assertEquals(HttpStatusCode.OK, client.post("/api/v1/organizations/current/reactivate") { bearerAuth(token) }.status)
+            assertEquals(HttpStatusCode.NoContent, client.delete("/api/v1/organizations/current") { bearerAuth(token) }.status)
         }
 
     @Test
@@ -104,11 +110,17 @@ private class FakeOrganizationOperations : OrganizationOperations {
         return response()
     }
 
+    override suspend fun retained(userId: UUID) = response()
+
     override suspend fun update(userId: UUID, request: UpdateOrganizationRequest): OrganizationResponse {
         lastUserId = userId
         updateRequest = request
         return response(name = request.name ?: "Acme", slug = request.slug ?: "acme")
     }
+
+    override suspend fun suspend(userId: UUID) = response().copy(status = "suspended")
+    override suspend fun reactivate(userId: UUID) = response()
+    override suspend fun delete(userId: UUID) = Unit
 
     private fun response(name: String = "Acme", slug: String = "acme") =
         OrganizationResponse(
