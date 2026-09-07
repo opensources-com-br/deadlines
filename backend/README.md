@@ -181,7 +181,7 @@ POST  /api/v1/invitations/{invitationId}/resend
 DELETE /api/v1/invitations/{invitationId}
 ```
 
-Creating an organization also creates the owner's membership and Free subscription in the same transaction. Each user can have only one active organization membership. Owners manage organization details, team membership, invitations, roles, and permissions.
+Creating an organization also creates the owner's membership and Free subscription in the same transaction. Each user can have only one active organization membership. Access to organization operations is determined by the permissions assigned to the membership role.
 
 Invitations expire after seven days by default. Invitation tokens are stored as hashes, and the authenticated account must use the invited email address.
 
@@ -202,7 +202,15 @@ GET    /api/v1/roles/{roleId}/permissions
 PUT    /api/v1/roles/{roleId}/permissions
 ```
 
-Every organization receives protected `Owner` and `Member` roles. Owners can manage custom roles and permissions, while system roles and global permissions remain read-only.
+Every organization receives protected `Owner` and `Member` roles. The Owner receives every platform permission, while custom roles can receive independent read, create, update, and delete capabilities. System roles and global permissions remain read-only.
+
+The authenticated authorization context is available at:
+
+```text
+GET /api/v1/users/me/authorization
+```
+
+It resolves the current `organizationId`, `membershipId`, `roleId`, and effective permission keys directly from the database. Services use the same centralized authorization component, so role changes take effect without issuing a new access token.
 
 ### Audit history
 
@@ -210,7 +218,7 @@ Every organization receives protected `Owner` and `Member` roles. Owners can man
 GET /api/v1/audits
 ```
 
-Audit history is restricted to organization owners and supports `offset`, `limit`, `action`, `resource`, `actorId`, `resourceId`, `from`, and `to` filters. Events are written by database triggers in the same transaction as the underlying change.
+Audit history requires `audit.read` and supports `offset`, `limit`, `action`, `resource`, `actorId`, `resourceId`, `from`, and `to` filters. Events are written by database triggers in the same transaction as the underlying change.
 
 Audit metadata intentionally excludes names, descriptions, email addresses, passwords, and tokens. Historical events cannot be updated, deleted, or truncated through normal database operations.
 
