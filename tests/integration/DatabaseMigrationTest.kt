@@ -30,6 +30,7 @@ import deadlines.organizations.Organization
 import deadlines.organizations.OrganizationAlreadyExistsException
 import deadlines.organizations.OrganizationContext
 import deadlines.organizations.OrganizationMembership
+import deadlines.organizations.OrganizationStatus
 import deadlines.organizations.access.ExposedPermissionRepository
 import deadlines.organizations.access.ExposedRoleRepository
 import deadlines.organizations.access.Permission
@@ -354,6 +355,48 @@ class DatabaseMigrationTest {
                 }
             }
         }
+
+    @Test
+    fun `organization lifecycle isolates access and preserves history`() = runTest {
+        DatabaseFactory.open(databaseConfig()).use { database ->
+            val query = DatabaseQuery(database.database)
+            val users = ExposedUserRepository(query)
+            val organizations = ExposedOrganizationRepository(query)
+            val authorization = ExposedAuthorizationRepository(query)
+            val roles = ExposedRoleRepository(query)
+            val invitations = ExposedInvitationRepository(query)
+            val audits = ExposedAuditRepository(query)
+            val now = Instant.now()
+            val owner = testUser("organization-lifecycle", now)
+            val context = organizationContext(owner.id, "organization-lifecycle-${UUID.randomUUID()}", now)
+            users.create(owner)
+            organizations.createWithOwner(context)
+            val memberRole = roles.list(context.organization.id).single { it.key == "member" }
+            val invitation = OrganizationInvitation(
+                UUID.randomUUID(), context.organization.id, context.organization.name,
+                "pending-${UUID.randomUUID()}@example.com", memberRole, owner.id, "1".repeat(64),
+                InvitationStatus.PENDING, now.plusSeconds(3600), now, now,
+            )
+            invitations.create(invitation)
+
+            assertTrue(organizations.suspend(context.organization.id, now.plusSeconds(1)))
+            assertNull(authorization.findByUserId(owner.id))
+            assertEquals(OrganizationStatus.SUSPENDED, organizations.findRetainedByUser(owner.id)?.organization?.status)
+            assertEquals(OrganizationStatus.ACTIVE, organizations.reactivateOwnedBy(owner.id, now.plusSeconds(2))?.organization?.status)
+            assertTrue(authorization.findByUserId(owner.id) != null)
+
+            assertTrue(organizations.delete(context.organization.id, now.plusSeconds(3)))
+            assertNull(organizations.findCurrentByUser(owner.id))
+            assertNull(organizations.findRetainedByUser(owner.id))
+            assertEquals(InvitationStatus.REVOKED, invitations.findById(context.organization.id, invitation.id, now)?.status)
+            assertTrue(audits.list(context.organization.id, AuditFilter(limit = 20)).data.any {
+                it.action == "organization.deleted"
+            })
+
+            val replacement = organizationContext(owner.id, context.organization.slug, now.plusSeconds(4))
+            assertEquals(replacement.organization.id, organizations.createWithOwner(replacement).organization.id)
+        }
+    }
 
     @Test
     fun `access repositories isolate and persist organization roles and permissions`() =
