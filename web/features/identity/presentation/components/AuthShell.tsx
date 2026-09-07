@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,11 +15,12 @@ type AuthShellProps = {
 };
 
 export function AuthShell({ title, description, children }: AuthShellProps) {
+  const t = useTranslations("Public");
   return (
     <main className="relative flex min-h-svh w-full items-center justify-center bg-muted/30 p-6 text-foreground md:p-10">
       <Link
         href="/"
-        aria-label="Back to home"
+        aria-label={t("backHome")}
         className={buttonVariants({ variant: "ghost", size: "icon" }) + " absolute left-6 top-6 md:left-10 md:top-10"}
       >
         <ArrowLeft />
