@@ -10,6 +10,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.patch
+import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import java.util.UUID
 
@@ -29,6 +30,12 @@ fun Route.memberRoutes(service: MemberOperations) {
                 delete {
                     service.remove(call.memberUserId(), call.memberResourceId())
                     call.respond(HttpStatusCode.NoContent)
+                }
+                post("/suspend") {
+                    call.respond(service.suspend(call.memberUserId(), call.memberResourceId()))
+                }
+                post("/reactivate") {
+                    call.respond(service.reactivate(call.memberUserId(), call.memberResourceId()))
                 }
             }
         }
