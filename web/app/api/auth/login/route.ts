@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
+import { deviceCookieName, newDeviceId, setDeviceCookie } from "@/features/identity/infrastructure/device-session";
 
 const accessCookieName = "deadlines_access_token";
 const refreshCookieName = "deadlines_refresh_token";
@@ -21,7 +22,7 @@ type AuthResponse = {
   };
 };
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const payload = await request.json().catch(() => null) as { email?: string; password?: string; keepSignedIn?: boolean } | null;
   if (!payload) {
     return NextResponse.json(
@@ -30,11 +31,12 @@ export async function POST(request: Request) {
     );
   }
 
+  const deviceId = request.cookies.get(deviceCookieName)?.value ?? newDeviceId();
   let backendResponse: Response;
   try {
     backendResponse = await fetch(backendApiUrl("/api/v1/auth/login"), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Device-Id": deviceId },
       body: JSON.stringify({ email: payload.email, password: payload.password }),
       cache: "no-store",
     });
@@ -56,6 +58,7 @@ export async function POST(request: Request) {
   const response = NextResponse.json({ user: auth.user });
   const secure = process.env.NODE_ENV === "production";
   const keepSignedIn = payload.keepSignedIn === true;
+  setDeviceCookie(response, deviceId);
   response.cookies.set(accessCookieName, auth.accessToken, {
     httpOnly: true,
     sameSite: "lax",

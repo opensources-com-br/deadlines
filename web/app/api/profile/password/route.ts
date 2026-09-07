@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
+import { deviceCookieName, newDeviceId, setDeviceCookie } from "@/features/identity/infrastructure/device-session";
 
 const accessCookieName = "deadlines_access_token";
 const refreshCookieName = "deadlines_refresh_token";
@@ -12,6 +13,7 @@ export async function PATCH(request: Request) {
   const accessToken = cookieStore.get(accessCookieName)?.value;
   const refreshToken = cookieStore.get(refreshCookieName)?.value;
   const persistentSession = cookieStore.get(persistentCookieName)?.value === "true";
+  const deviceId = cookieStore.get(deviceCookieName)?.value ?? newDeviceId();
   if (!accessToken || !refreshToken) {
     return NextResponse.json(
       { error: { code: "UNAUTHORIZED", message: "Authentication is required" } },
@@ -34,6 +36,7 @@ export async function PATCH(request: Request) {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
+        "X-Device-Id": deviceId,
       },
       body: JSON.stringify({ ...payload, refreshToken }),
       cache: "no-store",
@@ -70,5 +73,6 @@ export async function PATCH(request: Request) {
     path: "/",
     ...(persistentSession ? { maxAge: 60 * 60 * 24 * 30 } : {}),
   });
+  setDeviceCookie(response, deviceId);
   return response;
 }
