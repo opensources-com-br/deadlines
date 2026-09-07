@@ -22,3 +22,18 @@ fun testAuthorization(
         },
     )
 }
+
+fun testAuthorization(
+    userId: UUID,
+    organizationId: UUID,
+    membershipId: UUID,
+    vararg permissions: String,
+): AuthorizationOperations {
+    val context = AuthorizationContext(userId, organizationId, membershipId, UUID.randomUUID(), permissions.toSet())
+    return AuthorizationService(
+        object : AuthorizationRepository {
+            override suspend fun findByUserId(userId: UUID): AuthorizationContext? =
+                context.takeIf { it.userId == userId }
+        },
+    )
+}

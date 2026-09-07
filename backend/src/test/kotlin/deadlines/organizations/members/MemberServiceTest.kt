@@ -83,7 +83,7 @@ class MemberServiceTest {
     fun `member leaves while owner must transfer first`() = runTest {
         val repository = memberRepository()
         val memberService = MemberService(
-            testAuthorization(teammate.userId, organizationId),
+            testAuthorization(teammate.userId, organizationId, teammate.membershipId),
             repository,
             roles(),
             fixedClock(),
@@ -114,6 +114,7 @@ class MemberServiceTest {
             testAuthorization(
                 ownerId,
                 organizationId,
+                owner.membershipId,
                 PlatformPermission.MEMBERS_READ,
                 PlatformPermission.MEMBERS_UPDATE,
                 PlatformPermission.MEMBERS_REMOVE,
