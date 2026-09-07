@@ -45,19 +45,20 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
   }
 
   return (
-    <Card>
-      <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
-        <div>
-          <CardTitle>Organization</CardTitle>
-          <CardDescription className="mt-1">Manage the workspace associated with your account.</CardDescription>
-        </div>
-        {!isEditing && organization.role === "owner" ? (
-          <Button variant="outline" type="button" onClick={() => setIsEditing(true)}>
-            Edit organization
-          </Button>
-        ) : null}
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
+          <div>
+            <CardTitle>Organization details</CardTitle>
+            <CardDescription className="mt-1">The name and address people use to identify this workspace.</CardDescription>
+          </div>
+          {!isEditing && organization.role === "owner" ? (
+            <Button variant="outline" type="button" onClick={() => setIsEditing(true)}>
+              Edit details
+            </Button>
+          ) : null}
+        </CardHeader>
+        <CardContent>
         {isEditing ? (
           <form onSubmit={handleSubmit}>
             <FieldGroup>
@@ -110,7 +111,18 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
             </div>
           </dl>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      <Card className="border-dashed bg-muted/20">
+        <CardHeader>
+          <CardTitle>Workspace ownership</CardTitle>
+          <CardDescription>Owners can manage members, access control, and billing. Ownership transfer will be available in a future update.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">Your current access: <span className="font-medium capitalize text-foreground">{organization.role}</span></p>
+          <p className="mt-2 text-xs text-muted-foreground">Created {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(organization.createdAt))}</p>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

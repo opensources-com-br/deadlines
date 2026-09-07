@@ -5,10 +5,63 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Plan } from "@/features/plans/domain/plan";
 import { listPlans } from "@/features/plans/infrastructure/plan-api";
+import type { OrganizationSubscription } from "@/features/subscriptions/domain/subscription";
+import { getCurrentSubscription } from "@/features/subscriptions/infrastructure/subscription-api";
 
 export function PlansCard() {
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [subscription, setSubscription] = useState<OrganizationSubscription>();
   const [error, setError] = useState<string>();
-  useEffect(() => { void listPlans().then((result) => setPlans(result.data)).catch((reason) => setError(reason.message)); }, []);
-  return <Card><CardHeader><CardTitle>Plans</CardTitle><CardDescription>Plan selection and billing will be available soon.</CardDescription></CardHeader><CardContent>{error ? <p className="text-sm text-destructive">{error}</p> : plans.length === 0 ? <p className="text-sm text-muted-foreground">Loading plans...</p> : <div className="space-y-4">{plans.map((plan) => <div key={plan.id} className="rounded-lg border p-4"><p className="font-medium">{plan.name}</p><p className="text-sm text-muted-foreground">{plan.monthlyPriceCents === 0 ? "Free" : `$${(plan.monthlyPriceCents / 100).toFixed(2)} / month`}</p><p className="mt-2 text-xs text-muted-foreground">{plan.limits.map((limit) => `${limit.value === -1 ? "Unlimited" : limit.value} ${limit.resource}`).join(" · ")}</p></div>)}</div>}<Button className="mt-5" variant="outline" disabled>Manage plan soon</Button></CardContent></Card>;
+  useEffect(() => {
+    void Promise.all([listPlans(), getCurrentSubscription()])
+      .then(([planList, currentSubscription]) => {
+        setPlans(planList.data);
+        setSubscription(currentSubscription);
+      })
+      .catch((reason: Error) => setError(reason.message));
+  }, []);
+
+  if (error) return <p className="text-sm text-destructive">{error}</p>;
+  if (!subscription || plans.length === 0) return <p className="text-sm text-muted-foreground">Loading plan details...</p>;
+
+  return <div className="space-y-6">
+    <Card className="bg-muted/40">
+      <CardHeader>
+        <CardTitle>Current plan: {subscription.plan.name}</CardTitle>
+        <CardDescription>Your subscription is <span className="capitalize">{subscription.status}</span>. Billing and plan changes are not available yet.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {subscription.plan.limits.map((limit) => <div key={limit.resource} className="rounded-lg border bg-background p-3">
+            <p className="text-2xl font-semibold">{limit.value === -1 ? "∞" : limit.value}</p>
+            <p className="mt-1 text-xs capitalize text-muted-foreground">{limit.resource}</p>
+          </div>)}
+        </div>
+        <p className="mt-4 text-xs text-muted-foreground">Usage tracking and limit enforcement arrive with the next product phase.</p>
+      </CardContent>
+    </Card>
+    <Card>
+      <CardHeader>
+        <CardTitle>Available plans</CardTitle>
+        <CardDescription>Compare the plans that will become available when billing launches.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 lg:grid-cols-3">
+        {plans.map((plan) => {
+          const current = plan.id === subscription.plan.id;
+          return <div key={plan.id} className={`rounded-xl border p-4 ${current ? "border-foreground/30 bg-muted/50" : ""}`}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-medium">{plan.name}</p>
+              {current ? <span className="rounded-full bg-foreground px-2 py-0.5 text-xs text-background">Current</span> : null}
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">{plan.monthlyPriceCents === 0 ? "Free" : `$${(plan.monthlyPriceCents / 100).toFixed(2)} / month`}</p>
+            {plan.description ? <p className="mt-3 text-sm text-muted-foreground">{plan.description}</p> : null}
+            <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+              {plan.limits.map((limit) => <li key={limit.resource}>{limit.value === -1 ? "Unlimited" : limit.value} {limit.resource}</li>)}
+            </ul>
+            <Button className="mt-5 w-full" variant={current ? "secondary" : "outline"} disabled>{current ? "Current plan" : "Coming soon"}</Button>
+          </div>;
+        })}
+      </CardContent>
+    </Card>
+  </div>;
 }
