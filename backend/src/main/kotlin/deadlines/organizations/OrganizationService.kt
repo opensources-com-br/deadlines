@@ -1,6 +1,8 @@
 package deadlines.organizations
 
 import deadlines.organizations.audits.withAuditActor
+import deadlines.organizations.authorization.AuthorizationOperations
+import deadlines.organizations.authorization.PlatformPermission
 
 import java.time.Clock
 import java.util.UUID
@@ -15,6 +17,7 @@ interface OrganizationOperations {
 
 class OrganizationService(
     private val repository: OrganizationRepository,
+    private val authorization: AuthorizationOperations,
     private val clock: Clock = Clock.systemUTC(),
     private val idGenerator: () -> UUID = UUID::randomUUID,
 ) : OrganizationOperations {
@@ -49,15 +52,17 @@ class OrganizationService(
         return@withAuditActor repository.createWithOwner(context).toResponse()
     }
 
-    override suspend fun current(userId: UUID): OrganizationResponse =
-        repository.findCurrentByUser(userId)?.toResponse() ?: throw OrganizationNotFoundException()
+    override suspend fun current(userId: UUID): OrganizationResponse {
+        authorization.requirePermission(userId, PlatformPermission.ORGANIZATION_READ)
+        return repository.findCurrentByUser(userId)?.toResponse() ?: throw OrganizationNotFoundException()
+    }
 
     override suspend fun update(userId: UUID, request: UpdateOrganizationRequest): OrganizationResponse = withAuditActor(userId) {
         if (request.name == null && request.slug == null) {
             throw OrganizationValidationException(mapOf("body" to "must contain name or slug"))
         }
+        authorization.requirePermission(userId, PlatformPermission.ORGANIZATION_UPDATE)
         val current = repository.findCurrentByUser(userId) ?: throw OrganizationNotFoundException()
-        if (current.membership.role != MembershipRole.OWNER) throw OrganizationAccessDeniedException()
 
         val updated =
             current.organization.copy(
