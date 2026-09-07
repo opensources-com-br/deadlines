@@ -126,14 +126,6 @@ class ExposedMemberRepository(
                     .toSet()
             if (eligibleIds != setOf(currentOwnerMembershipId, nextOwnerMembershipId)) return@query false
 
-            val nextOwnerUpdated = MembershipsTable.update({
-                (MembershipsTable.organizationId eq organizationId) and
-                    (MembershipsTable.id eq nextOwnerMembershipId) and
-                    (MembershipsTable.status eq ACTIVE_STATUS)
-            }) {
-                it[roleId] = ownerRoleId
-                it[legacyRole] = OWNER_ROLE
-            }
             val previousOwnerUpdated = MembershipsTable.update({
                 (MembershipsTable.organizationId eq organizationId) and
                     (MembershipsTable.id eq currentOwnerMembershipId) and
@@ -141,6 +133,14 @@ class ExposedMemberRepository(
             }) {
                 it[roleId] = previousOwnerRoleId
                 it[legacyRole] = MEMBER_ROLE
+            }
+            val nextOwnerUpdated = MembershipsTable.update({
+                (MembershipsTable.organizationId eq organizationId) and
+                    (MembershipsTable.id eq nextOwnerMembershipId) and
+                    (MembershipsTable.status eq ACTIVE_STATUS)
+            }) {
+                it[roleId] = ownerRoleId
+                it[legacyRole] = OWNER_ROLE
             }
             nextOwnerUpdated == 1 && previousOwnerUpdated == 1
         }
