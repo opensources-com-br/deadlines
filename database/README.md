@@ -81,12 +81,15 @@ The default migration location is `filesystem:../database/migrations` and can be
 | `V017` | `define_platform_permissions` | Adds granular permissions for platform operations |
 | `V018` | `add_membership_lifecycle` | Adds suspension and enforces retained membership and ownership invariants |
 | `V019` | `add_organization_lifecycle` | Adds organization suspension, soft deletion, and lifecycle auditing |
+| `V020` | `add_account_lifecycle` | Adds reversible account deactivation and anonymized deletion state |
 
 ## Schema areas
 
 ### Identity and sessions
 
 The identity schema stores users, profiles, password hashes, email-verification tokens, password-reset tokens, and refresh sessions. Sensitive tokens are persisted only as SHA-256 hashes. Revoked and expired sessions remain available for lifecycle checks but are excluded from active-session queries.
+
+Account deactivation records when access was disabled and revokes every session. Account deletion keeps the non-personal identity record required by referential and audit history, but replaces the email, anonymizes the profile, removes credentials, tokens, and preferences, ends retained Member memberships, and revokes every session. Owners must transfer ownership or delete their organization first.
 
 ### Organizations and access control
 

@@ -142,6 +142,8 @@ POST  /api/v1/auth/forgot-password
 POST  /api/v1/auth/reset-password
 GET   /api/v1/users/me
 PATCH /api/v1/users/me
+DELETE /api/v1/users/me
+POST  /api/v1/users/me/deactivate
 GET   /api/v1/users/me/preferences
 PATCH /api/v1/users/me/preferences
 ```
@@ -151,6 +153,8 @@ Registration creates a pending account and sends an email-verification link. Log
 Access tokens are JWTs that include the session identifier in the `sid` claim. Clients send a stable `X-Device-Id` UUID when creating or renewing authenticated sessions. Each user has at most one session per device; signing in again or refreshing rotates that device's session in place. Logout revokes the refresh session but does not require the client to discard its device identifier. An already-issued access token remains valid until its short expiration time.
 
 User preferences persist locale, IANA timezone, and theme on the account. The web client mirrors them locally for immediate rendering and restores them from the account after login, so the same preferences follow the user across devices.
+
+Sensitive account actions require the current password. Deactivation and deletion revoke all sessions. Deletion anonymizes personal data and removes credentials; an organization owner must transfer ownership or delete the organization before either action.
 
 ### Sessions
 

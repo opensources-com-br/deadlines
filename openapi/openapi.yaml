@@ -1109,6 +1109,49 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "422":
           $ref: "#/components/responses/ValidationError"
+    delete:
+      tags: [Users]
+      summary: Exclui e anonimiza a conta autenticada
+      operationId: deleteOwnAccount
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmAccountActionRequest"
+      responses:
+        "204":
+          description: Conta excluída, dados pessoais removidos e sessões revogadas
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/v1/users/me/deactivate:
+    post:
+      tags: [Users]
+      summary: Desativa a conta autenticada
+      operationId: deactivateOwnAccount
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmAccountActionRequest"
+      responses:
+        "204":
+          description: Conta desativada e todas as sessões revogadas
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /api/v1/users/me/preferences:
     get:
       tags: [Users]
@@ -1536,6 +1579,14 @@ components:
           type: string
           minLength: 1
           maxLength: 100
+    ConfirmAccountActionRequest:
+      type: object
+      additionalProperties: false
+      required: [password]
+      properties:
+        password:
+          type: string
+          writeOnly: true
     UserPreference:
       type: object
       required: [locale, timezone, theme, updatedAt]
@@ -1595,7 +1646,7 @@ components:
           format: email
         status:
           type: string
-          enum: [pending, active, disabled]
+          enum: [pending, active, disabled, deleted]
         profile:
           $ref: "#/components/schemas/UserProfile"
         emailVerifiedAt:
