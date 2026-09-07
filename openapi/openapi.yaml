@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.14.0
+  version: 0.15.0
   description: API local do Deadlines. O cadastro exige confirmação de e-mail antes da ativação e do login; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
@@ -13,6 +13,7 @@ tags:
   - name: Email
   - name: Sessions
   - name: Organizations
+  - name: Authorization
   - name: Permissions
   - name: Roles
   - name: Members
@@ -54,7 +55,7 @@ paths:
   /api/v1/audits:
     get:
       tags: [Audits]
-      summary: Lista o histórico imutável da organização atual (somente Owner)
+      summary: Lista o histórico imutável da organização atual
       description: >-
         Ordem decrescente por occurredAt e id. Datas inclusivas em ISO-8601 UTC, com anos entre 0001 e 9999.
         actorId ausente indica manutenção sem usuário autenticado. Eventos registram
@@ -98,7 +99,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Apenas Owner pode consultar o histórico
+          description: A membership não possui audit.read
         "404":
           description: Usuário sem organização ativa
         "422":
@@ -1010,6 +1011,24 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "422":
           $ref: "#/components/responses/ValidationError"
+  /api/v1/users/me/authorization:
+    get:
+      tags: [Authorization]
+      summary: Busca o contexto de autorização do usuário autenticado
+      operationId: getOwnAuthorizationContext
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Identificadores do tenant e permissões efetivas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizationContext"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: O usuário não possui membership ativa
   /api/v1/users/{id}:
     parameters:
       - $ref: "#/components/parameters/UserId"
@@ -1396,6 +1415,24 @@ components:
         updatedAt:
           type: string
           format: date-time
+    AuthorizationContext:
+      type: object
+      required: [organizationId, membershipId, roleId, permissions]
+      properties:
+        organizationId:
+          type: string
+          format: uuid
+        membershipId:
+          type: string
+          format: uuid
+        roleId:
+          type: string
+          format: uuid
+        permissions:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
     UpdateUserPreferenceRequest:
       type: object
       minProperties: 1
