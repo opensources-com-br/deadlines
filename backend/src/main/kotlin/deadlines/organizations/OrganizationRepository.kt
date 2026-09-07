@@ -2,6 +2,7 @@ package deadlines.organizations
 
 import deadlines.shared.database.DatabaseQuery
 import java.sql.SQLException
+import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
 import org.jetbrains.exposed.v1.core.Table
@@ -22,6 +23,12 @@ interface OrganizationRepository {
     suspend fun findRetainedByUser(userId: UUID): OrganizationContext? = findCurrentByUser(userId)
 
     suspend fun update(organization: Organization): Organization
+
+    suspend fun suspend(organizationId: UUID, updatedAt: Instant): Boolean = false
+
+    suspend fun reactivateOwnedBy(userId: UUID, updatedAt: Instant): OrganizationContext? = null
+
+    suspend fun delete(organizationId: UUID, deletedAt: Instant): Boolean = false
 }
 
 class ExposedOrganizationRepository(
@@ -88,6 +95,71 @@ class ExposedOrganizationRepository(
                 organization
             }
         }
+
+    override suspend fun suspend(organizationId: UUID, updatedAt: Instant): Boolean =
+        query {
+            OrganizationsTable.update({
+                (OrganizationsTable.id eq organizationId) and
+                    (OrganizationsTable.status eq ACTIVE_ORGANIZATION_STATUS)
+            }) {
+                it[status] = SUSPENDED_ORGANIZATION_STATUS
+                it[OrganizationsTable.updatedAt] = updatedAt.atOffset(ZoneOffset.UTC)
+            } == 1
+        }
+
+    override suspend fun reactivateOwnedBy(userId: UUID, updatedAt: Instant): OrganizationContext? =
+        query {
+            val context = organizationContextQuery()
+                .where {
+                    (OrganizationMembershipsTable.userId eq userId) and
+                        (OrganizationMembershipsTable.role eq OWNER_ROLE) and
+                        (OrganizationMembershipsTable.status eq ACTIVE_MEMBERSHIP_STATUS) and
+                        (OrganizationsTable.status eq SUSPENDED_ORGANIZATION_STATUS)
+                }
+                .singleOrNull()
+                ?.toOrganizationContext()
+                ?: return@query null
+            val updated = OrganizationsTable.update({
+                (OrganizationsTable.id eq context.organization.id) and
+                    (OrganizationsTable.status eq SUSPENDED_ORGANIZATION_STATUS)
+            }) {
+                it[status] = ACTIVE_ORGANIZATION_STATUS
+                it[OrganizationsTable.updatedAt] = updatedAt.atOffset(ZoneOffset.UTC)
+            }
+            context.takeIf { updated == 1 }?.copy(
+                organization = context.organization.copy(status = OrganizationStatus.ACTIVE, updatedAt = updatedAt),
+            )
+        }
+
+    override suspend fun delete(organizationId: UUID, deletedAt: Instant): Boolean =
+        query {
+            val organizationUpdated = OrganizationsTable.update({
+                (OrganizationsTable.id eq organizationId) and
+                    (OrganizationsTable.status eq ACTIVE_ORGANIZATION_STATUS)
+            }) {
+                it[status] = DELETED_ORGANIZATION_STATUS
+                it[OrganizationsTable.deletedAt] = deletedAt.atOffset(ZoneOffset.UTC)
+                it[OrganizationsTable.updatedAt] = deletedAt.atOffset(ZoneOffset.UTC)
+            }
+            if (organizationUpdated != 1) return@query false
+
+            OrganizationMembershipsTable.update({
+                (OrganizationMembershipsTable.organizationId eq organizationId) and
+                    (OrganizationMembershipsTable.status inList RETAINED_MEMBERSHIP_STATUSES)
+            }) {
+                it[status] = REMOVED_MEMBERSHIP_STATUS
+                it[removedAt] = deletedAt.atOffset(ZoneOffset.UTC)
+            }
+            OrganizationInvitationsTable.update({
+                (OrganizationInvitationsTable.organizationId eq organizationId) and
+                    (OrganizationInvitationsTable.status eq PENDING_INVITATION_STATUS)
+            }) {
+                it[status] = REVOKED_INVITATION_STATUS
+                it[revokedAt] = deletedAt.atOffset(ZoneOffset.UTC)
+                it[updatedAt] = deletedAt.atOffset(ZoneOffset.UTC)
+            }
+            true
+        }
 }
 
 private suspend fun <T> mapOrganizationConflict(block: suspend () -> T): T =
@@ -114,6 +186,15 @@ private fun Throwable.hasConstraint(constraint: String): Boolean =
 
 private const val UNIQUE_VIOLATION_SQL_STATE = "23505"
 private const val ONE_ACTIVE_MEMBERSHIP_CONSTRAINT = "organization_memberships_one_retained_per_user"
+private const val ACTIVE_ORGANIZATION_STATUS = "active"
+private const val SUSPENDED_ORGANIZATION_STATUS = "suspended"
+private const val DELETED_ORGANIZATION_STATUS = "deleted"
+private const val ACTIVE_MEMBERSHIP_STATUS = "active"
+private const val REMOVED_MEMBERSHIP_STATUS = "removed"
+private const val OWNER_ROLE = "owner"
+private const val PENDING_INVITATION_STATUS = "pending"
+private const val REVOKED_INVITATION_STATUS = "revoked"
+private val RETAINED_MEMBERSHIP_STATUSES = listOf("active", "suspended")
 
 private object OrganizationUsersTable : Table("users") {
     val id = javaUUID("id")
@@ -142,6 +223,13 @@ private object OrganizationMembershipsTable : Table("organization_memberships") 
     val removedAt = timestampWithTimeZone("removed_at").nullable()
 
     override val primaryKey = PrimaryKey(id)
+}
+
+private object OrganizationInvitationsTable : Table("organization_invitations") {
+    val organizationId = javaUUID("organization_id").references(OrganizationsTable.id)
+    val status = varchar("status", 32)
+    val updatedAt = timestampWithTimeZone("updated_at")
+    val revokedAt = timestampWithTimeZone("revoked_at").nullable()
 }
 
 private fun organizationContextQuery() =
