@@ -129,7 +129,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
       <PlatformSidebar user={user} activeItem={section} />
       <SidebarInset className="min-h-svh bg-background text-foreground">
       <header className="w-full py-4">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6">
+        <div className="flex w-full items-center justify-between px-6">
           <SidebarTrigger variant="ghost" size="icon-sm" aria-label="Toggle sidebar" />
           <Button variant="outline" size="sm" type="button" onClick={handleSignOut} disabled={isSigningOut}>
             {isSigningOut ? "Signing out..." : "Log out"}
@@ -137,7 +137,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
         </div>
       </header>
 
-      <section className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[minmax(0,0.8fr)_minmax(420px,1fr)] lg:py-20">
+      <section className="grid w-full gap-10 px-6 py-16 lg:grid-cols-[minmax(0,0.8fr)_minmax(420px,1fr)] lg:py-20">
         <div className="max-w-xl">
           <p className="text-sm font-medium text-muted-foreground">{details.eyebrow}</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
