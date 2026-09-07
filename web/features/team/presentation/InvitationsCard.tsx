@@ -1,13 +1,14 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Role } from "@/features/access/domain/access";
 import type { OrganizationInvitation } from "@/features/team/domain/team";
 import { teamApi } from "@/features/team/infrastructure/team-api";
@@ -88,14 +89,17 @@ export function InvitationsCard({ initialInvitations, roles, canManage }: Invita
               </Field>
               <Field>
                 <FieldLabel>Role</FieldLabel>
-                <Select value={roleId} onValueChange={(value) => setRoleId(value ?? "")} required>
-                  <SelectTrigger className="w-full">
-                    <SelectValue>{assignableRoles.find((role) => role.id === roleId)?.name ?? "Select a role"}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {assignableRoles.map((role) => <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger render={<Button variant="outline" className="w-full justify-between" />}>
+                    {assignableRoles.find((role) => role.id === roleId)?.name ?? "Select a role"}
+                    <ChevronDown />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-(--anchor-width)">
+                    <DropdownMenuRadioGroup value={roleId} onValueChange={(value) => setRoleId(value)}>
+                      {assignableRoles.map((role) => <DropdownMenuRadioItem key={role.id} value={role.id}>{role.name}</DropdownMenuRadioItem>)}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </Field>
               <Field orientation="horizontal" className="justify-end">
                 <Button variant="outline" type="button" onClick={() => setIsCreating(false)} disabled={busyId === "new"}>Cancel</Button>
