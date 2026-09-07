@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.java.javaUUID
 import org.jetbrains.exposed.v1.javatime.timestampWithTimeZone
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -24,6 +25,10 @@ interface MemberRepository {
 
     suspend fun updateRole(organizationId: UUID, membershipId: UUID, roleId: UUID): Boolean
 
+    suspend fun suspend(organizationId: UUID, membershipId: UUID): Boolean = false
+
+    suspend fun reactivate(organizationId: UUID, membershipId: UUID): Boolean = false
+
     suspend fun remove(organizationId: UUID, membershipId: UUID, removedAt: Instant): Boolean
 }
 
@@ -35,7 +40,7 @@ class ExposedMemberRepository(
             memberQuery()
                 .where {
                     (MembershipsTable.organizationId eq organizationId) and
-                        (MembershipsTable.status eq ACTIVE_STATUS)
+                        (MembershipsTable.status inList RETAINED_STATUSES)
                 }
                 .orderBy(ProfilesTable.firstName to SortOrder.ASC, ProfilesTable.lastName to SortOrder.ASC)
                 .map { it.toMember() }
@@ -47,7 +52,7 @@ class ExposedMemberRepository(
                 .where {
                     (MembershipsTable.organizationId eq organizationId) and
                         (MembershipsTable.id eq membershipId) and
-                        (MembershipsTable.status eq ACTIVE_STATUS)
+                        (MembershipsTable.status inList RETAINED_STATUSES)
                 }
                 .singleOrNull()
                 ?.toMember()
@@ -59,18 +64,24 @@ class ExposedMemberRepository(
                 .where {
                     (MembershipsTable.organizationId eq organizationId) and
                         (MembershipsTable.userId eq userId) and
-                        (MembershipsTable.status eq ACTIVE_STATUS)
+                        (MembershipsTable.status inList RETAINED_STATUSES)
                 }
                 .singleOrNull()
                 ?.toMember()
         }
+
+    override suspend fun suspend(organizationId: UUID, membershipId: UUID): Boolean =
+        updateStatus(organizationId, membershipId, ACTIVE_STATUS, SUSPENDED_STATUS)
+
+    override suspend fun reactivate(organizationId: UUID, membershipId: UUID): Boolean =
+        updateStatus(organizationId, membershipId, SUSPENDED_STATUS, ACTIVE_STATUS)
 
     override suspend fun updateRole(organizationId: UUID, membershipId: UUID, roleId: UUID): Boolean =
         query {
             MembershipsTable.update({
                 (MembershipsTable.organizationId eq organizationId) and
                     (MembershipsTable.id eq membershipId) and
-                    (MembershipsTable.status eq ACTIVE_STATUS)
+                    (MembershipsTable.status inList RETAINED_STATUSES)
             }) {
                 it[MembershipsTable.roleId] = roleId
             } == 1
@@ -81,15 +92,34 @@ class ExposedMemberRepository(
             MembershipsTable.update({
                 (MembershipsTable.organizationId eq organizationId) and
                     (MembershipsTable.id eq membershipId) and
-                    (MembershipsTable.status eq ACTIVE_STATUS)
+                    (MembershipsTable.status inList RETAINED_STATUSES)
             }) {
                 it[status] = "removed"
                 it[MembershipsTable.removedAt] = removedAt.atOffset(ZoneOffset.UTC)
             } == 1
         }
+
+
+    private suspend fun updateStatus(
+        organizationId: UUID,
+        membershipId: UUID,
+        currentStatus: String,
+        nextStatus: String,
+    ): Boolean =
+        query {
+            MembershipsTable.update({
+                (MembershipsTable.organizationId eq organizationId) and
+                    (MembershipsTable.id eq membershipId) and
+                    (MembershipsTable.status eq currentStatus)
+            }) {
+                it[status] = nextStatus
+            } == 1
+        }
 }
 
 private const val ACTIVE_STATUS = "active"
+private const val SUSPENDED_STATUS = "suspended"
+private val RETAINED_STATUSES = listOf(ACTIVE_STATUS, SUSPENDED_STATUS)
 
 private object MemberOrganizationsTable : Table("organizations") {
     val id = javaUUID("id")
