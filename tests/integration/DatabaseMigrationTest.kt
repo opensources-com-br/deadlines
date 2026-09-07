@@ -629,7 +629,10 @@ class DatabaseMigrationTest {
             assertEquals(invitee.id.toString(), events.single { it.action == "invitation.accepted" }.actorId)
             assertEquals(owner.id.toString(), events.single { it.action == "organization.updated" }.actorId)
             assertTrue(events.none { it.metadata.toString().contains("sensitive") || it.metadata.toString().contains("secret") || it.metadata.toString().contains(invitee.email) })
-            val safeKeys = setOf("nameChanged", "slugChanged", "keyChanged", "descriptionChanged", "userId", "previousRoleId", "roleId", "acceptedBy", "permissionId")
+            val safeKeys = setOf(
+                "nameChanged", "slugChanged", "keyChanged", "descriptionChanged", "userId", "previousRoleId",
+                "roleId", "previousStatus", "status", "acceptedBy", "permissionId",
+            )
             assertTrue(events.all { it.metadata.keys.all { key -> key in safeKeys } })
             assertTrue(audits.list(UUID.randomUUID(), AuditFilter()).data.isEmpty())
             val filtered = audits.list(org, AuditFilter(action = "member.removed", actorId = owner.id, resource = "member", resourceId = member.membershipId))
