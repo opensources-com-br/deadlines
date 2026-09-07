@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { platformPermission } from "@/features/access/domain/authorization";
+import { usePermission } from "@/features/access/presentation/AuthorizationProvider";
 import type { Organization } from "@/features/organizations/domain/organization";
 import { organizationApi } from "@/features/organizations/infrastructure/organization-api";
 import { useLocalizedFormatters } from "@/features/platform/presentation/useLocalizedFormatters";
@@ -18,6 +20,7 @@ type OrganizationCardProps = {
 
 export function OrganizationCard({ organization: initialOrganization }: OrganizationCardProps) {
   const t = useTranslations("Organization");
+  const canUpdate = usePermission(platformPermission.organizationUpdate);
   const { formatDate } = useLocalizedFormatters();
   const [organization, setOrganization] = useState(initialOrganization);
   const [name, setName] = useState(initialOrganization.name);
@@ -56,7 +59,7 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
             <CardTitle>{t("details")}</CardTitle>
             <CardDescription className="mt-1">{t("detailsDescription")}</CardDescription>
           </div>
-          {!isEditing && organization.role === "owner" ? (
+          {!isEditing && canUpdate ? (
             <Button variant="outline" type="button" onClick={() => setIsEditing(true)}>
               {t("edit")}
             </Button>
