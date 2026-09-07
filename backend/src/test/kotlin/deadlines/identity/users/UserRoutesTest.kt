@@ -20,6 +20,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import java.util.UUID
 
 class UserRoutesTest {
     private val tokenService =
@@ -132,4 +133,55 @@ class UserRoutesTest {
 
             assertEquals(HttpStatusCode.BadRequest, response.status)
         }
+
+    @Test
+    fun `account lifecycle endpoints require authentication and forward password`() =
+        testApplication {
+            val lifecycle = RecordingAccountLifecycle()
+            application {
+                module(
+                    userService = UserService(InMemoryUserRepository()),
+                    tokenService = tokenService,
+                    accountLifecycleService = lifecycle,
+                )
+            }
+            val userId = UUID.randomUUID()
+
+            assertEquals(
+                HttpStatusCode.Unauthorized,
+                client.post("/api/v1/users/me/deactivate") {
+                    contentType(ContentType.Application.Json)
+                    setBody("""{"password":"secret"}""")
+                }.status,
+            )
+
+            val deactivated = client.post("/api/v1/users/me/deactivate") {
+                bearerAuth(tokenService.issue(userId).accessToken)
+                contentType(ContentType.Application.Json)
+                setBody("""{"password":"secret"}""")
+            }
+            assertEquals(HttpStatusCode.NoContent, deactivated.status)
+            assertEquals(userId to "secret", lifecycle.deactivated)
+
+            val deleted = client.delete("/api/v1/users/me") {
+                bearerAuth(tokenService.issue(userId).accessToken)
+                contentType(ContentType.Application.Json)
+                setBody("""{"password":"secret"}""")
+            }
+            assertEquals(HttpStatusCode.NoContent, deleted.status)
+            assertEquals(userId to "secret", lifecycle.deleted)
+        }
+}
+
+private class RecordingAccountLifecycle : AccountLifecycleOperations {
+    var deactivated: Pair<UUID, String>? = null
+    var deleted: Pair<UUID, String>? = null
+
+    override suspend fun deactivate(userId: UUID, password: String) {
+        deactivated = userId to password
+    }
+
+    override suspend fun delete(userId: UUID, password: String) {
+        deleted = userId to password
+    }
 }
