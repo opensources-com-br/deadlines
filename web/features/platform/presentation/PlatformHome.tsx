@@ -3,19 +3,15 @@
 import { AuditsCard } from "@/features/audits/presentation/AuditsCard";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import type { UserSession } from "@/features/platform/domain/session";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
-import { changePassword, updateUserProfile } from "@/features/platform/infrastructure/profile-api";
+import { AccountSettings } from "@/features/platform/presentation/AccountSettings";
+import { NotificationsCard } from "@/features/platform/presentation/NotificationsCard";
 import { SessionsCard } from "@/features/platform/presentation/SessionsCard";
 import { PlatformSidebar, type PlatformNavigationItem, type SettingsSection } from "@/features/platform/presentation/PlatformSidebar";
 import type { Organization } from "@/features/organizations/domain/organization";
@@ -57,17 +53,7 @@ const settingsNavigation: Array<{ label: string; items: Array<{ key: SettingsSec
 ];
 
 export function PlatformHome({ user, organization, sessions, permissions, roles, members, invitations, section, settingsSection }: PlatformHomeProps) {
-  const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [profile, setProfile] = useState(user.profile);
-  const [firstName, setFirstName] = useState(user.profile.firstName);
-  const [lastName, setLastName] = useState(user.profile.lastName);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [availablePermissions, setAvailablePermissions] = useState(permissions);
   const activeSettingsSection = settingsSection ?? (section === "settings" ? "organization" : section);
   const details = sectionDetails[activeSettingsSection];
@@ -77,60 +63,6 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
     await fetch("/api/auth/logout", { method: "POST" });
     toast.success("You have been signed out.");
     window.location.replace("/login");
-  }
-
-  async function handleProfileUpdate(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsSaving(true);
-
-    try {
-      const updated = await updateUserProfile({ firstName, lastName });
-      setProfile(updated.profile);
-      setFirstName(updated.profile.firstName);
-      setLastName(updated.profile.lastName);
-      setIsEditing(false);
-      toast.success("Your profile has been updated.");
-      router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to update your profile.");
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  function handleCancelEditing() {
-    setFirstName(profile.firstName);
-    setLastName(profile.lastName);
-    setIsEditing(false);
-  }
-
-  async function handlePasswordChange(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (newPassword !== passwordConfirmation) {
-      toast.error("Passwords do not match.");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await changePassword(currentPassword, newPassword);
-      setCurrentPassword("");
-      setNewPassword("");
-      setPasswordConfirmation("");
-      setIsChangingPassword(false);
-      toast.success("Your password has been changed.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to change your password.");
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  function handleCancelPasswordChange() {
-    setCurrentPassword("");
-    setNewPassword("");
-    setPasswordConfirmation("");
-    setIsChangingPassword(false);
   }
 
   return (
@@ -185,141 +117,8 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
           onPermissionsChange={setAvailablePermissions}
         />}
         {activeSettingsSection === "access-control" && <RolesCard initialRoles={roles} permissions={availablePermissions} canManage={organization.role === "owner"} />}
-        {activeSettingsSection === "account" && <Card>
-          <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
-            <div>
-              <CardTitle>Your account</CardTitle>
-              <CardDescription className="mt-1">Manage your personal information and password.</CardDescription>
-            </div>
-            {!isEditing && !isChangingPassword ? (
-              <Button variant="outline" type="button" onClick={() => setIsEditing(true)}>
-                Edit profile
-              </Button>
-            ) : null}
-          </CardHeader>
-          <CardContent>
-            {isEditing ? (
-              <form onSubmit={handleProfileUpdate}>
-                <FieldGroup>
-                  <div className="grid gap-6 sm:grid-cols-2">
-                    <Field>
-                      <FieldLabel htmlFor="profile-first-name">First name</FieldLabel>
-                      <Input
-                        id="profile-first-name"
-                        value={firstName}
-                        onChange={(event) => setFirstName(event.target.value)}
-                        maxLength={100}
-                        required
-                      />
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="profile-last-name">Last name</FieldLabel>
-                      <Input
-                        id="profile-last-name"
-                        value={lastName}
-                        onChange={(event) => setLastName(event.target.value)}
-                        maxLength={100}
-                        required
-                      />
-                    </Field>
-                  </div>
-                  <Field>
-                    <FieldLabel htmlFor="profile-email">Email</FieldLabel>
-                    <Input id="profile-email" type="email" value={user.email} disabled />
-                  </Field>
-                  <Field orientation="horizontal" className="justify-end">
-                    <Button variant="outline" type="button" onClick={handleCancelEditing} disabled={isSaving}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={isSaving}>
-                      {isSaving ? "Saving..." : "Save changes"}
-                    </Button>
-                  </Field>
-                </FieldGroup>
-              </form>
-            ) : isChangingPassword ? (
-              <form onSubmit={handlePasswordChange}>
-                <FieldGroup>
-                  <Field>
-                    <FieldLabel htmlFor="current-password">Current password</FieldLabel>
-                    <Input
-                      id="current-password"
-                      type="password"
-                      autoComplete="current-password"
-                      value={currentPassword}
-                      onChange={(event) => setCurrentPassword(event.target.value)}
-                      required
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="new-password">New password</FieldLabel>
-                    <Input
-                      id="new-password"
-                      type="password"
-                      autoComplete="new-password"
-                      value={newPassword}
-                      onChange={(event) => setNewPassword(event.target.value)}
-                      minLength={12}
-                      maxLength={72}
-                      required
-                    />
-                    <p className="text-sm text-muted-foreground">Use between 12 and 72 characters.</p>
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="password-confirmation">Confirm new password</FieldLabel>
-                    <Input
-                      id="password-confirmation"
-                      type="password"
-                      autoComplete="new-password"
-                      value={passwordConfirmation}
-                      onChange={(event) => setPasswordConfirmation(event.target.value)}
-                      minLength={12}
-                      maxLength={72}
-                      required
-                    />
-                  </Field>
-                  <Field orientation="horizontal" className="justify-end">
-                    <Button variant="outline" type="button" onClick={handleCancelPasswordChange} disabled={isSaving}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={isSaving}>
-                      {isSaving ? "Changing..." : "Change password"}
-                    </Button>
-                  </Field>
-                </FieldGroup>
-              </form>
-            ) : (
-              <div className="space-y-6">
-                <dl className="space-y-5">
-                  <div className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-6">
-                    <dt className="text-sm text-muted-foreground">Full name</dt>
-                    <dd className="text-sm font-medium">{profile.firstName} {profile.lastName}</dd>
-                  </div>
-                  <div className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-6">
-                    <dt className="text-sm text-muted-foreground">Email</dt>
-                    <dd className="text-sm font-medium">{user.email}</dd>
-                  </div>
-                </dl>
-                <Separator />
-                <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-                  <div>
-                    <p className="text-sm font-medium">Password</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Update your password without leaving your account.</p>
-                  </div>
-                  <Button variant="outline" type="button" onClick={() => setIsChangingPassword(true)}>
-                    Change password
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>}
-        {activeSettingsSection === "notifications" && <Card>
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>Notification preferences will be available here soon.</CardDescription>
-          </CardHeader>
-        </Card>}
+        {activeSettingsSection === "account" && <AccountSettings user={user} />}
+        {activeSettingsSection === "notifications" && <NotificationsCard />}
         {activeSettingsSection === "security" && organization.role === "owner" && <AuditsCard key={organization.id} members={members} />}
         {activeSettingsSection === "security" && <SessionsCard initialSessions={sessions} />}
         </div>

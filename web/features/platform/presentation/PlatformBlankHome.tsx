@@ -1,24 +1,18 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
-import { PlatformSidebar, type SettingsSection } from "@/features/platform/presentation/PlatformSidebar";
+import { PlatformSidebar } from "@/features/platform/presentation/PlatformSidebar";
 
 type PlatformBlankHomeProps = {
   user: UserProfile;
 };
 
 export function PlatformBlankHome({ user }: PlatformBlankHomeProps) {
-  const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
-
-  function handleSettingsNavigation(section: SettingsSection) {
-    router.push(`/app/settings?section=${section}`);
-  }
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -31,7 +25,6 @@ export function PlatformBlankHome({ user }: PlatformBlankHomeProps) {
     <SidebarProvider>
       <PlatformSidebar
         user={user}
-        onSettingsSelect={handleSettingsNavigation}
         onSignOut={() => void handleSignOut()}
         isSigningOut={isSigningOut}
       />
