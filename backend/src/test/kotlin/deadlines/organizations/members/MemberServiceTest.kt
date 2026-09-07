@@ -1,6 +1,7 @@
 package deadlines.organizations.members
 
 import deadlines.organizations.OrganizationAccessDeniedException
+import deadlines.organizations.MembershipStatus
 import deadlines.organizations.access.MemoryRoleRepository
 import deadlines.organizations.access.Role
 import deadlines.organizations.authorization.PlatformPermission
@@ -13,6 +14,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 
 class MemberServiceTest {
     private val now = Instant.parse("2026-09-06T18:00:00Z")
@@ -68,6 +70,45 @@ class MemberServiceTest {
         }
     }
 
+    @Test
+    fun `authorized user suspends and reactivates a member`() = runTest {
+        val repository = memberRepository()
+        val service = service(repository)
+
+        assertEquals("suspended", service.suspend(ownerId, teammate.membershipId).status)
+        assertEquals("active", service.reactivate(ownerId, teammate.membershipId).status)
+    }
+
+    @Test
+    fun `member leaves while owner must transfer first`() = runTest {
+        val repository = memberRepository()
+        val memberService = MemberService(
+            testAuthorization(teammate.userId, organizationId),
+            repository,
+            roles(),
+            fixedClock(),
+        )
+
+        memberService.leave(teammate.userId)
+        assertEquals(MembershipStatus.REMOVED, repository.value(teammate.membershipId)?.status)
+        assertFailsWith<OwnerCannotLeaveException> { service(repository).leave(ownerId) }
+    }
+
+    @Test
+    fun `owner transfers ownership and receives selected role`() = runTest {
+        val repository = memberRepository()
+
+        val updated = service(repository).transferOwnership(
+            ownerId,
+            teammate.membershipId,
+            TransferOwnershipRequest(managerRole.id.toString()),
+        )
+
+        assertEquals("owner", updated.role.key)
+        assertEquals("manager", repository.value(owner.membershipId)?.role?.key)
+        assertNotEquals("owner", repository.value(owner.membershipId)?.role?.key)
+    }
+
     private fun service(repository: MemoryMemberRepository = memberRepository()) =
         MemberService(
             testAuthorization(
@@ -112,7 +153,9 @@ private class MemoryMemberRepository(
     private val values = initial.toMutableList()
     private val rolesById = roles.associateBy(Role::id)
 
-    override suspend fun list(organizationId: UUID) = values.filter { it.organizationId == organizationId }
+    override suspend fun list(organizationId: UUID) = values.filter {
+        it.organizationId == organizationId && it.status != MembershipStatus.REMOVED
+    }
 
     override suspend fun findById(organizationId: UUID, membershipId: UUID) =
         values.firstOrNull { it.organizationId == organizationId && it.membershipId == membershipId }
@@ -129,5 +172,45 @@ private class MemoryMemberRepository(
     }
 
     override suspend fun remove(organizationId: UUID, membershipId: UUID, removedAt: Instant): Boolean =
-        values.removeIf { it.organizationId == organizationId && it.membershipId == membershipId }
+        updateStatus(organizationId, membershipId, MembershipStatus.REMOVED)
+
+    override suspend fun suspend(organizationId: UUID, membershipId: UUID): Boolean =
+        updateStatus(organizationId, membershipId, MembershipStatus.SUSPENDED, MembershipStatus.ACTIVE)
+
+    override suspend fun reactivate(organizationId: UUID, membershipId: UUID): Boolean =
+        updateStatus(organizationId, membershipId, MembershipStatus.ACTIVE, MembershipStatus.SUSPENDED)
+
+    override suspend fun transferOwnership(
+        organizationId: UUID,
+        currentOwnerMembershipId: UUID,
+        nextOwnerMembershipId: UUID,
+        ownerRoleId: UUID,
+        previousOwnerRoleId: UUID,
+    ): Boolean {
+        val currentIndex = values.indexOfFirst { it.organizationId == organizationId && it.membershipId == currentOwnerMembershipId }
+        val nextIndex = values.indexOfFirst { it.organizationId == organizationId && it.membershipId == nextOwnerMembershipId }
+        val ownerRole = rolesById[ownerRoleId] ?: return false
+        val previousRole = rolesById[previousOwnerRoleId] ?: return false
+        if (currentIndex < 0 || nextIndex < 0 || values[nextIndex].status != MembershipStatus.ACTIVE) return false
+        values[currentIndex] = values[currentIndex].copy(role = previousRole)
+        values[nextIndex] = values[nextIndex].copy(role = ownerRole)
+        return true
+    }
+
+    fun value(membershipId: UUID) = values.firstOrNull { it.membershipId == membershipId }
+
+    private fun updateStatus(
+        organizationId: UUID,
+        membershipId: UUID,
+        nextStatus: MembershipStatus,
+        requiredStatus: MembershipStatus? = null,
+    ): Boolean {
+        val index = values.indexOfFirst {
+            it.organizationId == organizationId && it.membershipId == membershipId &&
+                (requiredStatus == null || it.status == requiredStatus)
+        }
+        if (index < 0) return false
+        values[index] = values[index].copy(status = nextStatus)
+        return true
+    }
 }
