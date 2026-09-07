@@ -16,7 +16,8 @@ import { changePassword, updateUserProfile } from "@/features/platform/infrastru
 export function AccountSettings({ user }: { user: UserProfile }) {
   const router = useRouter();
   const locale = useLocale();
-  const t = useTranslations("LocaleSwitcher");
+  const tLocale = useTranslations("LocaleSwitcher");
+  const t = useTranslations("Account");
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -36,10 +37,10 @@ export function AccountSettings({ user }: { user: UserProfile }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ locale: nextLocale }),
       });
-      if (!response.ok) throw new Error(t("error"));
+      if (!response.ok) throw new Error(tLocale("error"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("error"));
+      toast.error(error instanceof Error ? error.message : tLocale("error"));
     } finally {
       setIsChangingLocale(false);
     }
@@ -47,38 +48,37 @@ export function AccountSettings({ user }: { user: UserProfile }) {
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setIsSaving(true);
-    try { const updated = await updateUserProfile({ firstName, lastName }); setFirstName(updated.profile.firstName); setLastName(updated.profile.lastName); setIsEditing(false); router.refresh(); toast.success("Your profile has been updated."); }
-    catch (error) { toast.error(error instanceof Error ? error.message : "Unable to update your profile."); }
+    try { const updated = await updateUserProfile({ firstName, lastName }); setFirstName(updated.profile.firstName); setLastName(updated.profile.lastName); setIsEditing(false); router.refresh(); toast.success(t("profileUpdated")); }
+    catch (error) { toast.error(error instanceof Error ? error.message : t("profileError")); }
     finally { setIsSaving(false); }
   }
   async function savePassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (newPassword !== passwordConfirmation) { toast.error("Passwords do not match."); return; }
+    if (newPassword !== passwordConfirmation) { toast.error(t("passwordMismatch")); return; }
     setIsSaving(true);
-    try { await changePassword(currentPassword, newPassword); setCurrentPassword(""); setNewPassword(""); setPasswordConfirmation(""); setIsChangingPassword(false); toast.success("Your password has been changed."); }
-    catch (error) { toast.error(error instanceof Error ? error.message : "Unable to change your password."); }
+    try { await changePassword(currentPassword, newPassword); setCurrentPassword(""); setNewPassword(""); setPasswordConfirmation(""); setIsChangingPassword(false); toast.success(t("passwordUpdated")); }
+    catch (error) { toast.error(error instanceof Error ? error.message : t("passwordError")); }
     finally { setIsSaving(false); }
   }
 
   return <div className="space-y-6">
     <Card>
-      <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4"><div><CardTitle>Profile</CardTitle><CardDescription>Your personal information used across Deadlines.</CardDescription></div>{!isEditing ? <Button variant="outline" onClick={() => setIsEditing(true)}>Edit profile</Button> : null}</CardHeader>
-      <CardContent>{isEditing ? <form onSubmit={saveProfile}><FieldGroup><div className="grid gap-6 sm:grid-cols-2"><Field><FieldLabel htmlFor="profile-first-name">First name</FieldLabel><Input id="profile-first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} maxLength={100} required /></Field><Field><FieldLabel htmlFor="profile-last-name">Last name</FieldLabel><Input id="profile-last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} maxLength={100} required /></Field></div><Field><FieldLabel htmlFor="profile-email">Email</FieldLabel><Input id="profile-email" type="email" value={user.email} disabled /><p className="text-xs text-muted-foreground">Your email address cannot be changed here.</p></Field><Field orientation="horizontal" className="justify-end"><Button variant="outline" type="button" disabled={isSaving} onClick={() => { setFirstName(user.profile.firstName); setLastName(user.profile.lastName); setIsEditing(false); }}>Cancel</Button><Button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save changes"}</Button></Field></FieldGroup></form> : <dl className="grid gap-5 sm:grid-cols-2"><div><dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Name</dt><dd className="mt-1 font-medium">{firstName} {lastName}</dd></div><div><dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Email</dt><dd className="mt-1 font-medium">{user.email}</dd></div></dl>}</CardContent>
+      <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4"><div><CardTitle>{t("profile")}</CardTitle><CardDescription>{t("profileDescription")}</CardDescription></div>{!isEditing ? <Button variant="outline" onClick={() => setIsEditing(true)}>{t("editProfile")}</Button> : null}</CardHeader>
+      <CardContent>{isEditing ? <form onSubmit={saveProfile}><FieldGroup><div className="grid gap-6 sm:grid-cols-2"><Field><FieldLabel htmlFor="profile-first-name">{t("firstName")}</FieldLabel><Input id="profile-first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} maxLength={100} required /></Field><Field><FieldLabel htmlFor="profile-last-name">{t("lastName")}</FieldLabel><Input id="profile-last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} maxLength={100} required /></Field></div><Field><FieldLabel htmlFor="profile-email">{t("email")}</FieldLabel><Input id="profile-email" type="email" value={user.email} disabled /><p className="text-xs text-muted-foreground">{t("emailHelp")}</p></Field><Field orientation="horizontal" className="justify-end"><Button variant="outline" type="button" disabled={isSaving} onClick={() => { setFirstName(user.profile.firstName); setLastName(user.profile.lastName); setIsEditing(false); }}>{t("cancel")}</Button><Button type="submit" disabled={isSaving}>{isSaving ? t("saving") : t("save")}</Button></Field></FieldGroup></form> : <dl className="grid gap-5 sm:grid-cols-2"><div><dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("name")}</dt><dd className="mt-1 font-medium">{firstName} {lastName}</dd></div><div><dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("email")}</dt><dd className="mt-1 font-medium">{user.email}</dd></div></dl>}</CardContent>
     </Card>
     <Card>
-      <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4"><div><CardTitle>Password</CardTitle><CardDescription>Choose a strong password to protect your account.</CardDescription></div>{!isChangingPassword ? <Button variant="outline" onClick={() => setIsChangingPassword(true)}>Change password</Button> : null}</CardHeader>
-      {isChangingPassword ? <CardContent><form onSubmit={savePassword}><FieldGroup><Field><FieldLabel htmlFor="current-password">Current password</FieldLabel><Input id="current-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></Field><Field><FieldLabel htmlFor="new-password">New password</FieldLabel><Input id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={12} maxLength={72} required /><p className="text-xs text-muted-foreground">Use between 12 and 72 characters.</p></Field><Field><FieldLabel htmlFor="password-confirmation">Confirm new password</FieldLabel><Input id="password-confirmation" type="password" autoComplete="new-password" value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} minLength={12} maxLength={72} required /></Field><Field orientation="horizontal" className="justify-end"><Button variant="outline" type="button" disabled={isSaving} onClick={() => { setCurrentPassword(""); setNewPassword(""); setPasswordConfirmation(""); setIsChangingPassword(false); }}>Cancel</Button><Button type="submit" disabled={isSaving}>{isSaving ? "Changing..." : "Update password"}</Button></Field></FieldGroup></form></CardContent> : null}
+      <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4"><div><CardTitle>{t("password")}</CardTitle><CardDescription>{t("passwordDescription")}</CardDescription></div>{!isChangingPassword ? <Button variant="outline" onClick={() => setIsChangingPassword(true)}>{t("changePassword")}</Button> : null}</CardHeader>
+      {isChangingPassword ? <CardContent><form onSubmit={savePassword}><FieldGroup><Field><FieldLabel htmlFor="current-password">{t("currentPassword")}</FieldLabel><Input id="current-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></Field><Field><FieldLabel htmlFor="new-password">{t("newPassword")}</FieldLabel><Input id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={12} maxLength={72} required /><p className="text-xs text-muted-foreground">{t("passwordHelp")}</p></Field><Field><FieldLabel htmlFor="password-confirmation">{t("confirmPassword")}</FieldLabel><Input id="password-confirmation" type="password" autoComplete="new-password" value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} minLength={12} maxLength={72} required /></Field><Field orientation="horizontal" className="justify-end"><Button variant="outline" type="button" disabled={isSaving} onClick={() => { setCurrentPassword(""); setNewPassword(""); setPasswordConfirmation(""); setIsChangingPassword(false); }}>{t("cancel")}</Button><Button type="submit" disabled={isSaving}>{isSaving ? t("changing") : t("updatePassword")}</Button></Field></FieldGroup></form></CardContent> : null}
     </Card>
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        <CardTitle>{tLocale("title")}</CardTitle><CardDescription>{tLocale("description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <Field className="max-w-sm">
-          <FieldLabel>{t("label")}</FieldLabel>
+          <FieldLabel>{tLocale("label")}</FieldLabel>
           <Select value={locale} disabled={isChangingLocale} onValueChange={(value) => value && void changeLocale(value)}>
-            <SelectTrigger className="w-full" aria-label={t("label")}>
+            <SelectTrigger className="w-full" aria-label={tLocale("label")}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent align="start">
@@ -86,7 +86,7 @@ export function AccountSettings({ user }: { user: UserProfile }) {
               <SelectItem value="en">English</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">{t("help")}</p>
+          <p className="text-xs text-muted-foreground">{tLocale("help")}</p>
         </Field>
       </CardContent>
     </Card>
