@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "i18n:check": "node scripts/check-translations.mjs",
     "start": "next start",
     "lint": "eslint"
   },
