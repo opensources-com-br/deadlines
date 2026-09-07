@@ -50,10 +50,14 @@ export function PlatformSidebar({ activeItem, user, onSignOut, onSettingsSelect,
   return (
     <Sidebar variant="floating" collapsible="icon">
       <SidebarHeader className="p-3">
-        <div className="flex h-8 items-center gap-2 px-2 text-sm font-semibold tracking-tight group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+        <Link
+          href="/app"
+          aria-label="Go to platform home"
+          className="flex h-8 items-center gap-2 rounded-md px-2 text-sm font-semibold tracking-tight outline-hidden hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+        >
           <Image className="size-6 invert" src="/deadlines-mark.png" alt="Deadlines" width={24} height={24} priority />
           <span className="group-data-[collapsible=icon]:hidden">Deadlines</span>
-        </div>
+        </Link>
       </SidebarHeader>
       <SidebarContent />
       <SidebarFooter className="gap-3 p-3">
