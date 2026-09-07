@@ -1,6 +1,7 @@
 package deadlines.subscriptions
 
-import deadlines.organizations.OrganizationRepository
+import deadlines.organizations.authorization.AuthorizationOperations
+import deadlines.organizations.authorization.PlatformPermission
 import java.util.UUID
 
 interface SubscriptionOperations {
@@ -8,13 +9,12 @@ interface SubscriptionOperations {
 }
 
 class SubscriptionService(
-    private val organizations: OrganizationRepository,
+    private val authorization: AuthorizationOperations,
     private val subscriptions: SubscriptionRepository,
 ) : SubscriptionOperations {
     override suspend fun current(userId: UUID): SubscriptionResponse {
-        val organization = organizations.findCurrentByUser(userId)
-            ?: throw SubscriptionNotFoundException()
-        return subscriptions.findActiveByOrganization(organization.organization.id)
+        val context = authorization.requirePermission(userId, PlatformPermission.BILLING_READ)
+        return subscriptions.findActiveByOrganization(context.organizationId)
             ?.toResponse()
             ?: throw SubscriptionNotFoundException()
     }

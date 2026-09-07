@@ -70,7 +70,7 @@ fun main() {
         val organizationRepository = ExposedOrganizationRepository(query)
         val authorizationService = AuthorizationService(ExposedAuthorizationRepository(query))
         val planService = PlanService(ExposedPlanRepository(query))
-        val subscriptionService = SubscriptionService(organizationRepository, ExposedSubscriptionRepository(query))
+        val subscriptionService = SubscriptionService(authorizationService, ExposedSubscriptionRepository(query))
         val auditService = AuditService(authorizationService, ExposedAuditRepository(query))
         val organizationService = OrganizationService(organizationRepository, authorizationService)
         val permissionRepository = ExposedPermissionRepository(query)
