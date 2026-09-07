@@ -1,7 +1,8 @@
 package deadlines.organizations.access
 
-import deadlines.organizations.MembershipRole
 import deadlines.organizations.OrganizationAccessDeniedException
+import deadlines.organizations.authorization.PlatformPermission
+import deadlines.organizations.authorization.testAuthorization
 import java.time.Clock
 import java.time.ZoneOffset
 import java.util.UUID
@@ -30,7 +31,7 @@ class PermissionServiceTest {
         }
 
     @Test
-    fun `owner creates updates and deletes a custom permission`() =
+    fun `authorized user creates updates and deletes a custom permission`() =
         runTest {
             val repository = MemoryPermissionRepository()
             val id = UUID.randomUUID()
@@ -48,7 +49,7 @@ class PermissionServiceTest {
         }
 
     @Test
-    fun `system permissions are immutable and members cannot mutate permissions`() =
+    fun `system permissions are immutable and mutations require permission`() =
         runTest {
             val repository = MemoryPermissionRepository(listOf(systemPermission))
             val ownerService = service(repository = repository)
@@ -59,7 +60,7 @@ class PermissionServiceTest {
                 ownerService.delete(userId, systemPermission.id)
             }
 
-            val memberService = service(repository = repository, role = MembershipRole.MEMBER)
+            val memberService = service(repository = repository, granted = emptySet())
             assertFailsWith<OrganizationAccessDeniedException> {
                 memberService.create(userId, CreatePermissionRequest("custom.read", "Custom read"))
             }
@@ -80,10 +81,15 @@ class PermissionServiceTest {
     private fun service(
         initial: List<Permission> = emptyList(),
         repository: MemoryPermissionRepository = MemoryPermissionRepository(initial),
-        role: MembershipRole = MembershipRole.OWNER,
+        granted: Set<String> = setOf(
+            PlatformPermission.PERMISSIONS_READ,
+            PlatformPermission.PERMISSIONS_CREATE,
+            PlatformPermission.PERMISSIONS_UPDATE,
+            PlatformPermission.PERMISSIONS_DELETE,
+        ),
         idGenerator: () -> UUID = UUID::randomUUID,
     ) = PermissionService(
-        TestOrganizationRepository(accessContext(userId, organizationId, role)),
+        testAuthorization(userId, organizationId, *granted.toTypedArray()),
         repository,
         Clock.fixed(accessTestNow, ZoneOffset.UTC),
         idGenerator,
