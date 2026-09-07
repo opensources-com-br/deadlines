@@ -200,7 +200,11 @@ class DatabaseMigrationTest {
                     )
                 val first = Session(UUID.randomUUID(), user.id, "a".repeat(64), null, null, now.plusSeconds(60), now)
                 val replacement =
-                    Session(UUID.randomUUID(), user.id, "b".repeat(64), null, null, now.plusSeconds(120), now)
+                    first.copy(
+                        refreshTokenHash = "b".repeat(64),
+                        expiresAt = now.plusSeconds(120),
+                        lastSeenAt = now.plusSeconds(30),
+                    )
 
                 users.create(user)
                 sessions.create(first)
@@ -210,6 +214,36 @@ class DatabaseMigrationTest {
                 assertNull(sessions.findActive(first.refreshTokenHash, now))
                 assertEquals(replacement, sessions.findActive(replacement.refreshTokenHash, now))
                 assertEquals(false, sessions.rotate(first.refreshTokenHash, replacement, now))
+            }
+        }
+
+    @Test
+    fun `session repository keeps one session per user and device`() =
+        runTest {
+            DatabaseFactory.open(databaseConfig()).use { database ->
+                val query = DatabaseQuery(database.database)
+                val users = ExposedUserRepository(query)
+                val sessions = ExposedSessionRepository(query)
+                val now = Instant.now()
+                val user =
+                    User(
+                        id = UUID.randomUUID(),
+                        email = "device-session-${UUID.randomUUID()}@example.com",
+                        status = UserStatus.ACTIVE,
+                        profile = UserProfile("Device", "Session", null, null),
+                        createdAt = now,
+                        updatedAt = now,
+                    )
+                val deviceId = UUID.randomUUID()
+                val first = Session(UUID.randomUUID(), user.id, "c".repeat(64), null, null, now.plusSeconds(60), now, deviceId, now)
+                val replacement = first.copy(refreshTokenHash = "d".repeat(64), lastSeenAt = now.plusSeconds(30))
+
+                users.create(user)
+                sessions.create(first)
+                sessions.create(replacement)
+
+                assertEquals(replacement, sessions.findByDevice(user.id, deviceId))
+                assertEquals(listOf(replacement), sessions.listActive(user.id, now))
             }
         }
 

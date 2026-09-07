@@ -40,7 +40,7 @@ class AuthServiceTest {
             FakeEmailVerificationOperations(),
             Clock.fixed(now, ZoneOffset.UTC),
         )
-    private val context = SessionContext("test-agent", "127.0.0.1")
+    private val context = SessionContext("test-agent", "127.0.0.1", UUID.randomUUID())
 
     @Test
     fun `register creates a pending account and sends verification`() =
@@ -90,7 +90,41 @@ class AuthServiceTest {
             val refreshed = service.refresh(authenticated.refreshToken, context)
 
             assertNotEquals(authenticated.refreshToken, refreshed.refreshToken)
+            assertEquals(1, sessions.values.size)
             assertFailsWith<InvalidRefreshTokenException> { service.refresh(authenticated.refreshToken, context) }
+        }
+
+    @Test
+    fun `login replaces the existing session for the same device`() =
+        runTest {
+            createActiveUser()
+
+            service.login(LoginRequest("user@example.com", "password-123"), context)
+            service.login(LoginRequest("user@example.com", "password-123"), context)
+
+            assertEquals(1, sessions.values.size)
+            assertEquals(context.deviceId, sessions.values.single().deviceId)
+        }
+
+    @Test
+    fun `login creates separate sessions for different devices`() =
+        runTest {
+            createActiveUser()
+
+            service.login(LoginRequest("user@example.com", "password-123"), context)
+            service.login(LoginRequest("user@example.com", "password-123"), context.copy(deviceId = UUID.randomUUID()))
+
+            assertEquals(2, sessions.values.size)
+        }
+
+    @Test
+    fun `login requires a device identity`() =
+        runTest {
+            createActiveUser()
+
+            assertFailsWith<AuthValidationException> {
+                service.login(LoginRequest("user@example.com", "password-123"), context.copy(deviceId = null))
+            }
         }
 
     @Test
@@ -203,16 +237,22 @@ private class MemorySessions : SessionRepository {
     private val revoked = mutableSetOf<String>()
 
     override suspend fun create(session: Session) {
+        values.removeAll { it.userId == session.userId && it.deviceId == session.deviceId }
         values += session
+        revoked.remove(session.refreshTokenHash)
     }
 
     override suspend fun findActive(refreshTokenHash: String, now: Instant) =
         values.firstOrNull { it.refreshTokenHash == refreshTokenHash && it.refreshTokenHash !in revoked && it.expiresAt > now }
 
+    override suspend fun findByDevice(userId: UUID, deviceId: UUID) =
+        values.firstOrNull { it.userId == userId && it.deviceId == deviceId }
+
     override suspend fun rotate(currentHash: String, replacement: Session, now: Instant): Boolean {
         if (findActive(currentHash, now) == null) return false
+        val index = values.indexOfFirst { it.refreshTokenHash == currentHash }
+        values[index] = replacement
         revoked += currentHash
-        values += replacement
         return true
     }
 

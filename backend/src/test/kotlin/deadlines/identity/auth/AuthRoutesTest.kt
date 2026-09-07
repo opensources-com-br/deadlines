@@ -6,6 +6,7 @@ import deadlines.identity.users.UserProfileResponse
 import deadlines.identity.users.UserResponse
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -34,6 +35,7 @@ class AuthRoutesTest {
             val login =
                 client.post("/api/v1/auth/login") {
                     contentType(ContentType.Application.Json)
+                    header("X-Device-Id", UUID.randomUUID().toString())
                     setBody("""{"email":"user@example.com","password":"password-123"}""")
                 }
 
@@ -66,6 +68,7 @@ class AuthRoutesTest {
                 client.patch("/api/v1/auth/password") {
                     bearerAuth(tokenService.issue(auth.userId).accessToken)
                     contentType(ContentType.Application.Json)
+                    header("X-Device-Id", UUID.randomUUID().toString())
                     setBody(
                         """{"currentPassword":"password-123","newPassword":"new-password-123","refreshToken":"refresh"}""",
                     )

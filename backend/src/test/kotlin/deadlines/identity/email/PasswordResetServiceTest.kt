@@ -53,6 +53,7 @@ private class ResetSessions : SessionRepository {
     var revokedUserId: UUID? = null
     override suspend fun create(session: Session) = Unit
     override suspend fun findActive(refreshTokenHash: String, now: Instant) = null
+    override suspend fun findByDevice(userId: UUID, deviceId: UUID) = null
     override suspend fun rotate(currentHash: String, replacement: Session, now: Instant) = false
     override suspend fun revoke(refreshTokenHash: String, now: Instant) = false
     override suspend fun revokeAll(userId: UUID, now: Instant): Int { revokedUserId = userId; return 1 }

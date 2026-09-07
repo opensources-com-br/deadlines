@@ -115,6 +115,9 @@ private class MemorySessionRepository : SessionRepository {
     override suspend fun findActive(refreshTokenHash: String, now: Instant): Session? =
         sessions.firstOrNull { it.refreshTokenHash == refreshTokenHash && it.id !in revoked && it.expiresAt > now }
 
+    override suspend fun findByDevice(userId: UUID, deviceId: UUID): Session? =
+        sessions.firstOrNull { it.userId == userId && it.deviceId == deviceId }
+
     override suspend fun rotate(currentHash: String, replacement: Session, now: Instant): Boolean {
         val current = findActive(currentHash, now) ?: return false
         revoked += current.id
