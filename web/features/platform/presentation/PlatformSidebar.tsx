@@ -29,7 +29,7 @@ import {
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 
 type PlatformSidebarProps = {
-  activeItem: PlatformNavigationItem;
+  activeItem?: PlatformNavigationItem;
   user: UserProfile;
   onSignOut: () => void;
   onSettingsSelect: (section: SettingsSection) => void;
