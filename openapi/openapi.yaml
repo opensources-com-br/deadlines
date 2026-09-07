@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.16.0
+  version: 0.17.0
   description: API local do Deadlines. O cadastro exige confirmação de e-mail antes da ativação e do login; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080
@@ -455,6 +455,69 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "422":
           $ref: "#/components/responses/ValidationError"
+    delete:
+      tags: [Organizations]
+      summary: Exclui logicamente a organização atual
+      operationId: deleteCurrentOrganization
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Organização excluída e acessos removidos
+        "403":
+          description: Usuário não é o proprietário
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/v1/organizations/retained:
+    get:
+      tags: [Organizations]
+      summary: Busca a organização ativa ou suspensa vinculada ao usuário
+      operationId: getRetainedOrganization
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Organização retida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/organizations/current/suspend:
+    post:
+      tags: [Organizations]
+      summary: Suspende a organização atual
+      operationId: suspendCurrentOrganization
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Organização suspensa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "403":
+          description: Usuário não é o proprietário
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/v1/organizations/current/reactivate:
+    post:
+      tags: [Organizations]
+      summary: Reativa uma organização suspensa do proprietário autenticado
+      operationId: reactivateCurrentOrganization
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Organização reativada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /api/v1/permissions:
     get:
       tags: [Permissions]
@@ -1643,7 +1706,7 @@ components:
           pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
     Organization:
       type: object
-      required: [id, name, slug, role, createdAt, updatedAt]
+      required: [id, name, slug, role, status, createdAt, updatedAt]
       properties:
         id:
           type: string
@@ -1655,6 +1718,9 @@ components:
         role:
           type: string
           enum: [owner, member]
+        status:
+          type: string
+          enum: [active, suspended]
         createdAt:
           type: string
           format: date-time
