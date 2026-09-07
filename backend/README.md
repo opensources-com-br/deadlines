@@ -168,6 +168,10 @@ Session routes require authentication. Password resets revoke all active session
 POST  /api/v1/organizations
 GET   /api/v1/organizations/current
 PATCH /api/v1/organizations/current
+DELETE /api/v1/organizations/current
+GET   /api/v1/organizations/retained
+POST  /api/v1/organizations/current/suspend
+POST  /api/v1/organizations/current/reactivate
 GET   /api/v1/members
 GET   /api/v1/members/{memberId}
 PATCH /api/v1/members/{memberId}
@@ -186,6 +190,8 @@ DELETE /api/v1/invitations/{invitationId}
 ```
 
 Creating an organization also creates the owner's membership and Free subscription in the same transaction. Each user can have only one active or suspended organization membership. Suspended users remain attached to that organization, while removed users may join another one. Ownership transfer changes both roles atomically, and the database requires exactly one active Owner after every transaction. Access to organization operations is determined by the permissions assigned to the membership role.
+
+Only the Owner can suspend, reactivate, or delete an organization. Suspension blocks tenant authorization without ending sessions. Soft deletion removes organization access, revokes pending invitations, releases members for onboarding elsewhere, and retains immutable audit history.
 
 Invitations expire after seven days by default. Invitation tokens are stored as hashes, and the authenticated account must use the invited email address.
 
