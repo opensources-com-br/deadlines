@@ -74,6 +74,8 @@ Translation messages live in `messages/pt-BR.json` and `messages/en.json`. Run `
 
 Authenticated platform routes validate the access token on the server. Logging out revokes the refresh session, removes the authentication cookies, and prevents protected pages from being restored from browser history.
 
+The authenticated settings shell loads the user's effective organization permissions on the server. UI sections and actions use permission guards for visibility, while the backend independently authorizes every protected operation.
+
 ## Project structure
 
 ```text
