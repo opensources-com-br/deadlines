@@ -3,6 +3,7 @@ export type Organization = {
   name: string;
   slug: string;
   role: "owner" | "member";
+  status: "active" | "suspended";
   createdAt: string;
   updatedAt: string;
 };
