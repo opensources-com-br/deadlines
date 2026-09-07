@@ -22,6 +22,18 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function formatLastActive(value: string, isCurrent: boolean) {
+  if (isCurrent) return "Active now";
+
+  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
+  if (elapsedSeconds < 60) return "Active less than a minute ago";
+  const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+  if (elapsedMinutes < 60) return `Active ${elapsedMinutes} minute${elapsedMinutes === 1 ? "" : "s"} ago`;
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) return `Active ${elapsedHours} hour${elapsedHours === 1 ? "" : "s"} ago`;
+  return `Last active ${formatDate(value)}`;
+}
+
 function sessionName(userAgent: string | null) {
   if (!userAgent) return "Unknown browser";
   if (userAgent.includes("Firefox")) return "Firefox";
@@ -95,7 +107,10 @@ export function SessionsCard({ initialSessions }: SessionsCardProps) {
                         ) : null}
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {session.ipAddress ?? "Unknown IP"} · Signed in {formatDate(session.createdAt)}
+                        {session.ipAddress ?? "Unknown IP"} · {formatLastActive(session.lastSeenAt, session.isCurrent)}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Signed in {formatDate(session.createdAt)} · Expires {formatDate(session.expiresAt)}
                       </p>
                     </div>
                   </div>
