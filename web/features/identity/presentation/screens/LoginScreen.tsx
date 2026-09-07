@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,6 +18,7 @@ type LoginScreenProps = {
 };
 
 export function LoginScreen({ nextPath }: LoginScreenProps) {
+  const t = useTranslations("Login");
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [keepSignedIn, setKeepSignedIn] = useState(false);
@@ -32,7 +34,7 @@ export function LoginScreen({ nextPath }: LoginScreenProps) {
         password: String(formData.get("password")),
         keepSignedIn,
       });
-      toast.success("Login successful.");
+      toast.success(t("success"));
       router.replace(nextPath ?? "/app");
       router.refresh();
     } catch (error) {
@@ -43,13 +45,13 @@ export function LoginScreen({ nextPath }: LoginScreenProps) {
   }
 
   return (
-    <AuthShell title="Login to your account" description="Enter your email below to login to your account.">
+    <AuthShell title={t("title")} description={t("description")}>
       <form onSubmit={handleSubmit}>
         <FieldGroup>
           <AuthTextField
             id="email"
             name="email"
-            label="Email"
+            label={t("email")}
             type="email"
             autoComplete="email"
             placeholder="m@example.com"
@@ -58,13 +60,13 @@ export function LoginScreen({ nextPath }: LoginScreenProps) {
           <AuthTextField
             id="password"
             name="password"
-            label="Password"
+            label={t("password")}
             type="password"
             autoComplete="current-password"
             required
             action={
               <Link href="/forgot-password" className="text-sm underline-offset-4 hover:underline">
-                Forgot your password?
+                {t("forgot")}
               </Link>
             }
           />
@@ -75,21 +77,20 @@ export function LoginScreen({ nextPath }: LoginScreenProps) {
               onCheckedChange={(checked) => setKeepSignedIn(checked === true)}
             />
             <span>
-              <span className="block font-medium">Keep me signed in</span>
-              <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">Stay signed in on this device for up to 30 days.</span>
+              <span className="block font-medium">{t("keep")}</span><span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{t("keepHelp")}</span>
             </span>
           </label>
           <Field>
             <Button className="w-full" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Signing in..." : "Login"}
+              {isSubmitting ? t("submitting") : t("submit")}
             </Button>
             <FieldDescription className="text-center">
-              Don&apos;t have an account?{" "}
+              {t("noAccount")}{" "}
               <Link
                 href={nextPath ? `/register?next=${encodeURIComponent(nextPath)}` : "/register"}
                 className="underline-offset-4 hover:underline"
               >
-                Sign up
+                {t("signup")}
               </Link>
             </FieldDescription>
           </Field>

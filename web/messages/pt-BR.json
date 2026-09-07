@@ -125,5 +125,8 @@
     "backHome": "Voltar ao início",
     "home": "Início do Deadlines",
     "getStarted": "Começar"
+  },
+  "Login": {
+    "title": "Entre na sua conta", "description": "Informe seu e-mail abaixo para acessar sua conta.", "email": "E-mail", "password": "Senha", "forgot": "Esqueceu sua senha?", "keep": "Continuar conectado", "keepHelp": "Permaneça conectado neste dispositivo por até 30 dias.", "submitting": "Entrando...", "submit": "Entrar", "noAccount": "Ainda não tem uma conta?", "signup": "Criar conta", "success": "Login realizado com sucesso."
   }
 }

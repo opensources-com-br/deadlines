@@ -125,5 +125,8 @@
     "backHome": "Back to home",
     "home": "Deadlines home",
     "getStarted": "Get started"
+  },
+  "Login": {
+    "title": "Login to your account", "description": "Enter your email below to login to your account.", "email": "Email", "password": "Password", "forgot": "Forgot your password?", "keep": "Keep me signed in", "keepHelp": "Stay signed in on this device for up to 30 days.", "submitting": "Signing in...", "submit": "Login", "noAccount": "Don’t have an account?", "signup": "Sign up", "success": "Login successful."
   }
 }
