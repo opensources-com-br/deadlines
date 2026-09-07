@@ -50,12 +50,10 @@ const sectionDetails: Record<SettingsSection, { eyebrow: string; title: string; 
 };
 
 const settingsNavigation: Array<{ key: SettingsSection; label: string }> = [
-  { key: "organization", label: "Organization" },
-  { key: "plans", label: "Plans" },
   { key: "team", label: "Team" },
+  { key: "organization", label: "Organization" },
   { key: "access-control", label: "Access control" },
   { key: "security", label: "Security" },
-  { key: "account", label: "Your account" },
 ];
 
 export function PlatformHome({ user, organization, sessions, permissions, roles, members, invitations, section, settingsSection }: PlatformHomeProps) {
