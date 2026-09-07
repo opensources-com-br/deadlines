@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   const preferences = await fetch(backendApiUrl("/api/v1/users/me/preferences"), {
     headers: { Authorization: `Bearer ${auth.accessToken}` },
     cache: "no-store",
-  }).then((result) => result.ok ? result.json() as Promise<{ locale?: unknown }> : undefined).catch(() => undefined);
+  }).then((result) => result.ok ? result.json() as Promise<{ locale?: unknown; timezone?: string; theme?: string }> : undefined).catch(() => undefined);
   const response = NextResponse.json({ user: auth.user });
   const secure = process.env.NODE_ENV === "production";
   const keepSignedIn = payload.keepSignedIn === true;
@@ -73,6 +73,9 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 365,
     });
   }
+  const preferenceCookieOptions = { httpOnly: true, sameSite: "lax" as const, secure, path: "/", maxAge: 60 * 60 * 24 * 365 };
+  if (preferences?.timezone) response.cookies.set("deadlines_timezone", preferences.timezone, preferenceCookieOptions);
+  if (preferences?.theme) response.cookies.set("deadlines_theme", preferences.theme, preferenceCookieOptions);
   response.cookies.set(accessCookieName, auth.accessToken, {
     httpOnly: true,
     sameSite: "lax",
