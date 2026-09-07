@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { CircleUserRound, CreditCard, EllipsisVertical, LogOut, Settings, ShieldCheck } from "lucide-react";
+import { CircleHelp, CircleUserRound, CreditCard, EllipsisVertical, LogOut, Search, Settings, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -54,8 +55,9 @@ export function PlatformSidebar({ activeItem, user, onSignOut, onSettingsSelect,
           <span className="group-data-[collapsible=icon]:hidden">Deadlines</span>
         </div>
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
+      <SidebarContent />
+      <SidebarFooter className="gap-3 p-3">
+        <SidebarGroup className="p-0">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton isActive={activeItem === "settings"} tooltip="Settings" render={<Link href="/app/settings" />}>
@@ -63,10 +65,28 @@ export function PlatformSidebar({ activeItem, user, onSignOut, onSettingsSelect,
                 <span>Settings</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip="Get Help"
+                type="button"
+                onClick={() => toast.info("The help center is coming soon.")}
+              >
+                <CircleHelp />
+                <span>Get Help</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip="Search"
+                type="button"
+                onClick={() => toast.info("Search is coming soon.")}
+              >
+                <Search />
+                <span>Search</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter className="p-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
