@@ -1,11 +1,7 @@
 package deadlines.subscriptions
 
-import deadlines.organizations.MembershipRole
-import deadlines.organizations.MembershipStatus
-import deadlines.organizations.Organization
-import deadlines.organizations.OrganizationContext
-import deadlines.organizations.OrganizationMembership
-import deadlines.organizations.OrganizationRepository
+import deadlines.organizations.authorization.PlatformPermission
+import deadlines.organizations.authorization.testAuthorization
 import deadlines.plans.Plan
 import deadlines.plans.PlanLimit
 import java.time.Instant
@@ -23,7 +19,10 @@ class SubscriptionServiceTest {
         val userId = UUID.randomUUID()
         val organizationId = UUID.randomUUID()
         val subscription = subscription(organizationId)
-        val service = SubscriptionService(OrganizationForSubscription(userId, organizationId, now), MemorySubscriptions(subscription))
+        val service = SubscriptionService(
+            testAuthorization(userId, organizationId, PlatformPermission.BILLING_READ),
+            MemorySubscriptions(subscription),
+        )
 
         val response = service.current(userId)
 
@@ -34,9 +33,13 @@ class SubscriptionServiceTest {
 
     @Test
     fun `rejects a user without an active organization subscription`() = runTest {
-        val service = SubscriptionService(OrganizationForSubscription(null, null, now), MemorySubscriptions(null))
+        val userId = UUID.randomUUID()
+        val service = SubscriptionService(
+            testAuthorization(userId, UUID.randomUUID(), PlatformPermission.BILLING_READ),
+            MemorySubscriptions(null),
+        )
 
-        assertFailsWith<SubscriptionNotFoundException> { service.current(UUID.randomUUID()) }
+        assertFailsWith<SubscriptionNotFoundException> { service.current(userId) }
     }
 
     private fun subscription(organizationId: UUID) =
@@ -48,24 +51,6 @@ class SubscriptionServiceTest {
             startedAt = now,
             endedAt = null,
         )
-}
-
-private class OrganizationForSubscription(
-    private val userId: UUID?,
-    private val organizationId: UUID?,
-    private val now: Instant,
-) : OrganizationRepository {
-    override suspend fun createWithOwner(context: OrganizationContext): OrganizationContext = context
-
-    override suspend fun findCurrentByUser(userId: UUID): OrganizationContext? {
-        if (userId != this.userId || organizationId == null) return null
-        return OrganizationContext(
-            organization = Organization(organizationId, "Acme", "acme", userId, now, now),
-            membership = OrganizationMembership(UUID.randomUUID(), organizationId, userId, MembershipRole.OWNER, MembershipStatus.ACTIVE, now, null),
-        )
-    }
-
-    override suspend fun update(organization: Organization): Organization = organization
 }
 
 private class MemorySubscriptions(private val subscription: OrganizationSubscription?) : SubscriptionRepository {
