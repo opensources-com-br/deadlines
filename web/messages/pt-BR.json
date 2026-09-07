@@ -103,5 +103,8 @@
   "Account": {
     "profile": "Perfil", "profileDescription": "Suas informações pessoais usadas no Deadlines.", "editProfile": "Editar perfil", "firstName": "Nome", "lastName": "Sobrenome", "email": "E-mail", "emailHelp": "Seu endereço de e-mail não pode ser alterado aqui.", "cancel": "Cancelar", "saving": "Salvando...", "save": "Salvar alterações", "name": "Nome", "profileUpdated": "Seu perfil foi atualizado.", "profileError": "Não foi possível atualizar seu perfil.",
     "password": "Senha", "passwordDescription": "Escolha uma senha forte para proteger sua conta.", "changePassword": "Alterar senha", "currentPassword": "Senha atual", "newPassword": "Nova senha", "passwordHelp": "Use entre 12 e 72 caracteres.", "confirmPassword": "Confirmar nova senha", "changing": "Alterando...", "updatePassword": "Atualizar senha", "passwordMismatch": "As senhas não coincidem.", "passwordUpdated": "Sua senha foi alterada.", "passwordError": "Não foi possível alterar sua senha."
+  },
+  "Notifications": {
+    "title": "Notificações por e-mail", "description": "O envio de notificações ainda não está ativo. Estas preferências poderão ser configuradas quando as notificações forem lançadas.", "security": "Alertas de segurança", "securityDescription": "Atividades importantes de login e senha.", "organization": "Atualizações da organização", "organizationDescription": "Convites e alterações no seu acesso.", "deadlines": "Lembretes de deadlines", "deadlinesDescription": "Trabalhos próximos e atrasados. Disponível quando deadlines for lançado.", "comingSoon": "Em breve"
   }
 }

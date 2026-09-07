@@ -103,5 +103,8 @@
   "Account": {
     "profile": "Profile", "profileDescription": "Your personal information used across Deadlines.", "editProfile": "Edit profile", "firstName": "First name", "lastName": "Last name", "email": "Email", "emailHelp": "Your email address cannot be changed here.", "cancel": "Cancel", "saving": "Saving...", "save": "Save changes", "name": "Name", "profileUpdated": "Your profile has been updated.", "profileError": "Unable to update your profile.",
     "password": "Password", "passwordDescription": "Choose a strong password to protect your account.", "changePassword": "Change password", "currentPassword": "Current password", "newPassword": "New password", "passwordHelp": "Use between 12 and 72 characters.", "confirmPassword": "Confirm new password", "changing": "Changing...", "updatePassword": "Update password", "passwordMismatch": "Passwords do not match.", "passwordUpdated": "Your password has been changed.", "passwordError": "Unable to change your password."
+  },
+  "Notifications": {
+    "title": "Email notifications", "description": "Notification delivery is not active yet. These preferences will become configurable when notifications launch.", "security": "Security alerts", "securityDescription": "Important sign-in and password activity.", "organization": "Organization updates", "organizationDescription": "Invitations and changes to your access.", "deadlines": "Deadline reminders", "deadlinesDescription": "Upcoming and overdue work. Available when deadlines launch.", "comingSoon": "Coming soon"
   }
 }
