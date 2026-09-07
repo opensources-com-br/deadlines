@@ -521,6 +521,53 @@ class DatabaseMigrationTest {
     }
 
     @Test
+    fun `ownership transfer preserves exactly one active owner`() = runTest {
+        DatabaseFactory.open(databaseConfig()).use { database ->
+            val query = DatabaseQuery(database.database)
+            val users = ExposedUserRepository(query)
+            val organizations = ExposedOrganizationRepository(query)
+            val roles = ExposedRoleRepository(query)
+            val invitations = ExposedInvitationRepository(query)
+            val members = ExposedMemberRepository(query)
+            val now = Instant.now()
+            val owner = testUser("transfer-owner", now)
+            val successor = testUser("transfer-successor", now)
+            val context = organizationContext(owner.id, "transfer-${UUID.randomUUID()}", now)
+            users.create(owner)
+            users.create(successor)
+            organizations.createWithOwner(context)
+            val organizationRoles = roles.list(context.organization.id)
+            val ownerRole = organizationRoles.single { it.key == "owner" }
+            val memberRole = organizationRoles.single { it.key == "member" }
+            val invitation = OrganizationInvitation(
+                UUID.randomUUID(), context.organization.id, context.organization.name, successor.email, memberRole,
+                owner.id, "f".repeat(64), InvitationStatus.PENDING, now.plusSeconds(3600), now, now,
+            )
+            invitations.create(invitation)
+            assertTrue(invitations.accept(invitation, successor.id, UUID.randomUUID(), now))
+            val successorMembership = members.findByUserId(context.organization.id, successor.id)!!
+
+            assertTrue(
+                members.transferOwnership(
+                    context.organization.id,
+                    context.membership.id,
+                    successorMembership.membershipId,
+                    ownerRole.id,
+                    memberRole.id,
+                ),
+            )
+            val currentMembers = members.list(context.organization.id)
+            assertEquals(1, currentMembers.count { it.role.key == "owner" && it.status == MembershipStatus.ACTIVE })
+            assertEquals(successor.id, currentMembers.single { it.role.key == "owner" }.userId)
+
+            assertFailsWith<Exception> {
+                members.remove(context.organization.id, successorMembership.membershipId, now.plusSeconds(1))
+            }
+            assertEquals("owner", members.findByUserId(context.organization.id, successor.id)?.role?.key)
+        }
+    }
+
+    @Test
     fun `audits persist safe events atomically and retain deleted resource history`() = runTest {
         DatabaseFactory.open(databaseConfig()).use { database ->
             val query = DatabaseQuery(database.database)
