@@ -116,7 +116,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
           initialPermissions={availablePermissions}
           onPermissionsChange={setAvailablePermissions}
         />}
-        {activeSettingsSection === "access-control" && <RolesCard initialRoles={roles} permissions={availablePermissions} canManage={organization.role === "owner"} />}
+        {activeSettingsSection === "access-control" && <RolesCard initialRoles={roles} permissions={availablePermissions} />}
         {activeSettingsSection === "account" && <AccountSettings user={user} />}
         {activeSettingsSection === "notifications" && <NotificationsCard />}
         {activeSettingsSection === "security" && organization.role === "owner" && <AuditsCard key={organization.id} members={members} />}

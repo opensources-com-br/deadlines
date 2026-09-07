@@ -11,16 +11,22 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import type { Permission, Role } from "@/features/access/domain/access";
+import { platformPermission } from "@/features/access/domain/authorization";
 import { accessApi } from "@/features/access/infrastructure/access-api";
+import { usePermission } from "@/features/access/presentation/AuthorizationProvider";
 
 type RolesCardProps = {
   initialRoles: Role[];
   permissions: Permission[];
-  canManage: boolean;
 };
 
-export function RolesCard({ initialRoles, permissions, canManage }: RolesCardProps) {
+export function RolesCard({ initialRoles, permissions }: RolesCardProps) {
   const t = useTranslations("AccessControl");
+  const canCreate = usePermission(platformPermission.rolesCreate);
+  const canUpdate = usePermission(platformPermission.rolesUpdate);
+  const canDelete = usePermission(platformPermission.rolesDelete);
+  const canReadPermissions = usePermission(platformPermission.permissionsRead);
+  const canManagePermissions = canUpdate && canReadPermissions;
   const [roles, setRoles] = useState(initialRoles);
   const [editing, setEditing] = useState<Role | "new">();
   const [key, setKey] = useState("");
@@ -125,7 +131,7 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
         <div>
           <CardTitle>{t("roles")}</CardTitle><CardDescription className="mt-1">{t("rolesDescription")}</CardDescription>
         </div>
-        {canManage && !editing ? <Button variant="outline" type="button" onClick={() => beginEdit()}>{t("newRole")}</Button> : null}
+        {canCreate && !editing ? <Button variant="outline" type="button" onClick={() => beginEdit()}>{t("newRole")}</Button> : null}
       </CardHeader>
       <CardContent>
         {managingRole ? (
@@ -142,12 +148,12 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
                 return <section key={group} className="rounded-lg border">
                   <div className="flex items-center justify-between gap-4 border-b bg-muted/30 px-4 py-3">
                     <div><h4 className="text-sm font-medium capitalize">{group}</h4><p className="text-xs text-muted-foreground">{t("permissionCount", { count: groupPermissions.length })}</p></div>
-                    <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground"><Checkbox checked={allSelected} onCheckedChange={(checked) => togglePermissionGroup(groupPermissions, checked === true)} disabled={!canManage || managingRole.key === "owner"} />{t("selectAll")}</label>
+                    <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground"><Checkbox checked={allSelected} onCheckedChange={(checked) => togglePermissionGroup(groupPermissions, checked === true)} disabled={!canManagePermissions || managingRole.key === "owner"} />{t("selectAll")}</label>
                   </div>
                   <div className="divide-y">
                     {groupPermissions.map((permission) => (
                       <label key={permission.id} className="flex cursor-pointer items-start gap-3 px-4 py-3">
-                        <Checkbox className="mt-0.5" checked={selectedPermissionIds.includes(permission.id)} onCheckedChange={(checked) => togglePermission(permission.id, checked === true)} disabled={!canManage || managingRole.key === "owner"} />
+                        <Checkbox className="mt-0.5" checked={selectedPermissionIds.includes(permission.id)} onCheckedChange={(checked) => togglePermission(permission.id, checked === true)} disabled={!canManagePermissions || managingRole.key === "owner"} />
                         <span className="min-w-0"><span className="block text-sm font-medium">{permission.name}</span><span className="block font-mono text-xs text-muted-foreground">{permission.key}</span>{permission.description ? <span className="mt-1 block text-xs text-muted-foreground">{permission.description}</span> : null}</span>
                       </label>
                     ))}
@@ -157,7 +163,7 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" type="button" onClick={() => setManagingRole(undefined)} disabled={isSaving}>{t("back")}</Button>
-              {canManage && managingRole.key !== "owner" ? (
+              {canManagePermissions && managingRole.key !== "owner" ? (
                 <Button type="button" onClick={savePermissions} disabled={isSaving}>{isSaving ? t("saving") : t("savePermissions")}</Button>
               ) : null}
             </div>
@@ -197,12 +203,13 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
                     {role.description ? <p className="mt-1 text-xs text-muted-foreground">{role.description}</p> : null}
                   </div>
                   <div className="flex flex-wrap justify-end gap-1">
-                    <Button variant="ghost" size="sm" type="button" onClick={() => beginManagePermissions(role)} disabled={loadingRoleId === role.id}>
+                    {canReadPermissions ? <Button variant="ghost" size="sm" type="button" onClick={() => beginManagePermissions(role)} disabled={loadingRoleId === role.id}>
                       {loadingRoleId === role.id ? t("loading") : t("permissions")}
-                    </Button>
-                    {canManage && !role.isSystem ? (
+                    </Button> : null}
+                    {(canUpdate || canDelete) && !role.isSystem ? (
                       <>
-                        <Button variant="ghost" size="sm" type="button" onClick={() => beginEdit(role)}>{t("edit")}</Button><Button variant="ghost" size="sm" type="button" onClick={() => handleDelete(role)}>{t("delete")}</Button>
+                        {canUpdate ? <Button variant="ghost" size="sm" type="button" onClick={() => beginEdit(role)}>{t("edit")}</Button> : null}
+                        {canDelete ? <Button variant="ghost" size="sm" type="button" onClick={() => handleDelete(role)}>{t("delete")}</Button> : null}
                       </>
                     ) : null}
                   </div>
