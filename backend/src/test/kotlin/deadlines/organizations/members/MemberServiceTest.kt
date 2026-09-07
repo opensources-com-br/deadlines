@@ -1,11 +1,10 @@
 package deadlines.organizations.members
 
-import deadlines.organizations.MembershipRole
 import deadlines.organizations.OrganizationAccessDeniedException
 import deadlines.organizations.access.MemoryRoleRepository
 import deadlines.organizations.access.Role
-import deadlines.organizations.access.TestOrganizationRepository
-import deadlines.organizations.access.accessContext
+import deadlines.organizations.authorization.PlatformPermission
+import deadlines.organizations.authorization.testAuthorization
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -34,7 +33,7 @@ class MemberServiceTest {
     }
 
     @Test
-    fun `owner assigns an organization role to a member`() = runTest {
+    fun `authorized user assigns an organization role to a member`() = runTest {
         val repository = MemoryMemberRepository(listOf(owner, teammate), listOf(ownerRole, memberRole, managerRole))
         val service = service(repository)
 
@@ -44,7 +43,7 @@ class MemberServiceTest {
     }
 
     @Test
-    fun `owner membership cannot be reassigned or removed`() = runTest {
+    fun `owner membership remains immutable`() = runTest {
         val service = service()
 
         assertFailsWith<OwnerMembershipImmutableException> {
@@ -56,9 +55,13 @@ class MemberServiceTest {
     }
 
     @Test
-    fun `regular member cannot manage organization members`() = runTest {
-        val organizations = TestOrganizationRepository(accessContext(teammate.userId, organizationId, MembershipRole.MEMBER))
-        val service = MemberService(organizations, memberRepository(), roles(), fixedClock())
+    fun `member removal requires permission`() = runTest {
+        val service = MemberService(
+            testAuthorization(teammate.userId, organizationId, PlatformPermission.MEMBERS_READ),
+            memberRepository(),
+            roles(),
+            fixedClock(),
+        )
 
         assertFailsWith<OrganizationAccessDeniedException> {
             service.remove(teammate.userId, owner.membershipId)
@@ -67,7 +70,13 @@ class MemberServiceTest {
 
     private fun service(repository: MemoryMemberRepository = memberRepository()) =
         MemberService(
-            TestOrganizationRepository(accessContext(ownerId, organizationId)),
+            testAuthorization(
+                ownerId,
+                organizationId,
+                PlatformPermission.MEMBERS_READ,
+                PlatformPermission.MEMBERS_UPDATE,
+                PlatformPermission.MEMBERS_REMOVE,
+            ),
             repository,
             roles(),
             fixedClock(),
