@@ -85,5 +85,13 @@
     "deadlines": "deadlines",
     "active": "active",
     "canceled": "canceled"
+  },
+  "Team": {
+    "users": "Users", "usersDescription": "Manage the people who currently have access to this organization.", "noUsers": "No users have joined this organization yet.",
+    "user": "User", "role": "Role", "status": "Status", "joined": "Joined", "actions": "Actions", "active": "Active", "remove": "Remove",
+    "roleUpdated": "Member role updated.", "updateError": "Unable to update this member.", "removeConfirm": "Remove {name} from the organization?", "removed": "Member removed.", "removeError": "Unable to remove this member.",
+    "invitations": "Invitations", "invitationsDescription": "Invite people and choose their initial role.", "invite": "Invite member", "email": "Email", "selectRole": "Select a role", "cancel": "Cancel", "sending": "Sending...", "send": "Send invitation", "none": "No invitations yet.", "expires": "Expires",
+    "sent": "Invitation sent.", "sendError": "Unable to send this invitation.", "resent": "Invitation sent again.", "resendError": "Unable to resend this invitation.", "revokeConfirm": "Revoke the invitation for {email}?", "revokedMessage": "Invitation revoked.", "revokeError": "Unable to revoke this invitation.", "resend": "Resend", "revoke": "Revoke",
+    "pending": "Pending", "expired": "Expired", "accepted": "Accepted", "revoked": "Revoked"
   }
 }

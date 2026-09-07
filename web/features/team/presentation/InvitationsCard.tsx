@@ -3,6 +3,7 @@
 import { type FormEvent, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +21,8 @@ type InvitationsCardProps = {
 };
 
 export function InvitationsCard({ initialInvitations, roles, canManage }: InvitationsCardProps) {
+  const t = useTranslations("Team");
+  const locale = useLocale();
   const [invitations, setInvitations] = useState(() => initialInvitations.filter((invitation) => invitation.status !== "revoked"));
   const [isCreating, setIsCreating] = useState(false);
   const [email, setEmail] = useState("");
@@ -35,9 +38,9 @@ export function InvitationsCard({ initialInvitations, roles, canManage }: Invita
       setInvitations((current) => [invitation, ...current]);
       setEmail("");
       setIsCreating(false);
-      toast.success("Invitation sent.");
+      toast.success(t("sent"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to send this invitation.");
+      toast.error(error instanceof Error ? error.message : t("sendError"));
     } finally {
       setBusyId(undefined);
     }
@@ -48,23 +51,23 @@ export function InvitationsCard({ initialInvitations, roles, canManage }: Invita
     try {
       const updated = await teamApi.resendInvitation(invitation.id);
       setInvitations((current) => current.map((item) => item.id === updated.id ? updated : item));
-      toast.success("Invitation sent again.");
+      toast.success(t("resent"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to resend this invitation.");
+      toast.error(error instanceof Error ? error.message : t("resendError"));
     } finally {
       setBusyId(undefined);
     }
   }
 
   async function revoke(invitation: OrganizationInvitation) {
-    if (!window.confirm(`Revoke the invitation for ${invitation.email}?`)) return;
+    if (!window.confirm(t("revokeConfirm", { email: invitation.email }))) return;
     setBusyId(invitation.id);
     try {
       await teamApi.revokeInvitation(invitation.id);
       setInvitations((current) => current.filter((item) => item.id !== invitation.id));
-      toast.success("Invitation revoked.");
+      toast.success(t("revokedMessage"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to revoke this invitation.");
+      toast.error(error instanceof Error ? error.message : t("revokeError"));
     } finally {
       setBusyId(undefined);
     }
@@ -74,24 +77,24 @@ export function InvitationsCard({ initialInvitations, roles, canManage }: Invita
     <Card>
       <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
         <div>
-          <CardTitle>Invitations</CardTitle>
-          <CardDescription className="mt-1">Invite people and choose their initial role.</CardDescription>
+          <CardTitle>{t("invitations")}</CardTitle>
+          <CardDescription className="mt-1">{t("invitationsDescription")}</CardDescription>
         </div>
-        {canManage && !isCreating ? <Button variant="outline" type="button" onClick={() => setIsCreating(true)}>Invite member</Button> : null}
+        {canManage && !isCreating ? <Button variant="outline" type="button" onClick={() => setIsCreating(true)}>{t("invite")}</Button> : null}
       </CardHeader>
       <CardContent>
         {isCreating ? (
           <form onSubmit={createInvitation}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="invitation-email">Email</FieldLabel>
+                <FieldLabel htmlFor="invitation-email">{t("email")}</FieldLabel>
                 <Input id="invitation-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
               </Field>
               <Field>
-                <FieldLabel>Role</FieldLabel>
+                <FieldLabel>{t("role")}</FieldLabel>
                 <DropdownMenu>
                   <DropdownMenuTrigger render={<Button variant="outline" className="w-full justify-between" />}>
-                    {assignableRoles.find((role) => role.id === roleId)?.name ?? "Select a role"}
+                    {assignableRoles.find((role) => role.id === roleId)?.name ?? t("selectRole")}
                     <ChevronDown />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="min-w-(--anchor-width)">
@@ -102,17 +105,17 @@ export function InvitationsCard({ initialInvitations, roles, canManage }: Invita
                 </DropdownMenu>
               </Field>
               <Field orientation="horizontal" className="justify-end">
-                <Button variant="outline" type="button" onClick={() => setIsCreating(false)} disabled={busyId === "new"}>Cancel</Button>
-                <Button type="submit" disabled={busyId === "new" || !roleId}>{busyId === "new" ? "Sending..." : "Send invitation"}</Button>
+                <Button variant="outline" type="button" onClick={() => setIsCreating(false)} disabled={busyId === "new"}>{t("cancel")}</Button>
+                <Button type="submit" disabled={busyId === "new" || !roleId}>{busyId === "new" ? t("sending") : t("send")}</Button>
               </Field>
             </FieldGroup>
           </form>
         ) : invitations.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No invitations yet.</p>
+          <p className="text-sm text-muted-foreground">{t("none")}</p>
         ) : (
           <div className="overflow-x-auto rounded-lg border">
           <table className="w-full min-w-[600px] text-left text-sm">
-            <thead className="border-b bg-muted/40 text-xs font-medium uppercase tracking-wide text-muted-foreground"><tr><th className="px-4 py-3">Email</th><th className="px-4 py-3">Role</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Expires</th><th className="px-4 py-3 text-right"><span className="sr-only">Actions</span></th></tr></thead>
+            <thead className="border-b bg-muted/40 text-xs font-medium uppercase tracking-wide text-muted-foreground"><tr><th className="px-4 py-3">{t("email")}</th><th className="px-4 py-3">{t("role")}</th><th className="px-4 py-3">{t("status")}</th><th className="px-4 py-3">{t("expires")}</th><th className="px-4 py-3 text-right"><span className="sr-only">{t("actions")}</span></th></tr></thead>
             <tbody className="divide-y">
             {invitations.map((invitation) => {
               const actionable = invitation.status === "pending" || invitation.status === "expired";
@@ -120,12 +123,12 @@ export function InvitationsCard({ initialInvitations, roles, canManage }: Invita
                 <tr key={invitation.id}>
                     <td className="px-4 py-3 font-medium">{invitation.email}</td>
                     <td className="px-4 py-3 text-muted-foreground">{invitation.role.name}</td>
-                    <td className="px-4 py-3"><span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium capitalize text-amber-700 dark:text-amber-400">{invitation.status}</span></td>
-                    <td className="px-4 py-3 whitespace-nowrap text-muted-foreground"><time dateTime={invitation.expiresAt}>{new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(invitation.expiresAt))}</time></td>
+                    <td className="px-4 py-3"><span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">{t(invitation.status as "pending" | "expired" | "accepted" | "revoked")}</span></td>
+                    <td className="px-4 py-3 whitespace-nowrap text-muted-foreground"><time dateTime={invitation.expiresAt}>{new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric" }).format(new Date(invitation.expiresAt))}</time></td>
                     <td className="px-4 py-3 text-right">{canManage && actionable ? (
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="sm" type="button" onClick={() => resend(invitation)} disabled={busyId === invitation.id}>Resend</Button>
-                        <Button variant="ghost" size="sm" type="button" onClick={() => revoke(invitation)} disabled={busyId === invitation.id}>Revoke</Button>
+                        <Button variant="ghost" size="sm" type="button" onClick={() => resend(invitation)} disabled={busyId === invitation.id}>{t("resend")}</Button>
+                        <Button variant="ghost" size="sm" type="button" onClick={() => revoke(invitation)} disabled={busyId === invitation.id}>{t("revoke")}</Button>
                       </div>) : null}</td>
                 </tr>
               );

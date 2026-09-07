@@ -85,5 +85,13 @@
     "deadlines": "deadlines",
     "active": "ativa",
     "canceled": "cancelada"
+  },
+  "Team": {
+    "users": "Usuários", "usersDescription": "Gerencie as pessoas que têm acesso a esta organização.", "noUsers": "Nenhum usuário entrou nesta organização ainda.",
+    "user": "Usuário", "role": "Função", "status": "Status", "joined": "Entrada", "actions": "Ações", "active": "Ativo", "remove": "Remover",
+    "roleUpdated": "Função do membro atualizada.", "updateError": "Não foi possível atualizar este membro.", "removeConfirm": "Remover {name} da organização?", "removed": "Membro removido.", "removeError": "Não foi possível remover este membro.",
+    "invitations": "Convites", "invitationsDescription": "Convide pessoas e escolha a função inicial.", "invite": "Convidar membro", "email": "E-mail", "selectRole": "Selecione uma função", "cancel": "Cancelar", "sending": "Enviando...", "send": "Enviar convite", "none": "Nenhum convite ainda.", "expires": "Expira em",
+    "sent": "Convite enviado.", "sendError": "Não foi possível enviar este convite.", "resent": "Convite enviado novamente.", "resendError": "Não foi possível reenviar este convite.", "revokeConfirm": "Revogar o convite de {email}?", "revokedMessage": "Convite revogado.", "revokeError": "Não foi possível revogar este convite.", "resend": "Reenviar", "revoke": "Revogar",
+    "pending": "Pendente", "expired": "Expirado", "accepted": "Aceito", "revoked": "Revogado"
   }
 }

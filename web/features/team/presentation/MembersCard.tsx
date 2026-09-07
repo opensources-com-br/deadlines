@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,10 +20,12 @@ type MembersCardProps = {
 };
 
 export function MembersCard({ initialMembers, roles, canManage }: MembersCardProps) {
+  const t = useTranslations("Team");
+  const locale = useLocale();
   const [members, setMembers] = useState(initialMembers);
   const [busyMemberId, setBusyMemberId] = useState<string>();
   const assignableRoles = roles.filter((role) => role.key !== "owner");
-  const formatter = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
+  const formatter = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric" });
 
   async function changeRole(member: OrganizationMember, roleId: string | null) {
     if (!roleId || roleId === member.role.id) return;
@@ -30,23 +33,23 @@ export function MembersCard({ initialMembers, roles, canManage }: MembersCardPro
     try {
       const updated = await teamApi.updateMemberRole(member.id, roleId);
       setMembers((current) => current.map((item) => item.id === updated.id ? updated : item));
-      toast.success("Member role updated.");
+      toast.success(t("roleUpdated"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to update this member.");
+      toast.error(error instanceof Error ? error.message : t("updateError"));
     } finally {
       setBusyMemberId(undefined);
     }
   }
 
   async function removeMember(member: OrganizationMember) {
-    if (!window.confirm(`Remove ${member.firstName} ${member.lastName} from the organization?`)) return;
+    if (!window.confirm(t("removeConfirm", { name: `${member.firstName} ${member.lastName}` }))) return;
     setBusyMemberId(member.id);
     try {
       await teamApi.removeMember(member.id);
       setMembers((current) => current.filter((item) => item.id !== member.id));
-      toast.success("Member removed.");
+      toast.success(t("removed"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to remove this member.");
+      toast.error(error instanceof Error ? error.message : t("removeError"));
     } finally {
       setBusyMemberId(undefined);
     }
@@ -55,14 +58,14 @@ export function MembersCard({ initialMembers, roles, canManage }: MembersCardPro
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Users</CardTitle>
-        <CardDescription className="mt-1">Manage the people who currently have access to this organization.</CardDescription>
+        <CardTitle>{t("users")}</CardTitle>
+        <CardDescription className="mt-1">{t("usersDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
-        {members.length === 0 ? <p className="text-sm text-muted-foreground">No users have joined this organization yet.</p> : <div className="overflow-x-auto rounded-lg border">
+        {members.length === 0 ? <p className="text-sm text-muted-foreground">{t("noUsers")}</p> : <div className="overflow-x-auto rounded-lg border">
           <table className="w-full min-w-[680px] text-left text-sm">
             <thead className="border-b bg-muted/40 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              <tr><th className="px-4 py-3">User</th><th className="px-4 py-3">Role</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Joined</th><th className="px-4 py-3 text-right"><span className="sr-only">Actions</span></th></tr>
+              <tr><th className="px-4 py-3">{t("user")}</th><th className="px-4 py-3">{t("role")}</th><th className="px-4 py-3">{t("status")}</th><th className="px-4 py-3">{t("joined")}</th><th className="px-4 py-3 text-right"><span className="sr-only">{t("actions")}</span></th></tr>
             </thead>
             <tbody className="divide-y">
           {members.map((member) => {
@@ -89,9 +92,9 @@ export function MembersCard({ initialMembers, roles, canManage }: MembersCardPro
                       <span className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground">{member.role.name}</span>
                     )}
                   </td>
-                  <td className="px-4 py-3"><span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">Active</span></td>
+                  <td className="px-4 py-3"><span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">{t("active")}</span></td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground"><time dateTime={member.joinedAt}>{formatter.format(new Date(member.joinedAt))}</time></td>
-                  <td className="px-4 py-3 text-right">{canManage && !isOwner ? <Button variant="ghost" size="sm" type="button" onClick={() => removeMember(member)} disabled={busyMemberId === member.id}>Remove</Button> : null}</td>
+                  <td className="px-4 py-3 text-right">{canManage && !isOwner ? <Button variant="ghost" size="sm" type="button" onClick={() => removeMember(member)} disabled={busyMemberId === member.id}>{t("remove")}</Button> : null}</td>
               </tr>
             );
           })}
