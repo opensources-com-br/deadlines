@@ -62,6 +62,7 @@ class UserService(
         }
 
         val current = get(id)
+        if (current.status == UserStatus.DELETED) throw AccountNotActiveException()
         val email = request.email?.normalizeEmail() ?: current.email
         val status = request.status?.parseStatus() ?: current.status
         val now = clock.instant()
@@ -99,6 +100,7 @@ class UserService(
 
     suspend fun disable(id: UUID) {
         val current = get(id)
+        if (current.status == UserStatus.DELETED) throw AccountNotActiveException()
         if (current.status != UserStatus.DISABLED) {
             val now = clock.instant()
             repository.update(current.copy(status = UserStatus.DISABLED, disabledAt = now, updatedAt = now))

@@ -103,6 +103,24 @@ class UserServiceTest {
         }
 
     @Test
+    fun `deleted user cannot be edited or disabled`() = runTest {
+        val created = service.create(validRequest)
+        val deleted = created.copy(
+            status = UserStatus.DELETED,
+            disabledAt = clock.instant(),
+            deletedAt = clock.instant(),
+        )
+        repository.update(deleted)
+
+        assertFailsWith<AccountNotActiveException> {
+            service.update(created.id, UpdateUserRequest(firstName = "Restored"))
+        }
+        assertFailsWith<AccountNotActiveException> {
+            service.disable(created.id)
+        }
+    }
+
+    @Test
     fun `reports a missing user`() =
         runTest {
             assertFailsWith<UserNotFoundException> {
