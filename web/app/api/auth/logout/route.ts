@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 
@@ -12,13 +12,15 @@ export async function POST() {
   const refreshToken = cookieStore.get(refreshCookieName)?.value;
 
   if (refreshToken) {
-    await fetch(backendApiUrl("/api/v1/auth/logout"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-      cache: "no-store",
-      signal: AbortSignal.timeout(1_500),
-    }).catch(() => undefined);
+    after(async () => {
+      await fetch(backendApiUrl("/api/v1/auth/logout"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(1_500),
+      }).catch(() => undefined);
+    });
   }
 
   const response = new NextResponse(null, { status: 204 });
