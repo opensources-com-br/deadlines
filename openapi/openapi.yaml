@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Deadlines API
-  version: 0.12.0
+  version: 0.13.0
   description: API local do Deadlines. O cadastro exige confirmação de e-mail antes da ativação e do login; as rotas administrativas de usuários permanecem abertas apenas durante o desenvolvimento.
 servers:
   - url: http://localhost:8080

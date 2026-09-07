@@ -146,7 +146,7 @@ PATCH /api/v1/users/me
 
 Registration creates a pending account and sends an email-verification link. Login becomes available after verification. Verification, reset, refresh, and invitation tokens are stored only as hashes and are single-use where applicable.
 
-Access tokens are JWTs that include the session identifier in the `sid` claim. Logout revokes the refresh session. An already-issued access token remains valid until its short expiration time.
+Access tokens are JWTs that include the session identifier in the `sid` claim. Clients send a stable `X-Device-Id` UUID when creating or renewing authenticated sessions. Each user has at most one session per device; signing in again or refreshing rotates that device's session in place. Logout revokes the refresh session but does not require the client to discard its device identifier. An already-issued access token remains valid until its short expiration time.
 
 ### Sessions
 
