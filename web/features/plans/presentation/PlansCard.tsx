@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Plan } from "@/features/plans/domain/plan";
 import { listPlans } from "@/features/plans/infrastructure/plan-api";
 import type { OrganizationSubscription } from "@/features/subscriptions/domain/subscription";
 import { getCurrentSubscription } from "@/features/subscriptions/infrastructure/subscription-api";
+import { useLocalizedFormatters } from "@/features/platform/presentation/useLocalizedFormatters";
 
 export function PlansCard() {
   const t = useTranslations("Plans");
-  const locale = useLocale();
+  const { formatCurrency } = useLocalizedFormatters();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscription, setSubscription] = useState<OrganizationSubscription>();
   const [error, setError] = useState<string>();
@@ -56,7 +57,7 @@ export function PlansCard() {
               <p className="font-medium">{plan.name}</p>
               {current ? <span className="rounded-full bg-foreground px-2 py-0.5 text-xs text-background">{t("current")}</span> : null}
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">{plan.monthlyPriceCents === 0 ? t("free") : t("perMonth", { price: new Intl.NumberFormat(locale, { style: "currency", currency: "USD" }).format(plan.monthlyPriceCents / 100) })}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{plan.monthlyPriceCents === 0 ? t("free") : t("perMonth", { price: formatCurrency(plan.monthlyPriceCents / 100) })}</p>
             {plan.description ? <p className="mt-3 text-sm text-muted-foreground">{plan.description}</p> : null}
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
               {plan.limits.map((limit) => <li key={limit.resource}>{limit.value === -1 ? t("unlimited") : limit.value} {t(limit.resource as "members" | "projects" | "deadlines")}</li>)}
