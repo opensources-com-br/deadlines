@@ -14,6 +14,7 @@ import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { changePassword, updateUserProfile } from "@/features/platform/infrastructure/profile-api";
 import { updatePreferences } from "@/features/platform/infrastructure/preference-api";
 import { useUserPreferences } from "@/features/platform/presentation/UserPreferenceProvider";
+import { AccountDangerZone } from "@/features/platform/presentation/AccountDangerZone";
 
 const timezones = typeof Intl.supportedValuesOf === "function"
   ? Intl.supportedValuesOf("timeZone")
@@ -132,5 +133,6 @@ export function AccountSettings({ user }: { user: UserProfile }) {
         </div>
       </CardContent>
     </Card>
+    <AccountDangerZone />
   </div>;
 }

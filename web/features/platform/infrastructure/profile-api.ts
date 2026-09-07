@@ -2,9 +2,16 @@ import type { UpdateUserProfileInput, UserProfile } from "@/features/platform/do
 
 type ErrorPayload = {
   error?: {
+    code?: string;
     message?: string;
   };
 };
+
+export class AccountActionError extends Error {
+  constructor(public readonly code: string | undefined, message: string) {
+    super(message);
+  }
+}
 
 export async function updateUserProfile(input: UpdateUserProfileInput): Promise<UserProfile> {
   const response = await fetch("/api/profile", {
@@ -42,7 +49,7 @@ async function accountAction(path: string, method: "POST" | "DELETE", password: 
   });
   if (!response.ok) {
     const data = (await response.json().catch(() => ({}))) as ErrorPayload;
-    throw new Error(data.error?.message ?? "Unable to update your account.");
+    throw new AccountActionError(data.error?.code, data.error?.message ?? "Unable to update your account.");
   }
 }
 
