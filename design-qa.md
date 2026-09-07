@@ -1,48 +1,43 @@
-# Design QA — sidebar user menu
+# Design QA — sidebar refinements
 
-- Source visual truth: `web/.qa/reference-user-menu.png`
-- Implementation screenshot: `web/.qa/implementation-user-menu.jpg`
-- Combined comparison: `web/.qa/user-menu-comparison.png`
-- Browser viewport: 1280 × 720 CSS px
-- Source pixels: 567 × 226 at 1×
-- Implementation pixels: 1280 × 720 at 1×; focused comparison crop is 467 × 226
-- State: desktop, dark theme, expanded sidebar, account menu open
+- Source visual truth: `/var/folders/15/bsnxdb1n0r9446hfq1kl71t80000gn/T/codex-clipboard-9a5179fa-5965-4ebe-a8f1-5aefbefb727a.png`
+- Implementation URL inspected: `http://localhost:3000/app`
+- Browser viewport: default in-app browser viewport
+- State requested: desktop, authenticated application with the sidebar expanded
 
 ## Full-view comparison evidence
 
-The implementation screenshot confirms the complete desktop layout, the utility actions immediately above the user control, and the popup opening to the right of the sidebar without clipping or covering the trigger.
+The reference is available, but the local application redirects to the login screen before the authenticated sidebar renders. The resulting browser DOM exposes only the login form, so it is not the same visual state and cannot be compared reliably.
 
 ## Focused region comparison evidence
 
-`web/.qa/user-menu-comparison.png` places the source and implementation side by side at the same 226 px height. The comparison covers the sidebar actions, user trigger, popup header, account options, separators, and logout action.
+Blocked: the sidebar toggle, its border, and the new header divider are behind authentication; no implementation crop exists for a meaningful comparison.
 
 ## Required fidelity surfaces
 
-- Fonts and typography: Geist follows the existing product type system and matches the source's compact sans-serif hierarchy, weights, line heights, and truncation behavior.
-- Spacing and layout rhythm: utility items, user card, popup rows, separators, radius, and right-side placement reproduce the source hierarchy. The implementation keeps the product's existing 16rem sidebar token rather than widening it to the screenshot crop.
-- Colors and visual tokens: dark background, muted secondary text, hover/active fill, borders, and popup elevation use the existing semantic theme tokens and closely match the source.
-- Image quality and asset fidelity: product and UI icons use the existing image asset and Lucide icon library. The user avatar correctly falls back to initials because the current user profile model does not expose an avatar URL.
-- Copy and content: Account, Plans, Notifications, and Log out match the requested product terminology; Settings, Get Help, and Search remain above the user control.
+- Fonts and typography: blocked by the authenticated route.
+- Spacing and layout rhythm: code updates set the floating sidebar to a 20 px radius and preserve its existing spacing.
+- Colors and visual tokens: code updates use the existing `border-border`, `muted`, and `sidebar-accent` tokens.
+- Image quality and asset fidelity: no image assets changed.
+- Copy and content: no copy changed.
 
 ## Interaction and console checks
 
-- User button opens and closes the popup.
-- Account, Plans, and Notifications each switch to the correct content.
-- Team, Organization, Access control, and Security each switch within Settings.
-- Get Help and Search provide visible feedback.
-- Popup runtime error found during the first pass was fixed by placing the account label inside the required menu group.
-- Final browser pass produced no new console errors.
+- `npm run lint` passed.
+- The public local route loaded without a browser-rendering error, but authentication prevented testing the sidebar interaction.
 
 ## Findings
 
-No actionable P0, P1, or P2 differences remain.
+- [P2] Authenticated sidebar visual comparison is unavailable.
+  Location: `/app` local route.
+  Evidence: the browser was redirected to the login form instead of rendering the requested sidebar state.
+  Impact: visual fidelity against the reference cannot be signed off.
+  Fix: provide an authenticated local session or a route that renders the sidebar in isolation, then capture the same desktop state and compare it with the source image.
 
-## Comparison history
+## Implementation Checklist
 
-- P1: opening the popup initially raised a Base UI menu-group runtime error. Fixed by nesting the popup identity label in `DropdownMenuGroup`; the post-fix capture shows the complete menu and all menu items were exercised successfully.
+1. Open an authenticated desktop app session.
+2. Capture the expanded sidebar and header at the reference viewport.
+3. Compare the radius, toggle outline, and divider with the source image.
 
-## Follow-up polish
-
-- P3: add profile avatar URL support when that field becomes available in the user domain model.
-
-final result: passed
+final result: blocked
