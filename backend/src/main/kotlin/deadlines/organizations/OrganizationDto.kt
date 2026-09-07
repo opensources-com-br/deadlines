@@ -22,6 +22,7 @@ data class OrganizationResponse(
     val role: String,
     val createdAt: String,
     val updatedAt: String,
+    val status: String = "active",
 )
 
 fun OrganizationContext.toResponse() =
@@ -30,6 +31,7 @@ fun OrganizationContext.toResponse() =
         name = organization.name,
         slug = organization.slug,
         role = membership.role.name.lowercase(),
+        status = organization.status.name.lowercase(),
         createdAt = organization.createdAt.toString(),
         updatedAt = organization.updatedAt.toString(),
     )

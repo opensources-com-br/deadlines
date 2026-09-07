@@ -37,6 +37,8 @@ class ExposedOrganizationRepository(
                     it[createdBy] = context.organization.createdBy
                     it[createdAt] = context.organization.createdAt.atOffset(ZoneOffset.UTC)
                     it[updatedAt] = context.organization.updatedAt.atOffset(ZoneOffset.UTC)
+                    it[status] = context.organization.status.name.lowercase()
+                    it[deletedAt] = context.organization.deletedAt?.atOffset(ZoneOffset.UTC)
                 }
                 OrganizationMembershipsTable.insert {
                     it[id] = context.membership.id
@@ -122,6 +124,8 @@ private object OrganizationsTable : Table("organizations") {
     val createdBy = javaUUID("created_by").references(OrganizationUsersTable.id)
     val createdAt = timestampWithTimeZone("created_at")
     val updatedAt = timestampWithTimeZone("updated_at")
+    val status = varchar("status", 32)
+    val deletedAt = timestampWithTimeZone("deleted_at").nullable()
 
     override val primaryKey = PrimaryKey(id)
 }
@@ -151,6 +155,8 @@ private fun org.jetbrains.exposed.v1.core.ResultRow.toOrganizationContext() =
                 createdBy = this[OrganizationsTable.createdBy],
                 createdAt = this[OrganizationsTable.createdAt].toInstant(),
                 updatedAt = this[OrganizationsTable.updatedAt].toInstant(),
+                status = OrganizationStatus.valueOf(this[OrganizationsTable.status].uppercase()),
+                deletedAt = this[OrganizationsTable.deletedAt]?.toInstant(),
             ),
         membership =
             OrganizationMembership(

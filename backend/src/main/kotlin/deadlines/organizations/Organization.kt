@@ -10,7 +10,15 @@ data class Organization(
     val createdBy: UUID,
     val createdAt: Instant,
     val updatedAt: Instant,
+    val status: OrganizationStatus = OrganizationStatus.ACTIVE,
+    val deletedAt: Instant? = null,
 )
+
+enum class OrganizationStatus {
+    ACTIVE,
+    SUSPENDED,
+    DELETED,
+}
 
 data class OrganizationMembership(
     val id: UUID,
