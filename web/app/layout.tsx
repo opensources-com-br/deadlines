@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,10 +19,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Deadlines",
-  description: "A plataforma para organizar o que importa.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Public");
+  return { title: "Deadlines", description: t("description") };
+}
 
 export const viewport: Viewport = {
   colorScheme: "dark",

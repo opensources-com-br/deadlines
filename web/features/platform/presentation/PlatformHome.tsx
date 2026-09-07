@@ -38,6 +38,7 @@ type PlatformHomeProps = {
 
 export function PlatformHome({ user, organization, sessions, permissions, roles, members, invitations, section, settingsSection }: PlatformHomeProps) {
   const t = useTranslations("SettingsShell");
+  const tPublic = useTranslations("Public");
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [availablePermissions, setAvailablePermissions] = useState(permissions);
@@ -75,7 +76,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
       <SidebarInset className="min-h-svh bg-background text-foreground">
       <header className="w-full border-b border-border py-4">
         <div className="flex w-full items-center px-[30px]">
-          <SidebarTrigger variant="ghost" aria-label="Toggle sidebar" />
+          <SidebarTrigger variant="ghost" aria-label={tPublic("toggleSidebar")} />
         </div>
       </header>
 
