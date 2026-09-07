@@ -32,7 +32,6 @@ type PlatformSidebarProps = {
   activeItem?: PlatformNavigationItem;
   user: UserProfile;
   onSignOut: () => void;
-  onSettingsSelect: (section: SettingsSection) => void;
   isSigningOut: boolean;
 };
 
@@ -43,7 +42,7 @@ function userInitials(user: UserProfile) {
   return `${user.profile.firstName[0] ?? ""}${user.profile.lastName[0] ?? ""}`.toUpperCase() || user.email.slice(0, 2).toUpperCase();
 }
 
-export function PlatformSidebar({ activeItem, user, onSignOut, onSettingsSelect, isSigningOut }: PlatformSidebarProps) {
+export function PlatformSidebar({ activeItem, user, onSignOut, isSigningOut }: PlatformSidebarProps) {
   const { isMobile } = useSidebar();
   const name = `${user.profile.firstName} ${user.profile.lastName}`.trim() || user.email;
 
@@ -64,7 +63,7 @@ export function PlatformSidebar({ activeItem, user, onSignOut, onSettingsSelect,
         <SidebarGroup className="p-0">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton isActive={activeItem === "settings"} tooltip="Settings" render={<Link href="/app/settings" />}>
+              <SidebarMenuButton isActive={activeItem === "settings"} tooltip="Settings" render={<Link href="/app/organization" />}>
                 <Settings />
                 <span>Settings</span>
               </SidebarMenuButton>
@@ -120,15 +119,15 @@ export function PlatformSidebar({ activeItem, user, onSignOut, onSettingsSelect,
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => onSettingsSelect("account")}>
+                  <DropdownMenuItem render={<Link href="/app/account" />}>
                     <CircleUserRound />
                     Account
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onSettingsSelect("plans")}>
+                  <DropdownMenuItem render={<Link href="/app/plans" />}>
                     <CreditCard />
                     Plans
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onSettingsSelect("notifications")}>
+                  <DropdownMenuItem render={<Link href="/app/notifications" />}>
                     <Bell />
                     Notifications
                   </DropdownMenuItem>

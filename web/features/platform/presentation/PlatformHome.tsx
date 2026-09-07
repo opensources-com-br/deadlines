@@ -2,6 +2,7 @@
 
 import { AuditsCard } from "@/features/audits/presentation/AuditsCard";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
@@ -25,7 +26,7 @@ import { RolesCard } from "@/features/access/presentation/RolesCard";
 import type { OrganizationInvitation, OrganizationMember } from "@/features/team/domain/team";
 import { InvitationsCard } from "@/features/team/presentation/InvitationsCard";
 import { MembersCard } from "@/features/team/presentation/MembersCard";
-import { SubscriptionCard } from "@/features/subscriptions/presentation/SubscriptionCard";
+import { PlansCard } from "@/features/plans/presentation/PlansCard";
 
 type PlatformHomeProps = {
   user: UserProfile;
@@ -49,11 +50,10 @@ const sectionDetails: Record<SettingsSection, { eyebrow: string; title: string; 
   notifications: { eyebrow: "Account", title: "Notifications", description: "Manage how you receive account updates." },
 };
 
-const settingsNavigation: Array<{ key: SettingsSection; label: string }> = [
-  { key: "team", label: "Team" },
-  { key: "organization", label: "Organization" },
-  { key: "access-control", label: "Access control" },
-  { key: "security", label: "Security" },
+const settingsNavigation: Array<{ label: string; items: Array<{ key: SettingsSection; label: string }> }> = [
+  { label: "Organization", items: [{ key: "organization", label: "General" }, { key: "plans", label: "Plan and usage" }, { key: "team", label: "Users" }] },
+  { label: "Access", items: [{ key: "access-control", label: "Roles and permissions" }] },
+  { label: "Personal", items: [{ key: "account", label: "My account" }, { key: "notifications", label: "Notifications" }, { key: "security", label: "Security" }] },
 ];
 
 export function PlatformHome({ user, organization, sessions, permissions, roles, members, invitations, section, settingsSection }: PlatformHomeProps) {
@@ -69,13 +69,8 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
   const [newPassword, setNewPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [availablePermissions, setAvailablePermissions] = useState(permissions);
-  const initialSettingsSection = settingsSection ?? (section === "settings" ? "organization" : section);
-  const [activeSettingsSection, setActiveSettingsSection] = useState<SettingsSection>(initialSettingsSection);
+  const activeSettingsSection = settingsSection ?? (section === "settings" ? "organization" : section);
   const details = sectionDetails[activeSettingsSection];
-
-  function handleSettingsNavigation(nextSection: SettingsSection) {
-    setActiveSettingsSection(nextSection);
-  }
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -143,7 +138,6 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
       <PlatformSidebar
         activeItem="settings"
         user={user}
-        onSettingsSelect={handleSettingsNavigation}
         onSignOut={() => void handleSignOut()}
         isSigningOut={isSigningOut}
       />
@@ -157,16 +151,21 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
       <section className="grid w-full items-start gap-8 px-[30px] pb-[34px] pt-[22px] lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-10">
         <nav aria-label="Settings" className="space-y-1">
           <h1 className="sr-only">Settings</h1>
-          {settingsNavigation.map((item) => (
-            <Button
-              key={item.key}
-              variant={activeSettingsSection === item.key ? "secondary" : "ghost"}
-              className="w-full justify-start"
-              type="button"
-              onClick={() => handleSettingsNavigation(item.key)}
-            >
-              {item.label}
-            </Button>
+          {settingsNavigation.map((group) => (
+            <div key={group.label} className="pb-4">
+              <p className="px-3 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{group.label}</p>
+              {group.items.map((item) => (
+                <Button
+                  key={item.key}
+                  variant={activeSettingsSection === item.key ? "secondary" : "ghost"}
+                  className="w-full justify-start"
+                  type="button"
+                  render={<Link href={`/app/${item.key}`} />}
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </div>
           ))}
         </nav>
 
@@ -177,7 +176,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{details.description}</p>
         </div>
         {activeSettingsSection === "organization" && <OrganizationCard organization={organization} />}
-        {activeSettingsSection === "plans" && <SubscriptionCard />}
+        {activeSettingsSection === "plans" && <PlansCard />}
         {activeSettingsSection === "team" && <MembersCard initialMembers={members} roles={roles} canManage={organization.role === "owner"} />}
         {activeSettingsSection === "team" && <InvitationsCard initialInvitations={invitations} roles={roles} canManage={organization.role === "owner"} />}
         {activeSettingsSection === "access-control" && <PermissionsCard
