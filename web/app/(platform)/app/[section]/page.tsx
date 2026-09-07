@@ -75,7 +75,10 @@ export default async function PlatformSectionPage({ params, searchParams }: Plat
   const [organizationResponse, permissionsResponse, rolesResponse, membersResponse, invitationsResponse] = await Promise.all([
     fetchWhen(can(platformPermission.organizationRead), "/api/v1/organizations/current"),
     fetchWhen(can(platformPermission.permissionsRead), "/api/v1/permissions"),
-    fetchWhen(can(platformPermission.rolesRead), "/api/v1/roles"),
+    fetchWhen(
+      can(platformPermission.rolesRead) || can(platformPermission.membersInvite) || can(platformPermission.membersUpdate),
+      "/api/v1/roles",
+    ),
     fetchWhen(can(platformPermission.membersRead), "/api/v1/members"),
     fetchWhen(can(platformPermission.membersInvite), "/api/v1/invitations"),
   ]);

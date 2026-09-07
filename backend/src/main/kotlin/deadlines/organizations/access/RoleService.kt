@@ -35,7 +35,10 @@ class RoleService(
     private val idGenerator: () -> UUID = UUID::randomUUID,
 ) : RoleOperations {
     override suspend fun list(userId: UUID): RoleListResponse {
-        val organizationId = authorization.requirePermission(userId, PlatformPermission.ROLES_READ).organizationId
+        val organizationId = authorization.requireAnyPermission(
+            userId,
+            setOf(PlatformPermission.ROLES_READ, PlatformPermission.MEMBERS_INVITE, PlatformPermission.MEMBERS_UPDATE),
+        ).organizationId
         return RoleListResponse(roles.list(organizationId).map(Role::toResponse))
     }
 
