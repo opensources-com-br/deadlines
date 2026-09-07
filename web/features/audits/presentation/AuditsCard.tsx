@@ -2,6 +2,7 @@
 
 import { CalendarIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,11 +41,13 @@ function localDateValue(date: Date, endOfDay: boolean) {
   return `${year}-${month}-${day}T${endOfDay ? "23:59:59" : "00:00:00"}`;
 }
 
-function AuditDatePicker({ label, value, endOfDay, disabled, onChange }: {
+function AuditDatePicker({ label, value, endOfDay, disabled, placeholder, clearLabel, onChange }: {
   label: string;
   value: string;
   endOfDay: boolean;
   disabled: boolean;
+  placeholder: string;
+  clearLabel: string;
   onChange: (value: string) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -61,7 +64,7 @@ function AuditDatePicker({ label, value, endOfDay, disabled, onChange }: {
           <CalendarIcon className="text-muted-foreground" aria-hidden="true" />
           {selected
             ? new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(selected)
-            : <span className="text-muted-foreground">Select a date</span>}
+            : <span className="text-muted-foreground">{placeholder}</span>}
         </PopoverTrigger>
         <PopoverContent align="start" className="w-auto p-0">
           <Calendar
@@ -76,7 +79,7 @@ function AuditDatePicker({ label, value, endOfDay, disabled, onChange }: {
           {value ? (
             <div className="border-t p-2">
               <Button type="button" variant="ghost" size="sm" className="w-full" onClick={() => { onChange(""); setOpen(false); }}>
-                Clear date
+                {clearLabel}
               </Button>
             </div>
           ) : null}
@@ -87,6 +90,8 @@ function AuditDatePicker({ label, value, endOfDay, disabled, onChange }: {
 }
 
 export function AuditsCard({ members }: { members: OrganizationMember[] }) {
+  const t = useTranslations("Security");
+  const locale = useLocale();
   const [page, setPage] = useState<AuditPage | null>(null);
   const [filters, setFilters] = useState(emptyFilters);
   const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
@@ -100,7 +105,7 @@ export function AuditsCard({ members }: { members: OrganizationMember[] }) {
     setError("");
     try {
       if (nextFilters.from && nextFilters.to && nextFilters.from > nextFilters.to) {
-        throw new Error("The end date must be on or after the start date.");
+        throw new Error(t("dateOrderError"));
       }
       const params = new URLSearchParams({ offset: String(offset), limit: "10" });
       for (const [key, value] of Object.entries(nextFilters)) {
@@ -108,15 +113,15 @@ export function AuditsCard({ members }: { members: OrganizationMember[] }) {
       }
       const response = await fetch(`/api/audits?${params}`, { cache: "no-store" });
       if (!response.ok) {
-        throw new Error(response.status === 403 ? "Only the organization owner can view this history."
-          : response.status === 401 ? "Your session has expired. Please log in again."
-          : response.status === 422 ? "Check the filters: IDs must be valid UUIDs."
-          : "Unable to load history. Please try again.");
+        throw new Error(response.status === 403 ? t("ownerOnly")
+          : response.status === 401 ? t("sessionExpired")
+          : response.status === 422 ? t("invalidFilters")
+          : t("historyError"));
       }
       setPage(await response.json() as AuditPage);
       setAppliedFilters(nextFilters);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load history.");
+      setError(cause instanceof Error ? cause.message : t("historyError"));
     } finally {
       setIsLoading(false);
     }
@@ -130,64 +135,59 @@ export function AuditsCard({ members }: { members: OrganizationMember[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Organization history</CardTitle>
-        <CardDescription>Review who changed your organization, team, and access settings.</CardDescription>
+        <CardTitle>{t("history")}</CardTitle><CardDescription>{t("historyDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        {!opened ? <Button variant="outline" onClick={() => void load(0)}>View history</Button> : <>
+        {!opened ? <Button variant="outline" onClick={() => void load(0)}>{t("viewHistory")}</Button> : <>
           <form onSubmit={submit} className="space-y-4">
             <fieldset disabled={isLoading} className="grid min-w-0 gap-4 sm:grid-cols-2">
-              <legend className="sr-only">Filter organization history</legend>
+              <legend className="sr-only">{t("filterLegend")}</legend>
               <Field className="sm:col-span-2">
-                <FieldLabel>Action</FieldLabel>
+                <FieldLabel>{t("action")}</FieldLabel>
                 <Select
                   value={filters.action || "all"}
                   onValueChange={(value) => setFilters({ ...filters, action: value === "all" || value === null ? "" : value })}
                 >
-                  <SelectTrigger className="w-full" aria-label="Action">
+                  <SelectTrigger className="w-full" aria-label={t("action")}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent align="start">
-                    <SelectItem value="all">All actions</SelectItem>
-                    {Object.entries(actions).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}
+                    <SelectItem value="all">{t("allActions")}</SelectItem>
+                    {Object.keys(actions).map((value) => <SelectItem key={value} value={value}>{t(`actions.${value}`)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </Field>
-              {([ ["actorId", "Actor ID", "text"], ["resourceId", "Resource ID", "text"]] as const).map(([key, label, type]) => (
+              {([ ["actorId", t("actorId"), "text"], ["resourceId", t("resourceId"), "text"]] as const).map(([key, label, type]) => (
                 <Field key={key}>
                   <FieldLabel htmlFor={`audit-${key}`}>{label}</FieldLabel>
                   <Input id={`audit-${key}`} type={type} value={filters[key]}
                     onChange={(event) => setFilters({ ...filters, [key]: event.target.value })} />
                 </Field>
               ))}
-              <AuditDatePicker label="From (local time)" value={filters.from} endOfDay={false} disabled={isLoading}
+              <AuditDatePicker label={t("from")} placeholder={t("selectDate")} clearLabel={t("clearDate")} value={filters.from} endOfDay={false} disabled={isLoading}
                 onChange={(from) => setFilters({ ...filters, from })} />
-              <AuditDatePicker label="To (local time)" value={filters.to} endOfDay disabled={isLoading}
+              <AuditDatePicker label={t("to")} placeholder={t("selectDate")} clearLabel={t("clearDate")} value={filters.to} endOfDay disabled={isLoading}
                 onChange={(to) => setFilters({ ...filters, to })} />
             </fieldset>
             <div className="flex flex-wrap gap-2">
-              <Button type="submit" disabled={isLoading}>Apply filters</Button>
-              <Button type="button" variant="outline" disabled={isLoading} onClick={() => { setFilters(emptyFilters); void load(0, emptyFilters); }}>Clear</Button>
-              <Button type="button" variant="outline" disabled={isLoading} onClick={() => void load(0)}>Refresh</Button>
+              <Button type="submit" disabled={isLoading}>{t("apply")}</Button><Button type="button" variant="outline" disabled={isLoading} onClick={() => { setFilters(emptyFilters); void load(0, emptyFilters); }}>{t("clear")}</Button><Button type="button" variant="outline" disabled={isLoading} onClick={() => void load(0)}>{t("refresh")}</Button>
             </div>
           </form>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <div aria-live="polite" aria-busy={isLoading} className="space-y-4">
-            {isLoading ? <p className="text-sm text-muted-foreground">Loading history…</p> : !error && page && <>
-              {page.data.length === 0 ? <p className="text-sm text-muted-foreground">No events found for these filters. History starts when auditing was enabled.</p> :
+            {isLoading ? <p className="text-sm text-muted-foreground">{t("loadingHistory")}</p> : !error && page && <>
+              {page.data.length === 0 ? <p className="text-sm text-muted-foreground">{t("noEvents")}</p> :
                 <ol className="space-y-4">
                   {page.data.map((event) => {
                     const actor = members.find((member) => member.userId === event.actorId);
                     return <li key={event.id} className="min-w-0 rounded-lg border p-4 text-sm">
-                      <p className="font-medium">{actions[event.action] ?? event.action}</p>
-                      <time dateTime={event.occurredAt} className="text-muted-foreground">{new Date(event.occurredAt).toLocaleString()}</time>
-                      <p className="mt-2 break-all">By {actor ? `${actor.firstName} ${actor.lastName}` : event.actorId ?? "System / maintenance"}</p>
+                      <p className="font-medium">{actions[event.action] ? t(`actions.${event.action}`) : event.action}</p>
+                      <time dateTime={event.occurredAt} className="text-muted-foreground">{new Date(event.occurredAt).toLocaleString(locale)}</time>
+                      <p className="mt-2 break-all">{t("by", { actor: actor ? `${actor.firstName} ${actor.lastName}` : event.actorId ?? t("systemMaintenance") })}</p>
                       <details className="mt-3">
-                        <summary className="cursor-pointer text-muted-foreground">Event details</summary>
+                        <summary className="cursor-pointer text-muted-foreground">{t("eventDetails")}</summary>
                         <dl className="mt-2 space-y-2 break-all">
-                          <div><dt className="text-muted-foreground">Resource</dt><dd>{event.resource} · {event.resourceId}</dd></div>
-                          <div><dt className="text-muted-foreground">Actor ID</dt><dd>{event.actorId ?? "System / maintenance"}</dd></div>
-                          <div><dt className="text-muted-foreground">Event ID</dt><dd>{event.id}</dd></div>
+                          <div><dt className="text-muted-foreground">{t("resource")}</dt><dd>{event.resource} · {event.resourceId}</dd></div><div><dt className="text-muted-foreground">{t("actorId")}</dt><dd>{event.actorId ?? t("systemMaintenance")}</dd></div><div><dt className="text-muted-foreground">{t("eventId")}</dt><dd>{event.id}</dd></div>
                           {Object.entries(event.metadata).map(([key, value]) => <div key={key}><dt className="text-muted-foreground">{key}</dt><dd>{String(value)}</dd></div>)}
                         </dl>
                       </details>
@@ -195,9 +195,7 @@ export function AuditsCard({ members }: { members: OrganizationMember[] }) {
                   })}
                 </ol>}
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <Button variant="outline" disabled={page.offset === 0} onClick={() => void load(Math.max(0, page.offset - page.limit))}>Previous</Button>
-                <span className="text-sm text-muted-foreground">Page {Math.floor(page.offset / page.limit) + 1}</span>
-                <Button variant="outline" disabled={!page.hasMore} onClick={() => void load(page.offset + page.limit)}>Next</Button>
+                <Button variant="outline" disabled={page.offset === 0} onClick={() => void load(Math.max(0, page.offset - page.limit))}>{t("previous")}</Button><span className="text-sm text-muted-foreground">{t("page", { page: Math.floor(page.offset / page.limit) + 1 })}</span><Button variant="outline" disabled={!page.hasMore} onClick={() => void load(page.offset + page.limit)}>{t("next")}</Button>
               </div>
             </>}
           </div>
