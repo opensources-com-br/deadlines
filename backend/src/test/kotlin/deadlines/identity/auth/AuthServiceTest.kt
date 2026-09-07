@@ -118,6 +118,22 @@ class AuthServiceTest {
         }
 
     @Test
+    fun `deleted account cannot log in or refresh an existing session`() = runTest {
+        val user = createActiveUser()
+        val authenticated = service.login(LoginRequest("user@example.com", "password-123"), context)
+        val deleted = user.copy(status = UserStatus.DELETED, disabledAt = now, deletedAt = now, updatedAt = now)
+        users.update(deleted)
+        credentials.values[user.email] = UserCredentials(deleted, "hash:password-123")
+
+        assertFailsWith<InvalidCredentialsException> {
+            service.login(LoginRequest("user@example.com", "password-123"), context)
+        }
+        assertFailsWith<InvalidRefreshTokenException> {
+            service.refresh(authenticated.refreshToken, context)
+        }
+    }
+
+    @Test
     fun `login requires a device identity`() =
         runTest {
             createActiveUser()
