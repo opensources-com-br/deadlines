@@ -2,12 +2,12 @@
 
 import { AuditsCard } from "@/features/audits/presentation/AuditsCard";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { UserSession } from "@/features/platform/domain/session";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { AccountSettings } from "@/features/platform/presentation/AccountSettings";
@@ -46,17 +46,19 @@ const sectionDetails: Record<SettingsSection, { eyebrow: string; title: string; 
   notifications: { eyebrow: "Account", title: "Notifications", description: "Manage how you receive account updates." },
 };
 
-const settingsNavigation: Array<{ label: string; items: Array<{ key: SettingsSection; label: string }> }> = [
-  { label: "Organization", items: [{ key: "organization", label: "General" }, { key: "plans", label: "Plan and usage" }, { key: "team", label: "Users" }] },
-  { label: "Access", items: [{ key: "access-control", label: "Roles and permissions" }] },
-  { label: "Personal", items: [{ key: "account", label: "My account" }, { key: "notifications", label: "Notifications" }, { key: "security", label: "Security" }] },
+const settingsNavigation: Array<{ key: string; label: string; items: Array<{ key: SettingsSection; label: string }> }> = [
+  { key: "organization", label: "Organization", items: [{ key: "organization", label: "General" }, { key: "plans", label: "Plan and usage" }, { key: "team", label: "Users" }] },
+  { key: "access", label: "Access", items: [{ key: "access-control", label: "Roles and permissions" }] },
+  { key: "personal", label: "Personal", items: [{ key: "account", label: "My account" }, { key: "notifications", label: "Notifications" }, { key: "security", label: "Security" }] },
 ];
 
 export function PlatformHome({ user, organization, sessions, permissions, roles, members, invitations, section, settingsSection }: PlatformHomeProps) {
+  const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [availablePermissions, setAvailablePermissions] = useState(permissions);
   const activeSettingsSection = settingsSection ?? (section === "settings" ? "organization" : section);
   const details = sectionDetails[activeSettingsSection];
+  const activeGroup = settingsNavigation.find((group) => group.items.some((item) => item.key === activeSettingsSection)) ?? settingsNavigation[0];
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -80,28 +82,22 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
         </div>
       </header>
 
-      <section className="grid w-full items-start gap-8 px-[30px] pb-[34px] pt-[22px] lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-10">
-        <nav aria-label="Settings" className="space-y-1">
-          <h1 className="sr-only">Settings</h1>
-          {settingsNavigation.map((group) => (
-            <div key={group.label} className="pb-4">
-              <p className="px-3 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{group.label}</p>
-              {group.items.map((item) => (
-                <Button
-                  key={item.key}
-                  variant={activeSettingsSection === item.key ? "secondary" : "ghost"}
-                  className="w-full justify-start"
-                  type="button"
-                  render={<Link href={`/app/${item.key}`} />}
-                >
-                  {item.label}
-                </Button>
-              ))}
-            </div>
-          ))}
-        </nav>
-
-        <div className="space-y-6">
+      <section className="w-full px-[30px] pb-[34px] pt-[22px]">
+        <h1 className="sr-only">Settings</h1>
+        <Tabs value={activeGroup.key} onValueChange={(value) => {
+          const nextGroup = settingsNavigation.find((group) => group.key === value);
+          if (nextGroup) router.push(`/app/${nextGroup.items[0].key}`);
+        }}>
+          <TabsList aria-label="Settings categories">
+            {settingsNavigation.map((group) => <TabsTrigger key={group.key} value={group.key}>{group.label}</TabsTrigger>)}
+          </TabsList>
+          <Tabs value={activeSettingsSection} onValueChange={(value) => router.push(`/app/${value}`)}>
+            <TabsList aria-label={`${activeGroup.label} settings`} className="gap-2 border-0">
+              {activeGroup.items.map((item) => <TabsTrigger key={item.key} value={item.key} className="rounded-md border-0 px-3 py-1.5 data-[active]:bg-muted data-[active]:text-foreground">{item.label}</TabsTrigger>)}
+            </TabsList>
+          </Tabs>
+        </Tabs>
+        <div className="mt-6 space-y-6">
         <div>
           <p className="text-sm font-medium text-muted-foreground">{details.eyebrow}</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">{details.title}</h2>
