@@ -370,7 +370,7 @@ class DatabaseMigrationTest {
                 users.create(user)
                 organizations.createWithOwner(context)
 
-                assertEquals(8, permissions.list(context.organization.id).count { it.isSystem })
+                assertEquals(20, permissions.list(context.organization.id).count { it.isSystem })
                 assertEquals(setOf("member", "owner"), roles.list(context.organization.id).map { it.key }.toSet())
 
                 val customPermission =
