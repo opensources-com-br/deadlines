@@ -29,6 +29,14 @@ interface MemberRepository {
 
     suspend fun reactivate(organizationId: UUID, membershipId: UUID): Boolean = false
 
+    suspend fun transferOwnership(
+        organizationId: UUID,
+        currentOwnerMembershipId: UUID,
+        nextOwnerMembershipId: UUID,
+        ownerRoleId: UUID,
+        previousOwnerRoleId: UUID,
+    ): Boolean = false
+
     suspend fun remove(organizationId: UUID, membershipId: UUID, removedAt: Instant): Boolean
 }
 
@@ -97,6 +105,42 @@ class ExposedMemberRepository(
                 it[status] = "removed"
                 it[MembershipsTable.removedAt] = removedAt.atOffset(ZoneOffset.UTC)
             } == 1
+        }
+
+    override suspend fun transferOwnership(
+        organizationId: UUID,
+        currentOwnerMembershipId: UUID,
+        nextOwnerMembershipId: UUID,
+        ownerRoleId: UUID,
+        previousOwnerRoleId: UUID,
+    ): Boolean =
+        query {
+            val eligibleIds =
+                MembershipsTable.selectAll()
+                    .where {
+                        (MembershipsTable.organizationId eq organizationId) and
+                            (MembershipsTable.id inList listOf(currentOwnerMembershipId, nextOwnerMembershipId)) and
+                            (MembershipsTable.status eq ACTIVE_STATUS)
+                    }
+                    .map { it[MembershipsTable.id] }
+                    .toSet()
+            if (eligibleIds != setOf(currentOwnerMembershipId, nextOwnerMembershipId)) return@query false
+
+            val nextOwnerUpdated = MembershipsTable.update({
+                (MembershipsTable.organizationId eq organizationId) and
+                    (MembershipsTable.id eq nextOwnerMembershipId) and
+                    (MembershipsTable.status eq ACTIVE_STATUS)
+            }) {
+                it[roleId] = ownerRoleId
+            }
+            val previousOwnerUpdated = MembershipsTable.update({
+                (MembershipsTable.organizationId eq organizationId) and
+                    (MembershipsTable.id eq currentOwnerMembershipId) and
+                    (MembershipsTable.status eq ACTIVE_STATUS)
+            }) {
+                it[roleId] = previousOwnerRoleId
+            }
+            nextOwnerUpdated == 1 && previousOwnerUpdated == 1
         }
 
 
