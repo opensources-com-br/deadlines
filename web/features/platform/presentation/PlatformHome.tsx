@@ -4,7 +4,6 @@ import { AuditsCard } from "@/features/audits/presentation/AuditsCard";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -60,11 +59,9 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
   const details = sectionDetails[activeSettingsSection];
   const activeGroup = settingsNavigation.find((group) => group.items.some((item) => item.key === activeSettingsSection)) ?? settingsNavigation[0];
 
-  async function handleSignOut() {
+  function handleSignOut() {
     setIsSigningOut(true);
-    await fetch("/api/auth/logout", { method: "POST" });
-    toast.success("You have been signed out.");
-    window.location.replace("/login");
+    window.location.replace("/api/auth/logout");
   }
 
   return (
@@ -72,7 +69,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
       <PlatformSidebar
         activeItem="settings"
         user={user}
-        onSignOut={() => void handleSignOut()}
+        onSignOut={handleSignOut}
         isSigningOut={isSigningOut}
       />
       <SidebarInset className="min-h-svh bg-background text-foreground">

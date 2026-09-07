@@ -7,27 +7,39 @@ const accessCookieName = "deadlines_access_token";
 const refreshCookieName = "deadlines_refresh_token";
 const activityCookieName = "deadlines_last_activity";
 
-export async function POST() {
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get(refreshCookieName)?.value;
+function revokeSessionAfterResponse(refreshToken: string | undefined) {
+  if (!refreshToken) return;
 
-  if (refreshToken) {
-    after(async () => {
-      await fetch(backendApiUrl("/api/v1/auth/logout"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-        cache: "no-store",
-        signal: AbortSignal.timeout(1_500),
-      }).catch(() => undefined);
-    });
-  }
+  after(async () => {
+    await fetch(backendApiUrl("/api/v1/auth/logout"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(1_500),
+    }).catch(() => undefined);
+  });
+}
 
-  const response = new NextResponse(null, { status: 204 });
+function clearSessionCookies(response: NextResponse) {
   response.cookies.delete(accessCookieName);
   response.cookies.delete(refreshCookieName);
   response.cookies.delete(activityCookieName);
   response.headers.set("Cache-Control", "private, no-store, no-cache, must-revalidate, max-age=0");
-  response.headers.set("Clear-Site-Data", '"cache"');
   return response;
+}
+
+async function currentRefreshToken() {
+  const cookieStore = await cookies();
+  return cookieStore.get(refreshCookieName)?.value;
+}
+
+export async function POST() {
+  revokeSessionAfterResponse(await currentRefreshToken());
+  return clearSessionCookies(new NextResponse(null, { status: 204 }));
+}
+
+export async function GET(request: Request) {
+  revokeSessionAfterResponse(await currentRefreshToken());
+  return clearSessionCookies(NextResponse.redirect(new URL("/login", request.url), 303));
 }

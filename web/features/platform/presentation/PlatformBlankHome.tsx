@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
@@ -14,18 +13,16 @@ type PlatformBlankHomeProps = {
 export function PlatformBlankHome({ user }: PlatformBlankHomeProps) {
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  async function handleSignOut() {
+  function handleSignOut() {
     setIsSigningOut(true);
-    await fetch("/api/auth/logout", { method: "POST" });
-    toast.success("You have been signed out.");
-    window.location.replace("/login");
+    window.location.replace("/api/auth/logout");
   }
 
   return (
     <SidebarProvider>
       <PlatformSidebar
         user={user}
-        onSignOut={() => void handleSignOut()}
+        onSignOut={handleSignOut}
         isSigningOut={isSigningOut}
       />
       <SidebarInset className="min-h-svh bg-background text-foreground">
