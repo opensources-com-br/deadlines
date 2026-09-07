@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenu
 import type { Role } from "@/features/access/domain/access";
 import type { OrganizationMember } from "@/features/team/domain/team";
 import { teamApi } from "@/features/team/infrastructure/team-api";
-import { useUserPreferences } from "@/features/platform/presentation/UserPreferenceProvider";
+import { useLocalizedFormatters } from "@/features/platform/presentation/useLocalizedFormatters";
 
 type MembersCardProps = {
   initialMembers: OrganizationMember[];
@@ -22,12 +22,10 @@ type MembersCardProps = {
 
 export function MembersCard({ initialMembers, roles, canManage }: MembersCardProps) {
   const t = useTranslations("Team");
-  const locale = useLocale();
-  const { preferences } = useUserPreferences();
+  const { formatDate } = useLocalizedFormatters();
   const [members, setMembers] = useState(initialMembers);
   const [busyMemberId, setBusyMemberId] = useState<string>();
   const assignableRoles = roles.filter((role) => role.key !== "owner");
-  const formatter = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric", timeZone: preferences.timezone });
 
   async function changeRole(member: OrganizationMember, roleId: string | null) {
     if (!roleId || roleId === member.role.id) return;
@@ -95,7 +93,7 @@ export function MembersCard({ initialMembers, roles, canManage }: MembersCardPro
                     )}
                   </td>
                   <td className="px-4 py-3"><span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">{t("active")}</span></td>
-                  <td className="whitespace-nowrap px-4 py-3 text-muted-foreground"><time dateTime={member.joinedAt}>{formatter.format(new Date(member.joinedAt))}</time></td>
+                  <td className="whitespace-nowrap px-4 py-3 text-muted-foreground"><time dateTime={member.joinedAt}>{formatDate(member.joinedAt) ?? "—"}</time></td>
                   <td className="px-4 py-3 text-right">{canManage && !isOwner ? <Button variant="ghost" size="sm" type="button" onClick={() => removeMember(member)} disabled={busyMemberId === member.id}>{t("remove")}</Button> : null}</td>
               </tr>
             );
