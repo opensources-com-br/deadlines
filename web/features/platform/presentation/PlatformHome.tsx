@@ -150,11 +150,8 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
       />
       <SidebarInset className="min-h-svh bg-background text-foreground">
       <header className="w-full py-4">
-        <div className="flex w-full items-center justify-between px-[30px]">
+        <div className="flex w-full items-center px-[30px]">
           <SidebarTrigger variant="ghost" size="icon-sm" aria-label="Toggle sidebar" />
-          <Button variant="outline" size="sm" type="button" onClick={handleSignOut} disabled={isSigningOut}>
-            {isSigningOut ? "Signing out..." : "Log out"}
-          </Button>
         </div>
       </header>
 
