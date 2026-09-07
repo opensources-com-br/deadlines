@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenu
 import type { Role } from "@/features/access/domain/access";
 import type { OrganizationInvitation } from "@/features/team/domain/team";
 import { teamApi } from "@/features/team/infrastructure/team-api";
+import { useUserPreferences } from "@/features/platform/presentation/UserPreferenceProvider";
 
 type InvitationsCardProps = {
   initialInvitations: OrganizationInvitation[];
@@ -23,6 +24,7 @@ type InvitationsCardProps = {
 export function InvitationsCard({ initialInvitations, roles, canManage }: InvitationsCardProps) {
   const t = useTranslations("Team");
   const locale = useLocale();
+  const { preferences } = useUserPreferences();
   const [invitations, setInvitations] = useState(() => initialInvitations.filter((invitation) => invitation.status !== "revoked"));
   const [isCreating, setIsCreating] = useState(false);
   const [email, setEmail] = useState("");
@@ -124,7 +126,7 @@ export function InvitationsCard({ initialInvitations, roles, canManage }: Invita
                     <td className="px-4 py-3 font-medium">{invitation.email}</td>
                     <td className="px-4 py-3 text-muted-foreground">{invitation.role.name}</td>
                     <td className="px-4 py-3"><span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">{t(invitation.status as "pending" | "expired" | "accepted" | "revoked")}</span></td>
-                    <td className="px-4 py-3 whitespace-nowrap text-muted-foreground"><time dateTime={invitation.expiresAt}>{new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric" }).format(new Date(invitation.expiresAt))}</time></td>
+                    <td className="px-4 py-3 whitespace-nowrap text-muted-foreground"><time dateTime={invitation.expiresAt}>{new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric", timeZone: preferences.timezone }).format(new Date(invitation.expiresAt))}</time></td>
                     <td className="px-4 py-3 text-right">{canManage && actionable ? (
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="sm" type="button" onClick={() => resend(invitation)} disabled={busyId === invitation.id}>{t("resend")}</Button>

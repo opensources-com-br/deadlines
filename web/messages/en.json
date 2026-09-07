@@ -4,7 +4,16 @@
     "description": "Choose the language used for navigation, dates, and messages.",
     "label": "Language",
     "help": "Dates and numbers are displayed using this language.",
-    "error": "Unable to change the language."
+    "error": "Unable to change the language.",
+    "timezone": "Timezone",
+    "timezoneHelp": "Dates and times are displayed in this timezone.",
+    "theme": "Theme",
+    "themeHelp": "Choose how Deadlines looks on this device.",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark",
+    "preferenceSaved": "Preference updated.",
+    "preferenceError": "Unable to update the preference."
   },
   "SettingsShell": {
     "settings": "Settings",

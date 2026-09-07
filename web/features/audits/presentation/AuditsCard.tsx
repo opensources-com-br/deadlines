@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { AuditPage } from "@/features/audits/domain/audit";
 import type { OrganizationMember } from "@/features/team/domain/team";
+import { useUserPreferences } from "@/features/platform/presentation/UserPreferenceProvider";
 
 const actions: Record<string, string> = {
   "organization.updated": "Organization updated",
@@ -92,6 +93,7 @@ function AuditDatePicker({ label, value, endOfDay, disabled, placeholder, clearL
 export function AuditsCard({ members }: { members: OrganizationMember[] }) {
   const t = useTranslations("Security");
   const locale = useLocale();
+  const { preferences } = useUserPreferences();
   const [page, setPage] = useState<AuditPage | null>(null);
   const [filters, setFilters] = useState(emptyFilters);
   const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
@@ -182,7 +184,7 @@ export function AuditsCard({ members }: { members: OrganizationMember[] }) {
                     const actor = members.find((member) => member.userId === event.actorId);
                     return <li key={event.id} className="min-w-0 rounded-lg border p-4 text-sm">
                       <p className="font-medium">{actions[event.action] ? t(`actions.${event.action}`) : event.action}</p>
-                      <time dateTime={event.occurredAt} className="text-muted-foreground">{new Date(event.occurredAt).toLocaleString(locale)}</time>
+                      <time dateTime={event.occurredAt} className="text-muted-foreground">{new Date(event.occurredAt).toLocaleString(locale, { timeZone: preferences.timezone })}</time>
                       <p className="mt-2 break-all">{t("by", { actor: actor ? `${actor.firstName} ${actor.lastName}` : event.actorId ?? t("systemMaintenance") })}</p>
                       <details className="mt-3">
                         <summary className="cursor-pointer text-muted-foreground">{t("eventDetails")}</summary>

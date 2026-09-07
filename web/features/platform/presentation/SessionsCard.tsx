@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import type { UserSession } from "@/features/platform/domain/session";
 import { revokeAllSessions, revokeSession } from "@/features/platform/infrastructure/session-api";
+import { useUserPreferences } from "@/features/platform/presentation/UserPreferenceProvider";
 
 type SessionsCardProps = {
   initialSessions: UserSession[];
@@ -22,19 +23,21 @@ function parseDate(value: string | undefined) {
   return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
-function formatDate(value: string | undefined, locale: string, unknownDate: string) {
+function formatDate(value: string | undefined, locale: string, timezone: string, unknownDate: string) {
   const date = parseDate(value);
   if (!date) return unknownDate;
 
   return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: timezone,
   }).format(date);
 }
 
 export function SessionsCard({ initialSessions }: SessionsCardProps) {
   const t = useTranslations("Security");
   const locale = useLocale();
+  const { preferences } = useUserPreferences();
   const router = useRouter();
   const [sessions, setSessions] = useState(initialSessions);
   const [revokingId, setRevokingId] = useState<string>();
@@ -57,7 +60,7 @@ export function SessionsCard({ initialSessions }: SessionsCardProps) {
     if (elapsedMinutes < 60) return t("activeMinutes", { count: elapsedMinutes });
     const elapsedHours = Math.floor(elapsedMinutes / 60);
     if (elapsedHours < 24) return t("activeHours", { count: elapsedHours });
-    return t("lastActive", { date: formatDate(lastActive.toISOString(), locale, t("unknownDate")) });
+    return t("lastActive", { date: formatDate(lastActive.toISOString(), locale, preferences.timezone, t("unknownDate")) });
   }
 
   async function handleRevoke(sessionId: string) {
@@ -120,7 +123,7 @@ export function SessionsCard({ initialSessions }: SessionsCardProps) {
                         {session.ipAddress ?? t("unknownIp")} · {formatLastActive(session.lastSeenAt, session.createdAt, session.isCurrent)}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {t("signedInExpires", { signedIn: formatDate(session.createdAt, locale, t("unknownDate")), expires: formatDate(session.expiresAt, locale, t("unknownDate")) })}
+                        {t("signedInExpires", { signedIn: formatDate(session.createdAt, locale, preferences.timezone, t("unknownDate")), expires: formatDate(session.expiresAt, locale, preferences.timezone, t("unknownDate")) })}
                       </p>
                     </div>
                   </div>

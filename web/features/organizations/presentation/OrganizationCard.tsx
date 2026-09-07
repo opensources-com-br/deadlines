@@ -10,6 +10,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import type { Organization } from "@/features/organizations/domain/organization";
 import { organizationApi } from "@/features/organizations/infrastructure/organization-api";
+import { useUserPreferences } from "@/features/platform/presentation/UserPreferenceProvider";
 
 type OrganizationCardProps = {
   organization: Organization;
@@ -18,6 +19,7 @@ type OrganizationCardProps = {
 export function OrganizationCard({ organization: initialOrganization }: OrganizationCardProps) {
   const t = useTranslations("Organization");
   const locale = useLocale();
+  const { preferences } = useUserPreferences();
   const [organization, setOrganization] = useState(initialOrganization);
   const [name, setName] = useState(initialOrganization.name);
   const [slug, setSlug] = useState(initialOrganization.slug);
@@ -123,7 +125,7 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">{t("currentAccess", { role: t(organization.role) })}</p>
-          <p className="mt-2 text-xs text-muted-foreground">{t("created", { date: new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(organization.createdAt)) })}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{t("created", { date: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: preferences.timezone }).format(new Date(organization.createdAt)) })}</p>
         </CardContent>
       </Card>
     </div>

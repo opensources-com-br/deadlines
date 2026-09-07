@@ -4,7 +4,16 @@
     "description": "Escolha o idioma usado na navegação, nas datas e nas mensagens.",
     "label": "Idioma",
     "help": "Datas e números são exibidos usando este idioma.",
-    "error": "Não foi possível alterar o idioma."
+    "error": "Não foi possível alterar o idioma.",
+    "timezone": "Fuso horário",
+    "timezoneHelp": "Datas e horários são exibidos neste fuso.",
+    "theme": "Tema",
+    "themeHelp": "Escolha a aparência do Deadlines neste dispositivo.",
+    "system": "Sistema",
+    "light": "Claro",
+    "dark": "Escuro",
+    "preferenceSaved": "Preferência atualizada.",
+    "preferenceError": "Não foi possível atualizar a preferência."
   },
   "SettingsShell": {
     "settings": "Configurações",

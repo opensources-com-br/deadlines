@@ -12,12 +12,19 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { changePassword, updateUserProfile } from "@/features/platform/infrastructure/profile-api";
+import { updatePreferences } from "@/features/platform/infrastructure/preference-api";
+import { useUserPreferences } from "@/features/platform/presentation/UserPreferenceProvider";
+
+const timezones = typeof Intl.supportedValuesOf === "function"
+  ? Intl.supportedValuesOf("timeZone")
+  : ["UTC", "America/Sao_Paulo", "America/New_York", "Europe/London", "Asia/Tokyo"];
 
 export function AccountSettings({ user }: { user: UserProfile }) {
   const router = useRouter();
   const locale = useLocale();
   const tLocale = useTranslations("LocaleSwitcher");
   const t = useTranslations("Account");
+  const { preferences, setPreferences } = useUserPreferences();
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,6 +48,18 @@ export function AccountSettings({ user }: { user: UserProfile }) {
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : tLocale("error"));
+    } finally {
+      setIsChangingLocale(false);
+    }
+  }
+  async function changePreference(input: { timezone?: string; theme?: "light" | "dark" | "system" }) {
+    setIsChangingLocale(true);
+    try {
+      const updated = await updatePreferences(input);
+      setPreferences(updated);
+      toast.success(tLocale("preferenceSaved"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : tLocale("preferenceError"));
     } finally {
       setIsChangingLocale(false);
     }
@@ -88,6 +107,29 @@ export function AccountSettings({ user }: { user: UserProfile }) {
           </Select>
           <p className="text-xs text-muted-foreground">{tLocale("help")}</p>
         </Field>
+        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          <Field>
+            <FieldLabel>{tLocale("timezone")}</FieldLabel>
+            <Select value={preferences.timezone} disabled={isChangingLocale} onValueChange={(value) => value && void changePreference({ timezone: value })}>
+              <SelectTrigger className="w-full" aria-label={tLocale("timezone")}><SelectValue /></SelectTrigger>
+              <SelectContent align="start">
+                {!timezones.includes(preferences.timezone) ? <SelectItem value={preferences.timezone}>{preferences.timezone}</SelectItem> : null}
+                {timezones.map((timezone) => <SelectItem key={timezone} value={timezone}>{timezone.replaceAll("_", " ")}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{tLocale("timezoneHelp")}</p>
+          </Field>
+          <Field>
+            <FieldLabel>{tLocale("theme")}</FieldLabel>
+            <Select value={preferences.theme} disabled={isChangingLocale} onValueChange={(value) => value && void changePreference({ theme: value as "light" | "dark" | "system" })}>
+              <SelectTrigger className="w-full" aria-label={tLocale("theme")}><SelectValue /></SelectTrigger>
+              <SelectContent align="start">
+                <SelectItem value="system">{tLocale("system")}</SelectItem><SelectItem value="light">{tLocale("light")}</SelectItem><SelectItem value="dark">{tLocale("dark")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{tLocale("themeHelp")}</p>
+          </Field>
+        </div>
       </CardContent>
     </Card>
   </div>;

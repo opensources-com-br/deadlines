@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenu
 import type { Role } from "@/features/access/domain/access";
 import type { OrganizationMember } from "@/features/team/domain/team";
 import { teamApi } from "@/features/team/infrastructure/team-api";
+import { useUserPreferences } from "@/features/platform/presentation/UserPreferenceProvider";
 
 type MembersCardProps = {
   initialMembers: OrganizationMember[];
@@ -22,10 +23,11 @@ type MembersCardProps = {
 export function MembersCard({ initialMembers, roles, canManage }: MembersCardProps) {
   const t = useTranslations("Team");
   const locale = useLocale();
+  const { preferences } = useUserPreferences();
   const [members, setMembers] = useState(initialMembers);
   const [busyMemberId, setBusyMemberId] = useState<string>();
   const assignableRoles = roles.filter((role) => role.key !== "owner");
-  const formatter = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric" });
+  const formatter = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric", timeZone: preferences.timezone });
 
   async function changeRole(member: OrganizationMember, roleId: string | null) {
     if (!roleId || roleId === member.role.id) return;
