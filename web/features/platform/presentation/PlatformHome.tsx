@@ -29,7 +29,7 @@ import { PlansCard } from "@/features/plans/presentation/PlansCard";
 
 type PlatformHomeProps = {
   user: UserProfile;
-  organization: Organization;
+  organization: Organization | null;
   sessions: UserSession[];
   permissions: Permission[];
   roles: Role[];
@@ -128,7 +128,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
           <h3 className="mt-2 text-2xl font-semibold tracking-tight">{details.title}</h3>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{details.description}</p>
         </div>
-        {activeSettingsSection === "organization" && <Can permission={platformPermission.organizationRead}><OrganizationCard organization={organization} /></Can>}
+        {activeSettingsSection === "organization" && organization ? <Can permission={platformPermission.organizationRead}><OrganizationCard organization={organization} /></Can> : null}
         {activeSettingsSection === "plans" && <Can permission={platformPermission.billingRead}><PlansCard /></Can>}
         {activeSettingsSection === "team" && <Can permission={platformPermission.membersRead}><MembersCard initialMembers={members} roles={roles} /></Can>}
         {activeSettingsSection === "team" && <Can permission={platformPermission.membersInvite}><InvitationsCard initialInvitations={invitations} roles={roles} /></Can>}
@@ -139,7 +139,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
         {activeSettingsSection === "access-control" && <Can permission={platformPermission.rolesRead}><RolesCard initialRoles={roles} permissions={availablePermissions} /></Can>}
         {activeSettingsSection === "account" && <AccountSettings user={user} />}
         {activeSettingsSection === "notifications" && <NotificationsCard />}
-        {activeSettingsSection === "security" && <Can permission={platformPermission.auditRead}><AuditsCard key={organization.id} members={members} /></Can>}
+        {activeSettingsSection === "security" && <Can permission={platformPermission.auditRead}><AuditsCard members={members} /></Can>}
         {activeSettingsSection === "security" && <SessionsCard initialSessions={sessions} />}
         </div>
         </div>
