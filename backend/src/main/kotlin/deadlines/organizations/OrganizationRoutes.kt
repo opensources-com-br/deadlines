@@ -9,6 +9,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
@@ -31,6 +32,19 @@ fun Route.organizationRoutes(service: OrganizationOperations) {
 
                 patch {
                     call.respond(service.update(call.authenticatedUserId(), call.receive()))
+                }
+
+                post("/suspend") {
+                    call.respond(service.suspend(call.authenticatedUserId()))
+                }
+
+                post("/reactivate") {
+                    call.respond(service.reactivate(call.authenticatedUserId()))
+                }
+
+                delete {
+                    service.delete(call.authenticatedUserId())
+                    call.respond(HttpStatusCode.NoContent)
                 }
             }
         }
