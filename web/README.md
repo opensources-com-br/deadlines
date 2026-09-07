@@ -9,6 +9,7 @@ The Deadlines web application provides the public site, authentication flows, or
 - Tailwind CSS 4
 - Base UI and shadcn components
 - Lucide icons
+- next-intl for Portuguese and English translations
 
 ## Requirements
 
@@ -52,7 +53,14 @@ npm run dev     # Start the development server
 npm run build   # Create a production build
 npm run start   # Run the production build
 npm run lint    # Run ESLint
+npm run i18n:check # Verify that translation catalogs have matching keys
 ```
+
+## Internationalization
+
+The interface supports Brazilian Portuguese (`pt-BR`) and English (`en`). Public pages use the locale cookie, while authenticated users also persist their language, timezone, and theme preferences in their account. Signing in on another device restores those saved preferences.
+
+Translation messages live in `messages/pt-BR.json` and `messages/en.json`. Run `npm run i18n:check` after changing either catalog to prevent missing or orphaned translations.
 
 ## Application areas
 
