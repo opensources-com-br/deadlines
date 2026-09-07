@@ -163,7 +163,7 @@ private suspend fun <T> mapMembershipConflict(block: suspend () -> T): T =
     try {
         block()
     } catch (exception: Exception) {
-        if (exception.hasConstraint("organization_memberships_one_active_per_user")) {
+        if (exception.hasConstraint("organization_memberships_one_retained_per_user")) {
             throw ActiveMembershipAlreadyExistsException()
         }
         throw exception

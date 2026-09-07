@@ -22,7 +22,7 @@ class OrganizationService(
     private val idGenerator: () -> UUID = UUID::randomUUID,
 ) : OrganizationOperations {
     override suspend fun create(userId: UUID, request: CreateOrganizationRequest): OrganizationResponse = withAuditActor(userId) {
-        if (repository.findCurrentByUser(userId) != null) throw ActiveMembershipAlreadyExistsException()
+        if (repository.findRetainedByUser(userId) != null) throw ActiveMembershipAlreadyExistsException()
         val name = validateName(request.name)
         val slug = validateSlug(request.slug)
         val now = clock.instant()

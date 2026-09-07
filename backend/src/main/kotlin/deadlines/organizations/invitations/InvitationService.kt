@@ -134,7 +134,7 @@ class InvitationService(
         val user = users.findById(userId)?.takeIf { it.status == UserStatus.ACTIVE } ?: throw InvitationInvalidException()
         if (!user.email.equals(invitation.email, ignoreCase = true)) throw InvitationEmailMismatchException()
 
-        val current = organizations.findCurrentByUser(userId)
+        val current = organizations.findRetainedByUser(userId)
         if (current != null) {
             if (current.organization.id == invitation.organizationId) throw InvitationForMemberException()
             throw ActiveMembershipAlreadyExistsException()

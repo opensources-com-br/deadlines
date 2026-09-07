@@ -7,6 +7,7 @@ import java.util.UUID
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.java.javaUUID
 import org.jetbrains.exposed.v1.javatime.timestampWithTimeZone
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -17,6 +18,8 @@ interface OrganizationRepository {
     suspend fun createWithOwner(context: OrganizationContext): OrganizationContext
 
     suspend fun findCurrentByUser(userId: UUID): OrganizationContext?
+
+    suspend fun findRetainedByUser(userId: UUID): OrganizationContext? = findCurrentByUser(userId)
 
     suspend fun update(organization: Organization): Organization
 }
@@ -59,6 +62,17 @@ class ExposedOrganizationRepository(
                 ?.toOrganizationContext()
         }
 
+    override suspend fun findRetainedByUser(userId: UUID): OrganizationContext? =
+        query {
+            organizationContextQuery()
+                .where {
+                    (OrganizationMembershipsTable.userId eq userId) and
+                        (OrganizationMembershipsTable.status inList listOf("active", "suspended"))
+                }
+                .singleOrNull()
+                ?.toOrganizationContext()
+        }
+
     override suspend fun update(organization: Organization): Organization =
         mapOrganizationConflict {
             query {
@@ -95,7 +109,7 @@ private fun Throwable.hasConstraint(constraint: String): Boolean =
         .any { it.message?.contains(constraint) == true }
 
 private const val UNIQUE_VIOLATION_SQL_STATE = "23505"
-private const val ONE_ACTIVE_MEMBERSHIP_CONSTRAINT = "organization_memberships_one_active_per_user"
+private const val ONE_ACTIVE_MEMBERSHIP_CONSTRAINT = "organization_memberships_one_retained_per_user"
 
 private object OrganizationUsersTable : Table("users") {
     val id = javaUUID("id")
