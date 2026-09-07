@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,7 @@ type RolesCardProps = {
 };
 
 export function RolesCard({ initialRoles, permissions, canManage }: RolesCardProps) {
+  const t = useTranslations("AccessControl");
   const [roles, setRoles] = useState(initialRoles);
   const [editing, setEditing] = useState<Role | "new">();
   const [key, setKey] = useState("");
@@ -60,22 +62,22 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
         editing === "new" ? [...current, saved] : current.map((item) => item.id === saved.id ? saved : item),
       );
       cancelEdit();
-      toast.success(editing === "new" ? "Role created." : "Role updated.");
+      toast.success(editing === "new" ? t("roleCreated") : t("roleUpdated"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to save this role.");
+      toast.error(error instanceof Error ? error.message : t("roleSaveError"));
     } finally {
       setIsSaving(false);
     }
   }
 
   async function handleDelete(role: Role) {
-    if (!window.confirm(`Delete the “${role.name}” role?`)) return;
+    if (!window.confirm(t("roleDeleteConfirm", { name: role.name }))) return;
     try {
       await accessApi.deleteRole(role.id);
       setRoles((current) => current.filter((item) => item.id !== role.id));
-      toast.success("Role deleted.");
+      toast.success(t("roleDeleted"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to delete this role.");
+      toast.error(error instanceof Error ? error.message : t("roleDeleteError"));
     }
   }
 
@@ -86,7 +88,7 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
       setManagingRole(role);
       setSelectedPermissionIds(assigned.data.map((permission) => permission.id));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to load role permissions.");
+      toast.error(error instanceof Error ? error.message : t("permissionsLoadError"));
     } finally {
       setLoadingRoleId(undefined);
     }
@@ -97,10 +99,10 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
     setIsSaving(true);
     try {
       await accessApi.replaceRolePermissions(managingRole.id, selectedPermissionIds);
-      toast.success("Role permissions updated.");
+      toast.success(t("permissionsUpdated"));
       setManagingRole(undefined);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to update role permissions.");
+      toast.error(error instanceof Error ? error.message : t("permissionsUpdateError"));
     } finally {
       setIsSaving(false);
     }
@@ -121,10 +123,9 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
     <Card>
       <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4">
         <div>
-          <CardTitle>Roles</CardTitle>
-          <CardDescription className="mt-1">Group permissions into roles for future team members.</CardDescription>
+          <CardTitle>{t("roles")}</CardTitle><CardDescription className="mt-1">{t("rolesDescription")}</CardDescription>
         </div>
-        {canManage && !editing ? <Button variant="outline" type="button" onClick={() => beginEdit()}>New role</Button> : null}
+        {canManage && !editing ? <Button variant="outline" type="button" onClick={() => beginEdit()}>{t("newRole")}</Button> : null}
       </CardHeader>
       <CardContent>
         {managingRole ? (
@@ -132,7 +133,7 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
             <div>
               <p className="text-sm font-medium">{managingRole.name}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {managingRole.key === "owner" ? "The owner always retains every permission." : "Select the capabilities assigned to this role."}
+                {managingRole.key === "owner" ? t("ownerPermissions") : t("selectCapabilities")}
               </p>
             </div>
             <div className="space-y-5">
@@ -140,8 +141,8 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
                 const allSelected = groupPermissions.every((permission) => selectedPermissionIds.includes(permission.id));
                 return <section key={group} className="rounded-lg border">
                   <div className="flex items-center justify-between gap-4 border-b bg-muted/30 px-4 py-3">
-                    <div><h4 className="text-sm font-medium capitalize">{group}</h4><p className="text-xs text-muted-foreground">{groupPermissions.length} permission{groupPermissions.length === 1 ? "" : "s"}</p></div>
-                    <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground"><Checkbox checked={allSelected} onCheckedChange={(checked) => togglePermissionGroup(groupPermissions, checked === true)} disabled={!canManage || managingRole.key === "owner"} />Select all</label>
+                    <div><h4 className="text-sm font-medium capitalize">{group}</h4><p className="text-xs text-muted-foreground">{t("permissionCount", { count: groupPermissions.length })}</p></div>
+                    <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground"><Checkbox checked={allSelected} onCheckedChange={(checked) => togglePermissionGroup(groupPermissions, checked === true)} disabled={!canManage || managingRole.key === "owner"} />{t("selectAll")}</label>
                   </div>
                   <div className="divide-y">
                     {groupPermissions.map((permission) => (
@@ -155,9 +156,9 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
               })}
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" type="button" onClick={() => setManagingRole(undefined)} disabled={isSaving}>Back</Button>
+              <Button variant="outline" type="button" onClick={() => setManagingRole(undefined)} disabled={isSaving}>{t("back")}</Button>
               {canManage && managingRole.key !== "owner" ? (
-                <Button type="button" onClick={savePermissions} disabled={isSaving}>{isSaving ? "Saving..." : "Save permissions"}</Button>
+                <Button type="button" onClick={savePermissions} disabled={isSaving}>{isSaving ? t("saving") : t("savePermissions")}</Button>
               ) : null}
             </div>
           </div>
@@ -165,20 +166,19 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="role-name">Name</FieldLabel>
+                <FieldLabel htmlFor="role-name">{t("name")}</FieldLabel>
                 <Input id="role-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} required />
               </Field>
               <Field>
-                <FieldLabel htmlFor="role-key">Key</FieldLabel>
+                <FieldLabel htmlFor="role-key">{t("key")}</FieldLabel>
                 <Input id="role-key" value={key} onChange={(event) => setKey(event.target.value.toLowerCase())} maxLength={80} placeholder="project-manager" required />
               </Field>
               <Field>
-                <FieldLabel htmlFor="role-description">Description</FieldLabel>
+                <FieldLabel htmlFor="role-description">{t("description")}</FieldLabel>
                 <Input id="role-description" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} />
               </Field>
               <Field orientation="horizontal" className="justify-end">
-                <Button variant="outline" type="button" onClick={cancelEdit} disabled={isSaving}>Cancel</Button>
-                <Button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save role"}</Button>
+                <Button variant="outline" type="button" onClick={cancelEdit} disabled={isSaving}>{t("cancel")}</Button><Button type="submit" disabled={isSaving}>{isSaving ? t("saving") : t("saveRole")}</Button>
               </Field>
             </FieldGroup>
           </form>
@@ -191,19 +191,18 @@ export function RolesCard({ initialRoles, permissions, canManage }: RolesCardPro
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-medium">{role.name}</p>
-                      {role.isSystem ? <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">System</span> : null}
+                      {role.isSystem ? <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">{t("system")}</span> : null}
                     </div>
                     <p className="mt-1 font-mono text-xs text-muted-foreground">{role.key}</p>
                     {role.description ? <p className="mt-1 text-xs text-muted-foreground">{role.description}</p> : null}
                   </div>
                   <div className="flex flex-wrap justify-end gap-1">
                     <Button variant="ghost" size="sm" type="button" onClick={() => beginManagePermissions(role)} disabled={loadingRoleId === role.id}>
-                      {loadingRoleId === role.id ? "Loading..." : "Permissions"}
+                      {loadingRoleId === role.id ? t("loading") : t("permissions")}
                     </Button>
                     {canManage && !role.isSystem ? (
                       <>
-                        <Button variant="ghost" size="sm" type="button" onClick={() => beginEdit(role)}>Edit</Button>
-                        <Button variant="ghost" size="sm" type="button" onClick={() => handleDelete(role)}>Delete</Button>
+                        <Button variant="ghost" size="sm" type="button" onClick={() => beginEdit(role)}>{t("edit")}</Button><Button variant="ghost" size="sm" type="button" onClick={() => handleDelete(role)}>{t("delete")}</Button>
                       </>
                     ) : null}
                   </div>
