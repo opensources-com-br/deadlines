@@ -1,7 +1,8 @@
 package deadlines.organizations.access
 
-import deadlines.organizations.MembershipRole
 import deadlines.organizations.OrganizationAccessDeniedException
+import deadlines.organizations.authorization.PlatformPermission
+import deadlines.organizations.authorization.testAuthorization
 import java.time.Clock
 import java.time.ZoneOffset
 import java.util.UUID
@@ -31,7 +32,7 @@ class RoleServiceTest {
         }
 
     @Test
-    fun `owner creates updates and deletes a custom role`() =
+    fun `authorized user creates updates and deletes a custom role`() =
         runTest {
             val repository = MemoryRoleRepository()
             val roleId = UUID.randomUUID()
@@ -49,7 +50,7 @@ class RoleServiceTest {
         }
 
     @Test
-    fun `system roles are immutable and members cannot create roles`() =
+    fun `system roles are immutable and creation requires permission`() =
         runTest {
             val repository = MemoryRoleRepository(listOf(ownerRole, memberRole))
             val ownerService = service(repository = repository)
@@ -58,7 +59,7 @@ class RoleServiceTest {
             }
             assertFailsWith<SystemRoleImmutableException> { ownerService.delete(userId, ownerRole.id) }
 
-            val memberService = service(repository = repository, membershipRole = MembershipRole.MEMBER)
+            val memberService = service(repository = repository, granted = emptySet())
             assertFailsWith<OrganizationAccessDeniedException> {
                 memberService.create(userId, CreateRoleRequest("new-role", "New role"))
             }
@@ -98,10 +99,16 @@ class RoleServiceTest {
         initial: List<Role> = emptyList(),
         repository: MemoryRoleRepository = MemoryRoleRepository(initial),
         permissions: MemoryPermissionRepository = MemoryPermissionRepository(listOf(systemPermission, customPermission)),
-        membershipRole: MembershipRole = MembershipRole.OWNER,
+        granted: Set<String> = setOf(
+            PlatformPermission.ROLES_READ,
+            PlatformPermission.ROLES_CREATE,
+            PlatformPermission.ROLES_UPDATE,
+            PlatformPermission.ROLES_DELETE,
+            PlatformPermission.PERMISSIONS_READ,
+        ),
         idGenerator: () -> UUID = UUID::randomUUID,
     ) = RoleService(
-        TestOrganizationRepository(accessContext(userId, organizationId, membershipRole)),
+        testAuthorization(userId, organizationId, *granted.toTypedArray()),
         repository,
         permissions,
         Clock.fixed(accessTestNow, ZoneOffset.UTC),
