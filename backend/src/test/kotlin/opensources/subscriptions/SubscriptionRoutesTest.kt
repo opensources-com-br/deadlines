@@ -1,4 +1,4 @@
-package opensources.subscriptions
+package opensources.modules.billing.subscriptions
 
 import opensources.application.module
 import opensources.config.AuthConfig
@@ -40,7 +40,7 @@ private class RouteSubscriptions : SubscriptionOperations {
             status = "active",
             startedAt = "2026-09-06T20:00:00Z",
             endedAt = null,
-            plan = opensources.plans.PlanResponse(UUID.randomUUID().toString(), "free", "Free", null, 0, "USD", emptyList()),
+            plan = opensources.modules.billing.plans.PlanResponse(UUID.randomUUID().toString(), "free", "Free", null, 0, "USD", emptyList()),
         )
     }
 }

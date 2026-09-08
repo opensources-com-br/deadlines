@@ -1,4 +1,4 @@
-package opensources.plans
+package opensources.modules.billing.plans
 
 import kotlinx.serialization.Serializable
 

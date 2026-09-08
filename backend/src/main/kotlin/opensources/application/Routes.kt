@@ -30,10 +30,10 @@ import opensources.organizations.invitations.InvitationOperations
 import opensources.organizations.invitations.invitationRoutes
 import opensources.organizations.members.MemberOperations
 import opensources.organizations.members.memberRoutes
-import opensources.plans.PlanOperations
-import opensources.plans.planRoutes
-import opensources.subscriptions.SubscriptionOperations
-import opensources.subscriptions.subscriptionRoutes
+import opensources.modules.billing.plans.PlanOperations
+import opensources.modules.billing.plans.planRoutes
+import opensources.modules.billing.subscriptions.SubscriptionOperations
+import opensources.modules.billing.subscriptions.subscriptionRoutes
 import opensources.shared.errors.ApiException
 import io.ktor.server.application.Application
 import io.ktor.server.response.respond

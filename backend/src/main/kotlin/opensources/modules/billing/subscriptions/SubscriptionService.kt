@@ -1,4 +1,4 @@
-package opensources.subscriptions
+package opensources.modules.billing.subscriptions
 
 import opensources.organizations.authorization.AuthorizationOperations
 import opensources.organizations.authorization.PlatformPermission

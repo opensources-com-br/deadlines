@@ -1,7 +1,7 @@
-package opensources.subscriptions
+package opensources.modules.billing.subscriptions
 
-import opensources.plans.Plan
-import opensources.plans.PlanLimit
+import opensources.modules.billing.plans.Plan
+import opensources.modules.billing.plans.PlanLimit
 import opensources.shared.database.DatabaseQuery
 import java.util.UUID
 import org.jetbrains.exposed.v1.core.Table

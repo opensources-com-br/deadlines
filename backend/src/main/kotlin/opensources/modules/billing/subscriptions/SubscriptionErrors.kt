@@ -1,4 +1,4 @@
-package opensources.subscriptions
+package opensources.modules.billing.subscriptions
 
 import opensources.shared.errors.ApiException
 

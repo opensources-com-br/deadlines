@@ -56,8 +56,8 @@ import opensources.organizations.invitations.InvitationService
 import opensources.organizations.members.ExposedMemberRepository
 import opensources.organizations.members.MemberOperations
 import opensources.organizations.members.MemberService
-import opensources.plans.PlanOperations
-import opensources.subscriptions.SubscriptionOperations
+import opensources.modules.billing.plans.PlanOperations
+import opensources.modules.billing.subscriptions.SubscriptionOperations
 import opensources.modules.billing.billingModule
 import opensources.shared.database.DatabaseFactory
 import opensources.shared.database.DatabaseQuery

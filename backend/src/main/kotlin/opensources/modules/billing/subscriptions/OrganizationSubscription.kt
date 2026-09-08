@@ -1,6 +1,6 @@
-package opensources.subscriptions
+package opensources.modules.billing.subscriptions
 
-import opensources.plans.Plan
+import opensources.modules.billing.plans.Plan
 import java.time.Instant
 import java.util.UUID
 

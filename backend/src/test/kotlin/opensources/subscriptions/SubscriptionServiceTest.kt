@@ -1,9 +1,9 @@
-package opensources.subscriptions
+package opensources.modules.billing.subscriptions
 
 import opensources.organizations.authorization.PlatformPermission
 import opensources.organizations.authorization.testAuthorization
-import opensources.plans.Plan
-import opensources.plans.PlanLimit
+import opensources.modules.billing.plans.Plan
+import opensources.modules.billing.plans.PlanLimit
 import java.time.Instant
 import java.util.UUID
 import kotlinx.coroutines.test.runTest

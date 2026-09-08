@@ -1,13 +1,13 @@
 package opensources.modules.billing
 
 import opensources.organizations.authorization.AuthorizationOperations
-import opensources.plans.ExposedPlanRepository
-import opensources.plans.PlanOperations
-import opensources.plans.PlanService
+import opensources.modules.billing.plans.ExposedPlanRepository
+import opensources.modules.billing.plans.PlanOperations
+import opensources.modules.billing.plans.PlanService
 import opensources.shared.database.DatabaseQuery
-import opensources.subscriptions.ExposedSubscriptionRepository
-import opensources.subscriptions.SubscriptionOperations
-import opensources.subscriptions.SubscriptionService
+import opensources.modules.billing.subscriptions.ExposedSubscriptionRepository
+import opensources.modules.billing.subscriptions.SubscriptionOperations
+import opensources.modules.billing.subscriptions.SubscriptionService
 
 data class BillingModule(
     val plans: PlanOperations,

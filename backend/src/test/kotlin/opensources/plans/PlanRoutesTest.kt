@@ -1,4 +1,4 @@
-package opensources.plans
+package opensources.modules.billing.plans
 
 import opensources.application.module
 import io.ktor.client.request.get

@@ -1,7 +1,7 @@
-package opensources.subscriptions
+package opensources.modules.billing.subscriptions
 
-import opensources.plans.PlanResponse
-import opensources.plans.toResponse
+import opensources.modules.billing.plans.PlanResponse
+import opensources.modules.billing.plans.toResponse
 import kotlinx.serialization.Serializable
 
 @Serializable

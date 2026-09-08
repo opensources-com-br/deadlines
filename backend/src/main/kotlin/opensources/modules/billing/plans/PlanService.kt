@@ -1,4 +1,4 @@
-package opensources.plans
+package opensources.modules.billing.plans
 
 interface PlanOperations { suspend fun list(): PlanListResponse }
 

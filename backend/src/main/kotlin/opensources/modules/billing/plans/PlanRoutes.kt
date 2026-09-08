@@ -1,4 +1,4 @@
-package opensources.plans
+package opensources.modules.billing.plans
 
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route

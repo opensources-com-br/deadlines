@@ -1,4 +1,4 @@
-package opensources.plans
+package opensources.modules.billing.plans
 
 import opensources.shared.database.DatabaseQuery
 import java.util.UUID

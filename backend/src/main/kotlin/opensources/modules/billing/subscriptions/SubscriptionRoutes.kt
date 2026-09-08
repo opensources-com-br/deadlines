@@ -1,4 +1,4 @@
-package opensources.subscriptions
+package opensources.modules.billing.subscriptions
 
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal

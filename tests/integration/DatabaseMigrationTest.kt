@@ -44,7 +44,7 @@ import opensources.organizations.invitations.OrganizationInvitation
 import opensources.organizations.members.ExposedMemberRepository
 import opensources.shared.database.DatabaseQuery
 import opensources.shared.database.DatabaseFactory
-import opensources.subscriptions.ExposedSubscriptionRepository
+import opensources.modules.billing.subscriptions.ExposedSubscriptionRepository
 import kotlinx.coroutines.test.runTest
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
