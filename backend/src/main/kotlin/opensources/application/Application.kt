@@ -11,6 +11,8 @@ import opensources.identity.auth.AuthenticationAbuseProtection
 import opensources.identity.auth.AuthService
 import opensources.identity.auth.BcryptPasswordHasher
 import opensources.identity.auth.ExposedSessionRepository
+import opensources.identity.auth.ExposedRateLimitStore
+import opensources.identity.auth.ExposedLoginAttemptStore
 import opensources.identity.auth.SessionService
 import opensources.identity.auth.TokenService
 import opensources.identity.email.EmailVerificationOperations
@@ -124,7 +126,11 @@ fun main() {
                 tokenService,
                 emailVerificationService,
             )
-        val abuseProtection = AuthenticationAbuseProtection(config.abuseProtection)
+        val abuseProtection = AuthenticationAbuseProtection(
+            config.abuseProtection,
+            ExposedRateLimitStore(query),
+            ExposedLoginAttemptStore(query),
+        )
         val passwordResetService =
             PasswordResetService(credentialsRepository, emailTokens, emailService, passwordHasher, sessionRepository, config.email)
 
