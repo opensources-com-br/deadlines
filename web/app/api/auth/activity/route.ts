@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { authCookies } from "@/lib/cookies";
+import { authCookies, persistentCookieOptions } from "@/lib/cookies";
 
 const accessCookieName = authCookies.accessToken;
 const activityCookieName = authCookies.lastActivity;
@@ -14,12 +14,6 @@ export async function POST() {
   }
 
   const response = new NextResponse(null, { status: 204 });
-  response.cookies.set(activityCookieName, "active", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: activityWindowSeconds,
-  });
+  response.cookies.set(activityCookieName, "active", persistentCookieOptions(activityWindowSeconds));
   return response;
 }
