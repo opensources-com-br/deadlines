@@ -22,7 +22,7 @@ product
 
 `ProductConfig` is the single runtime contract for product identity and optional modules. It provides the product name, description, logo, locale, timezone, support email, application URL, and enabled-module set.
 
-The corresponding environment variables use the `PRODUCT_` prefix. `PRODUCT_ENABLED_MODULES` is a comma-separated list; for example, `PRODUCT_ENABLED_MODULES=billing`. When it is not supplied, the legacy `FEATURE_BILLING_ENABLED` flag determines the default during the transition.
+The corresponding environment variables use the `PRODUCT_` prefix. `PRODUCT_ENABLED_MODULES` is a comma-separated list; for example, `PRODUCT_ENABLED_MODULES=billing`. The browser reads matching `NEXT_PUBLIC_PRODUCT_` variables.
 
 Dependency rules:
 
@@ -32,6 +32,6 @@ Dependency rules:
 
 ## Optional billing
 
-Billing is enabled when `billing` is present in `PRODUCT_ENABLED_MODULES`. During the transition, `FEATURE_BILLING_ENABLED=false` removes it from the default backend module set. The web client must also receive `NEXT_PUBLIC_FEATURE_BILLING_ENABLED=false` so it hides billing navigation and pages.
+Billing is enabled when `billing` is present in `PRODUCT_ENABLED_MODULES` and `NEXT_PUBLIC_PRODUCT_ENABLED_MODULES`. Its tables, catalog data, subscription trigger, and billing permissions live in `database/migrations/billing`; a new installation without the module runs only `database/migrations/core`.
 
 Organization creation, identity, membership, and authorization do not require the billing module. This permits a new product to use the core foundation without importing the billing composition.
