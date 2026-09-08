@@ -47,12 +47,9 @@ import deadlines.organizations.invitations.InvitationService
 import deadlines.organizations.members.ExposedMemberRepository
 import deadlines.organizations.members.MemberOperations
 import deadlines.organizations.members.MemberService
-import deadlines.plans.ExposedPlanRepository
 import deadlines.plans.PlanOperations
-import deadlines.plans.PlanService
-import deadlines.subscriptions.ExposedSubscriptionRepository
 import deadlines.subscriptions.SubscriptionOperations
-import deadlines.subscriptions.SubscriptionService
+import deadlines.modules.billing.billingModule
 import deadlines.shared.database.DatabaseFactory
 import deadlines.shared.database.DatabaseQuery
 import io.ktor.server.application.Application
@@ -73,8 +70,7 @@ fun main() {
         val sessionService = SessionService(sessionRepository)
         val organizationRepository = ExposedOrganizationRepository(query)
         val authorizationService = AuthorizationService(ExposedAuthorizationRepository(query))
-        val planService = PlanService(ExposedPlanRepository(query))
-        val subscriptionService = SubscriptionService(authorizationService, ExposedSubscriptionRepository(query))
+        val billing = config.features.takeIf { it.billingEnabled }?.let { billingModule(query, authorizationService) }
         val auditService = AuditService(authorizationService, ExposedAuditRepository(query))
         val organizationService = OrganizationService(organizationRepository, authorizationService)
         val permissionRepository = ExposedPermissionRepository(query)
@@ -136,8 +132,8 @@ fun main() {
                 memberService,
                 invitationService,
                 auditService,
-                planService,
-                subscriptionService,
+                billing?.plans,
+                billing?.subscriptions,
                 userPreferenceService,
                 authorizationService,
                 accountLifecycleService,
