@@ -1,6 +1,6 @@
 # Postman
 
-Importe `deadlines.postman_collection.json` no Postman e inicie a API localmente:
+Importe `opensources.postman_collection.json` no Postman e inicie a API localmente:
 
 ```bash
 docker compose up -d --build backend
