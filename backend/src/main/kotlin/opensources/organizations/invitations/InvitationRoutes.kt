@@ -7,6 +7,7 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.plugins.origin
+import opensources.application.clientAddress
 import io.ktor.server.request.receive
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
@@ -20,14 +21,14 @@ import java.util.UUID
 fun Route.invitationRoutes(service: InvitationOperations, abuseProtection: AuthenticationAbuseProtection) {
     route("/api/v1/invitations") {
         get("/preview") {
-            abuseProtection.checkRateLimit("invitation-preview", call.request.origin.remoteHost)
+            abuseProtection.checkRateLimit("invitation-preview", call.clientAddress())
             call.respond(service.preview(call.request.queryParameters["token"].orEmpty()))
         }
 
         authenticate("auth-jwt") {
             post("/accept") {
                 val request = call.receive<AcceptInvitationRequest>()
-                abuseProtection.checkRateLimit("invitation-accept", call.request.origin.remoteHost)
+                abuseProtection.checkRateLimit("invitation-accept", call.clientAddress())
                 call.respond(service.accept(call.invitationUserId(), request.token))
             }
 

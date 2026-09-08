@@ -6,6 +6,7 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.plugins.origin
+import opensources.application.clientAddress
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -66,7 +67,7 @@ fun Route.authRoutes(auth: AuthOperations, abuseProtection: AuthenticationAbuseP
 private fun io.ktor.server.application.ApplicationCall.sessionContext() =
     SessionContext(
         userAgent = request.headers[HttpHeaders.UserAgent],
-        ipAddress = request.origin.remoteHost,
+        ipAddress = clientAddress(),
         deviceId = request.headers[DEVICE_ID_HEADER]?.let { value ->
             runCatching { UUID.fromString(value) }.getOrElse {
                 throw AuthValidationException(mapOf(DEVICE_ID_HEADER to "must be a UUID"))

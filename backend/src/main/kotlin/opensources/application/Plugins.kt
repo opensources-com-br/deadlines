@@ -41,6 +41,7 @@ fun Application.configurePlugins(
     activeAccounts: ActiveAccountOperations? = null,
     http: HttpConfig = HttpConfig(8080),
 ) {
+    attributes.put(ClientAddressResolverKey, ClientAddressResolver(http.trustedProxyAddresses.toSet()))
     intercept(ApplicationCallPipeline.Setup) {
         val requestId = call.request.headers[REQUEST_ID_HEADER]?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
         call.attributes.put(RequestIdKey, requestId)
@@ -166,9 +167,12 @@ internal fun ApplicationCall.requestId(): String = attributes[RequestIdKey]
 internal fun ApplicationCall.requestDurationMillis(): Long =
     (System.nanoTime() - attributes[RequestStartedAtKey]) / 1_000_000
 
+fun ApplicationCall.clientAddress(): String = application.attributes[ClientAddressResolverKey].resolve(this)
+
 private const val REQUEST_ID_HEADER = "X-Request-Id"
 private val RequestIdKey = AttributeKey<String>("request-id")
 private val RequestStartedAtKey = AttributeKey<Long>("request-started-at")
+private val ClientAddressResolverKey = AttributeKey<ClientAddressResolver>("client-address-resolver")
 private val structuredLogJson = Json { encodeDefaults = true; explicitNulls = true }
 
 @Serializable

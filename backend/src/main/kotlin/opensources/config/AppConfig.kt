@@ -18,6 +18,7 @@ data class AppConfig(
                     },
                     allowedCorsOrigins = environment.csv("CORS_ALLOWED_ORIGINS", default = listOf("http://localhost:3000")),
                     maxRequestBodyBytes = environment.positiveLong("HTTP_MAX_REQUEST_BODY_BYTES", default = 1_048_576),
+                    trustedProxyAddresses = environment.csv("TRUSTED_PROXY_ADDRESSES", default = emptyList()),
                 ),
                 database = DatabaseConfig(
                     url = environment.required("DATABASE_URL"),
@@ -92,6 +93,7 @@ data class HttpConfig(
     val port: Int,
     val allowedCorsOrigins: List<String> = listOf("http://localhost:3000"),
     val maxRequestBodyBytes: Long = 1_048_576,
+    val trustedProxyAddresses: List<String> = emptyList(),
 )
 
 data class DatabaseConfig(

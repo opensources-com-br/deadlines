@@ -3,6 +3,7 @@ package opensources.identity.email
 import opensources.identity.auth.AuthenticationAbuseProtection
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.plugins.origin
+import opensources.application.clientAddress
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.auth.authenticate
@@ -48,25 +49,25 @@ fun Route.emailRoutes(
 ) {
     route("/api/v1/auth") {
         post("/email/verify") {
-            abuseProtection.checkRateLimit("verify-email", call.request.origin.remoteHost)
+            abuseProtection.checkRateLimit("verify-email", call.clientAddress())
             verification.verify(call.receive<VerifyEmailRequest>().token)
             call.respond(HttpStatusCode.NoContent)
         }
         post("/forgot-password") {
             val request = call.receive<ForgotPasswordRequest>()
-            abuseProtection.checkRateLimit("forgot-password", call.request.origin.remoteHost, request.email)
+            abuseProtection.checkRateLimit("forgot-password", call.clientAddress(), request.email)
             passwordReset.request(request.email)
             call.respond(HttpStatusCode.NoContent)
         }
         post("/reset-password") {
             val request = call.receive<ResetPasswordRequest>()
-            abuseProtection.checkRateLimit("reset-password", call.request.origin.remoteHost)
+            abuseProtection.checkRateLimit("reset-password", call.clientAddress())
             passwordReset.reset(request.token, request.password)
             call.respond(HttpStatusCode.NoContent)
         }
         post("/email/resend") {
             val request = call.receive<ResendVerificationRequest>()
-            abuseProtection.checkRateLimit("resend-verification", call.request.origin.remoteHost, request.email)
+            abuseProtection.checkRateLimit("resend-verification", call.clientAddress(), request.email)
             verification.resendForEmail(request.email)
             call.respond(HttpStatusCode.NoContent)
         }
