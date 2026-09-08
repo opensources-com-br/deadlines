@@ -2,7 +2,7 @@
 
 import { AuditsCard } from "@/features/audits/presentation/AuditsCard";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -13,7 +13,7 @@ import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { AccountSettings } from "@/features/platform/presentation/AccountSettings";
 import { NotificationsCard } from "@/features/platform/presentation/NotificationsCard";
 import { SessionsCard } from "@/features/platform/presentation/SessionsCard";
-import { PlatformSidebar, type PlatformNavigationItem, type SettingsSection } from "@/features/platform/presentation/PlatformSidebar";
+import { PlatformSidebar, type SettingsSection } from "@/features/platform/presentation/PlatformSidebar";
 import type { Organization } from "@/features/organizations/domain/organization";
 import { OrganizationCard } from "@/features/organizations/presentation/OrganizationCard";
 import type { Permission, Role } from "@/features/access/domain/access";
@@ -34,14 +34,12 @@ type PlatformHomeProps = {
   roles: Role[];
   members: OrganizationMember[];
   invitations: OrganizationInvitation[];
-  section: PlatformNavigationItem;
-  settingsSection?: SettingsSection;
+  section: SettingsSection;
 };
 
-export function PlatformHome({ user, organization, sessions, permissions, roles, members, invitations, section, settingsSection }: PlatformHomeProps) {
+export function PlatformHome({ user, organization, sessions, permissions, roles, members, invitations, section }: PlatformHomeProps) {
   const t = useTranslations("SettingsShell");
   const tPublic = useTranslations("Public");
-  const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [availablePermissions, setAvailablePermissions] = useState(permissions);
   const sectionDetails: Record<SettingsSection, { eyebrow: string; title: string; description: string }> = {
@@ -66,10 +64,9 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
     { key: "access", label: t("access"), items: accessItems },
     { key: "personal", label: t("personal"), items: [{ key: "account", label: t("account") }, { key: "notifications", label: t("notifications") }, { key: "security", label: t("security") }] },
   ];
-  const requestedSettingsSection = settingsSection ?? (section === "settings" ? "organization" : section);
   const visibleSettingsSections = settingsNavigation.flatMap((group) => group.items.map((item) => item.key));
-  const activeSettingsSection = visibleSettingsSections.includes(requestedSettingsSection)
-    ? requestedSettingsSection
+  const activeSettingsSection = visibleSettingsSections.includes(section)
+    ? section
     : (visibleSettingsSections[0] ?? "account");
   const details = sectionDetails[activeSettingsSection];
   const activeGroup = settingsNavigation.find((group) => group.items.some((item) => item.key === activeSettingsSection)) ?? settingsNavigation[0];
@@ -96,12 +93,18 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
 
       <section className="w-full px-[30px] pb-[34px] pt-[22px]">
         <h1 className="sr-only">{t("settings")}</h1>
-        <Tabs value={activeGroup.key} onValueChange={(value) => {
-          const nextGroup = settingsNavigation.find((group) => group.key === value);
-          if (nextGroup) router.push(`/app/settings/${nextGroup.items[0].key}`);
-        }}>
+        <Tabs value={activeGroup.key}>
           <TabsList aria-label={t("settings")}>
-            {settingsNavigation.map((group) => <TabsTrigger key={group.key} value={group.key}>{group.label}</TabsTrigger>)}
+            {settingsNavigation.map((group) => (
+              <TabsTrigger
+                key={group.key}
+                value={group.key}
+                nativeButton={false}
+                render={<Link href={`/app/settings/${group.items[0].key}`} />}
+              >
+                {group.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
         </Tabs>
         <div className="mt-6 rounded-2xl border bg-card/40 p-4 sm:p-6">
@@ -110,9 +113,18 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
               <p className="text-sm font-medium text-muted-foreground">{t("categoryBreadcrumb", { category: activeGroup.label })}</p>
               <h2 className="mt-1 text-lg font-semibold tracking-tight">{t("categoryTitle", { category: activeGroup.label })}</h2>
             </div>
-            <Tabs value={activeSettingsSection} onValueChange={(value) => router.push(`/app/settings/${value}`)}>
+            <Tabs value={activeSettingsSection}>
               <TabsList aria-label={`${activeGroup.label} settings`}>
-                {activeGroup.items.map((item) => <TabsTrigger key={item.key} value={item.key}>{item.label}</TabsTrigger>)}
+                {activeGroup.items.map((item) => (
+                  <TabsTrigger
+                    key={item.key}
+                    value={item.key}
+                    nativeButton={false}
+                    render={<Link href={`/app/settings/${item.key}`} />}
+                  >
+                    {item.label}
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </Tabs>
           </div>
