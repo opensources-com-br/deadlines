@@ -5,6 +5,7 @@ import opensources.organizations.audits.ExposedAuditRepository
 import opensources.organizations.audits.auditRoutes
 
 import opensources.config.AppConfig
+import opensources.config.HttpConfig
 import opensources.config.EmailProvider
 import opensources.identity.auth.AuthOperations
 import opensources.identity.auth.AuthenticationAbuseProtection
@@ -157,6 +158,7 @@ fun main() {
                 accountLifecycleService,
                 abuseProtection,
                 { database.isReady() },
+                config.http,
             )
         }.start(wait = true)
     }
@@ -184,8 +186,9 @@ fun Application.module(
     accountLifecycleService: opensources.identity.users.AccountLifecycleOperations? = null,
     abuseProtection: AuthenticationAbuseProtection = AuthenticationAbuseProtection(opensources.config.AbuseProtectionConfig()),
     readinessCheck: () -> Boolean = { true },
+    http: HttpConfig = HttpConfig(8080),
 ) {
-    configurePlugins(tokenService, userRepository?.let(::ActiveAccountService))
+    configurePlugins(tokenService, userRepository?.let(::ActiveAccountService), http)
     configureRoutes(
         userService,
         authService,

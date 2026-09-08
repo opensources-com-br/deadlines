@@ -2,6 +2,7 @@ package opensources.application
 
 import opensources.identity.auth.TokenService
 import opensources.identity.users.ActiveAccountOperations
+import opensources.config.HttpConfig
 import opensources.shared.errors.ApiErrorBody
 import opensources.shared.errors.ApiErrorResponse
 import opensources.shared.errors.ApiException
@@ -38,6 +39,7 @@ import java.util.UUID
 fun Application.configurePlugins(
     tokenService: TokenService? = null,
     activeAccounts: ActiveAccountOperations? = null,
+    http: HttpConfig = HttpConfig(8080),
 ) {
     intercept(ApplicationCallPipeline.Setup) {
         val requestId = call.request.headers[REQUEST_ID_HEADER]?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
@@ -72,11 +74,21 @@ fun Application.configurePlugins(
     }
 
     install(CORS) {
-        allowHost("localhost:3000", schemes = listOf("http"))
+        http.allowedCorsOrigins.forEach { origin ->
+            val parsed = java.net.URI(origin)
+            val host = parsed.host ?: throw IllegalArgumentException("CORS_ALLOWED_ORIGINS must contain valid origins")
+            val hostWithPort = if (parsed.port == -1) host else "$host:${parsed.port}"
+            allowHost(hostWithPort, schemes = listOf(parsed.scheme ?: throw IllegalArgumentException("CORS origin requires a scheme")))
+        }
         allowMethod(HttpMethod.Options)
         allowMethod(HttpMethod.Post)
+        allowMethod(HttpMethod.Get)
+        allowMethod(HttpMethod.Patch)
+        allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Delete)
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.Authorization)
+        allowHeader(HttpHeaders.Origin)
         allowHeader(REQUEST_ID_HEADER)
         exposeHeader(REQUEST_ID_HEADER)
     }
