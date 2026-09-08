@@ -7,10 +7,10 @@ import { PlatformBlankHome } from "@/features/platform/presentation/PlatformBlan
 
 export default async function PlatformPage() {
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("deadlines_access_token")?.value;
-  const refreshToken = cookieStore.get("deadlines_refresh_token")?.value;
-  const recentActivity = cookieStore.get("deadlines_last_activity")?.value;
-  const persistentSession = cookieStore.get("deadlines_persistent_session")?.value === "true";
+  const accessToken = cookieStore.get("opensources_access_token")?.value;
+  const refreshToken = cookieStore.get("opensources_refresh_token")?.value;
+  const recentActivity = cookieStore.get("opensources_last_activity")?.value;
+  const persistentSession = cookieStore.get("opensources_persistent_session")?.value === "true";
   if (!accessToken) redirect(refreshToken && (recentActivity || persistentSession) ? "/api/auth/refresh?returnTo=/app" : "/login");
 
   const authenticatedRequest = {

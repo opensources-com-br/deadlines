@@ -12,8 +12,8 @@ type PlatformLayoutProps = {
 
 export default async function PlatformLayout({ children }: PlatformLayoutProps) {
   const cookieStore = await cookies();
-  const persistentSession = cookieStore.get("deadlines_persistent_session")?.value === "true";
-  const accessToken = cookieStore.get("deadlines_access_token")?.value;
+  const persistentSession = cookieStore.get("opensources_persistent_session")?.value === "true";
+  const accessToken = cookieStore.get("opensources_access_token")?.value;
   const fallback: UserPreference = { locale: "pt-BR", timezone: "America/Sao_Paulo", theme: "system", updatedAt: new Date(0).toISOString() };
   const preferences = accessToken ? await fetch(backendApiUrl("/api/v1/users/me/preferences"), {
     headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store",

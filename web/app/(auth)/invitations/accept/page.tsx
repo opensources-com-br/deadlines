@@ -8,7 +8,7 @@ type AcceptInvitationPageProps = {
 
 export default async function AcceptInvitationPage({ searchParams }: AcceptInvitationPageProps) {
   const { token } = await searchParams;
-  const authenticated = Boolean((await cookies()).get("deadlines_access_token")?.value);
+  const authenticated = Boolean((await cookies()).get("opensources_access_token")?.value);
   return (
     <AcceptInvitationScreen
       token={typeof token === "string" ? token : undefined}

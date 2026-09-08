@@ -5,7 +5,7 @@ import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import { CreateOrganizationScreen } from "@/features/organizations/presentation/CreateOrganizationScreen";
 
 export default async function CreateOrganizationPage() {
-  const accessToken = (await cookies()).get("deadlines_access_token")?.value;
+  const accessToken = (await cookies()).get("opensources_access_token")?.value;
   if (!accessToken) redirect("/login");
 
   const response = await fetch(backendApiUrl("/api/v1/organizations/current"), {
