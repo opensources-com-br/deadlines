@@ -26,6 +26,9 @@ import opensources.identity.users.AccountLifecycleService
 import opensources.identity.users.AccountPasswordVerifier
 import opensources.identity.users.ExposedAccountLifecycleRepository
 import opensources.identity.users.UserService
+import opensources.identity.users.UserRepository
+import opensources.identity.users.ActiveAccountOperations
+import opensources.identity.users.ActiveAccountService
 import opensources.identity.preferences.ExposedUserPreferenceRepository
 import opensources.identity.preferences.UserPreferenceOperations
 import opensources.identity.preferences.UserPreferenceService
@@ -120,7 +123,8 @@ fun main() {
 
         embeddedServer(Netty, port = config.http.port) {
             module(
-                userService,
+            userService,
+                userRepository,
                 authService,
                 tokenService,
                 emailVerificationService,
@@ -146,6 +150,7 @@ fun main() {
 
 fun Application.module(
     userService: UserService? = null,
+    userRepository: UserRepository? = null,
     authService: AuthOperations? = null,
     tokenService: TokenService? = null,
     emailVerification: EmailVerificationOperations? = null,
@@ -165,7 +170,7 @@ fun Application.module(
     abuseProtection: AuthenticationAbuseProtection = AuthenticationAbuseProtection(opensources.config.AbuseProtectionConfig()),
     readinessCheck: () -> Boolean = { true },
 ) {
-    configurePlugins(tokenService)
+    configurePlugins(tokenService, userRepository?.let(::ActiveAccountService))
     configureRoutes(
         userService,
         authService,

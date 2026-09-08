@@ -1,6 +1,7 @@
 package opensources.application
 
 import opensources.identity.auth.TokenService
+import opensources.identity.users.ActiveAccountOperations
 import opensources.shared.errors.ApiErrorBody
 import opensources.shared.errors.ApiErrorResponse
 import opensources.shared.errors.ApiException
@@ -34,7 +35,10 @@ import kotlinx.serialization.encodeToString
 import org.slf4j.event.Level
 import java.util.UUID
 
-fun Application.configurePlugins(tokenService: TokenService? = null) {
+fun Application.configurePlugins(
+    tokenService: TokenService? = null,
+    activeAccounts: ActiveAccountOperations? = null,
+) {
     intercept(ApplicationCallPipeline.Setup) {
         val requestId = call.request.headers[REQUEST_ID_HEADER]?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
         call.attributes.put(RequestIdKey, requestId)
@@ -83,7 +87,8 @@ fun Application.configurePlugins(tokenService: TokenService? = null) {
                 verifier(tokenService.verifier())
                 validate { credential ->
                     val subject = credential.payload.subject
-                    if (subject != null && runCatching { UUID.fromString(subject) }.isSuccess) {
+                    val userId = subject?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+                    if (userId != null && (activeAccounts == null || activeAccounts.isActive(userId))) {
                         JWTPrincipal(credential.payload)
                     } else {
                         null
