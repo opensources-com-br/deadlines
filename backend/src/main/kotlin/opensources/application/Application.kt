@@ -63,6 +63,8 @@ import opensources.shared.database.DatabaseFactory
 import opensources.shared.database.DatabaseQuery
 import io.ktor.server.application.Application
 import io.ktor.server.engine.embeddedServer
+import io.ktor.server.engine.applicationEnvironment
+import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.netty.Netty
 
 fun main() {
@@ -135,9 +137,18 @@ fun main() {
         val passwordResetService =
             PasswordResetService(credentialsRepository, emailTokens, emailService, passwordHasher, sessionRepository, config.email)
 
-        embeddedServer(Netty, port = config.http.port) {
+        embeddedServer(
+            Netty,
+            environment = applicationEnvironment {
+                this.config = MapApplicationConfig("ktor.deployment.port" to config.http.port.toString())
+            },
+            configure = {
+                requestReadTimeoutSeconds = config.http.requestReadTimeoutSeconds
+                responseWriteTimeoutSeconds = config.http.responseWriteTimeoutSeconds
+            },
+        ) {
             module(
-            userService,
+                userService,
                 userRepository,
                 authService,
                 tokenService,
