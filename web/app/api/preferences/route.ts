@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import type { UserPreference } from "@/features/platform/domain/user-preference";
 import { isAppLocale, localeCookieName } from "@/i18n/config";
+import { persistentCookieOptions } from "@/lib/cookies";
 
 async function forward(method: "GET" | "PATCH", body?: unknown) {
   const accessToken = (await cookies()).get("opensources_access_token")?.value;
@@ -19,7 +20,7 @@ async function forward(method: "GET" | "PATCH", body?: unknown) {
     const response = NextResponse.json(data, { status: backendResponse.status });
     if (backendResponse.ok && data) {
       const preferences = data as UserPreference;
-      const cookieOptions = { httpOnly: true, sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 365 };
+      const cookieOptions = persistentCookieOptions(60 * 60 * 24 * 365);
       if (isAppLocale(preferences.locale)) response.cookies.set(localeCookieName, preferences.locale, cookieOptions);
       response.cookies.set("opensources_timezone", preferences.timezone, cookieOptions);
       response.cookies.set("opensources_theme", preferences.theme, cookieOptions);
