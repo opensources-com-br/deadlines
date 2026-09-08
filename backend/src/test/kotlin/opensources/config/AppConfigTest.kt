@@ -26,6 +26,8 @@ class AppConfigTest {
         assertEquals(true, config.features.billingEnabled)
         assertEquals(EmailProvider.LOGGING, config.email.provider)
         assertEquals("http://localhost:3000", config.email.appBaseUrl)
+        assertEquals("opensources", config.product.name)
+        assertEquals(true, config.product.isModuleEnabled("billing"))
         assertEquals(604_800, config.email.invitationExpirationSeconds)
     }
 
@@ -51,6 +53,8 @@ class AppConfigTest {
                         "PASSWORD_RESET_EXPIRATION_SECONDS" to "300",
                         "INVITATION_EXPIRATION_SECONDS" to "600",
                         "FEATURE_BILLING_ENABLED" to "false",
+                        "PRODUCT_NAME" to "Example",
+                        "PRODUCT_ENABLED_MODULES" to "reports, exports",
                     ),
             )
 
@@ -70,6 +74,8 @@ class AppConfigTest {
         assertEquals(300, config.email.passwordResetExpirationSeconds)
         assertEquals(600, config.email.invitationExpirationSeconds)
         assertEquals(false, config.features.billingEnabled)
+        assertEquals("Example", config.product.name)
+        assertEquals(false, config.product.isModuleEnabled("billing"))
     }
 
     @Test

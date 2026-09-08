@@ -7,6 +7,7 @@ data class AppConfig(
     val abuseProtection: AbuseProtectionConfig,
     val features: FeatureConfig,
     val email: EmailConfig,
+    val product: ProductConfig,
 ) {
     companion object {
         fun fromEnvironment(environment: Map<String, String> = System.getenv()): AppConfig =
@@ -51,7 +52,7 @@ data class AppConfig(
                             EmailProvider.fromEnvironment(
                                 environment["EMAIL_PROVIDER"],
                                 environment["RESEND_API_KEY"]?.isNotBlank() == true,
-                            ),
+                    ),
                         from =
                             environment["EMAIL_FROM"]?.takeIf(String::isNotBlank)
                                 ?: environment["MAIL_FROM"]?.takeIf(String::isNotBlank)
@@ -67,6 +68,17 @@ data class AppConfig(
                         environment.positiveLong("PASSWORD_RESET_EXPIRATION_SECONDS", default = 3_600),
                     invitationExpirationSeconds =
                         environment.positiveLong("INVITATION_EXPIRATION_SECONDS", default = 604_800),
+                ),
+                product = ProductConfig(
+                    name = environment["PRODUCT_NAME"]?.takeIf(String::isNotBlank) ?: "opensources",
+                    description = environment["PRODUCT_DESCRIPTION"]?.takeIf(String::isNotBlank) ?: "A reusable SaaS foundation",
+                    logo = environment["PRODUCT_LOGO"]?.takeIf(String::isNotBlank) ?: "/opensources-mark.png",
+                    defaultLocale = environment["PRODUCT_DEFAULT_LOCALE"]?.takeIf(String::isNotBlank) ?: "en",
+                    defaultTimezone = environment["PRODUCT_DEFAULT_TIMEZONE"]?.takeIf(String::isNotBlank) ?: "UTC",
+                    supportEmail = environment["PRODUCT_SUPPORT_EMAIL"]?.takeIf(String::isNotBlank) ?: "support@opensources.local",
+                    applicationUrl = environment["PRODUCT_APPLICATION_URL"]?.takeIf(String::isNotBlank)
+                        ?: environment["APP_BASE_URL"]?.takeIf(String::isNotBlank) ?: "http://localhost:3000",
+                    enabledModules = environment.csv("PRODUCT_ENABLED_MODULES", default = listOf("billing")).toSet(),
                 ),
             )
     }
