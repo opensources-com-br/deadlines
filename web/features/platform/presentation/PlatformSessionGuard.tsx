@@ -17,6 +17,8 @@ export function PlatformSessionGuard({ persistentSession }: { persistentSession:
     }
 
     window.addEventListener("pageshow", revalidateRestoredPage);
+    const handleExpiredSession = () => window.location.replace("/login");
+    window.addEventListener("api:session-expired", handleExpiredSession);
 
     let refreshing = false;
     let lastActivityAt = Date.now();
@@ -71,6 +73,7 @@ export function PlatformSessionGuard({ persistentSession }: { persistentSession:
     activityEvents.forEach((event) => window.addEventListener(event, recordActivity, { passive: true }));
     return () => {
       window.removeEventListener("pageshow", revalidateRestoredPage);
+      window.removeEventListener("api:session-expired", handleExpiredSession);
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       activityEvents.forEach((event) => window.removeEventListener(event, recordActivity));
