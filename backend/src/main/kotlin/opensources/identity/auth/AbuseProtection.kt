@@ -7,6 +7,7 @@ import java.time.Clock
 import java.time.Instant
 import java.util.ArrayDeque
 import java.util.concurrent.ConcurrentHashMap
+import org.slf4j.LoggerFactory
 
 class RateLimitExceededException : ApiException(
     status = 429,
@@ -105,6 +106,7 @@ class AuthenticationAbuseProtection(
         val now = clock.instant()
         loginAttempts.deleteBefore(now.minusSeconds(config.loginLockoutMaxSeconds))
         loginAttempts.record(LoginAttempt(hash(normalizeEmail(email)), hash(ipAddress.orEmpty()), now, successful))
+        logger.info("authentication_event action=login outcome={}", if (successful) "success" else "failure")
     }
 
     private fun rateLimitKey(route: String, subject: String, value: String) = hash("$route:$subject:${hash(value)}")
@@ -113,4 +115,8 @@ class AuthenticationAbuseProtection(
 
     private fun hash(value: String): String =
         MessageDigest.getInstance("SHA-256").digest(value.toByteArray()).joinToString("") { "%02x".format(it) }
+
+    private companion object {
+        val logger = LoggerFactory.getLogger(AuthenticationAbuseProtection::class.java)
+    }
 }
