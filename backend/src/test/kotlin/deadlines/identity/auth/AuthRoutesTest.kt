@@ -1,6 +1,7 @@
 package deadlines.identity.auth
 
 import deadlines.application.module
+import deadlines.config.AbuseProtectionConfig
 import deadlines.config.AuthConfig
 import deadlines.identity.users.UserProfileResponse
 import deadlines.identity.users.UserResponse
@@ -77,6 +78,32 @@ class AuthRoutesTest {
             assertEquals(HttpStatusCode.OK, response.status)
             assertEquals("new-password-123", auth.changedPassword?.newPassword)
         }
+
+    @Test
+    fun `limits repeated failed login attempts`() =
+        testApplication {
+            val protection =
+                AuthenticationAbuseProtection(
+                    AbuseProtectionConfig(
+                        rateLimitWindowSeconds = 60,
+                        rateLimitMaxRequests = 10,
+                        loginFailureThreshold = 1,
+                        loginLockoutBaseSeconds = 60,
+                        loginLockoutMaxSeconds = 60,
+                    ),
+                )
+            application { module(authService = FailingAuthOperations(), tokenService = tokenService, abuseProtection = protection) }
+
+            repeat(2) { attempt ->
+                val response =
+                    client.post("/api/v1/auth/login") {
+                        contentType(ContentType.Application.Json)
+                        header("X-Device-Id", UUID.randomUUID().toString())
+                        setBody("""{"email":"user@example.com","password":"wrong-password"}""")
+                    }
+                assertEquals(if (attempt == 0) HttpStatusCode.Unauthorized else HttpStatusCode.TooManyRequests, response.status)
+            }
+        }
 }
 
 private class FakeAuthOperations : AuthOperations {
@@ -102,4 +129,18 @@ private class FakeAuthOperations : AuthOperations {
         changedPassword = request
         return response
     }
+}
+
+private class FailingAuthOperations : AuthOperations {
+    override suspend fun register(request: RegisterRequest, context: SessionContext): RegistrationResponse = error("not used")
+
+    override suspend fun login(request: LoginRequest, context: SessionContext): AuthResponse = throw InvalidCredentialsException()
+
+    override suspend fun refresh(refreshToken: String, context: SessionContext): AuthResponse = error("not used")
+
+    override suspend fun logout(refreshToken: String) = Unit
+
+    override suspend fun me(userId: UUID): deadlines.identity.users.UserResponse = error("not used")
+
+    override suspend fun changePassword(userId: UUID, request: ChangePasswordRequest, context: SessionContext): AuthResponse = error("not used")
 }
