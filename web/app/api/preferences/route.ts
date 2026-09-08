@@ -6,7 +6,7 @@ import type { UserPreference } from "@/features/platform/domain/user-preference"
 import { isAppLocale, localeCookieName } from "@/i18n/config";
 
 async function forward(method: "GET" | "PATCH", body?: unknown) {
-  const accessToken = (await cookies()).get("deadlines_access_token")?.value;
+  const accessToken = (await cookies()).get("opensources_access_token")?.value;
   if (!accessToken) return NextResponse.json({ error: { code: "UNAUTHORIZED", message: "Authentication is required." } }, { status: 401 });
   try {
     const backendResponse = await fetch(backendApiUrl("/api/v1/users/me/preferences"), {
@@ -21,8 +21,8 @@ async function forward(method: "GET" | "PATCH", body?: unknown) {
       const preferences = data as UserPreference;
       const cookieOptions = { httpOnly: true, sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 365 };
       if (isAppLocale(preferences.locale)) response.cookies.set(localeCookieName, preferences.locale, cookieOptions);
-      response.cookies.set("deadlines_timezone", preferences.timezone, cookieOptions);
-      response.cookies.set("deadlines_theme", preferences.theme, cookieOptions);
+      response.cookies.set("opensources_timezone", preferences.timezone, cookieOptions);
+      response.cookies.set("opensources_theme", preferences.theme, cookieOptions);
     }
     return response;
   } catch {

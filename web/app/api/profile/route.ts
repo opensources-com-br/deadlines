@@ -3,12 +3,12 @@ import { NextResponse } from "next/server";
 
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 
-const accessCookieName = "deadlines_access_token";
+const accessCookieName = "opensources_access_token";
 const sessionCookieNames = [
   accessCookieName,
-  "deadlines_refresh_token",
-  "deadlines_last_activity",
-  "deadlines_persistent_session",
+  "opensources_refresh_token",
+  "opensources_last_activity",
+  "opensources_persistent_session",
 ];
 
 export async function DELETE(request: Request) {

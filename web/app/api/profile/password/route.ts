@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import { deviceCookieName, newDeviceId, setDeviceCookie } from "@/features/identity/infrastructure/device-session";
 
-const accessCookieName = "deadlines_access_token";
-const refreshCookieName = "deadlines_refresh_token";
-const persistentCookieName = "deadlines_persistent_session";
+const accessCookieName = "opensources_access_token";
+const refreshCookieName = "opensources_refresh_token";
+const persistentCookieName = "opensources_persistent_session";
 
 export async function PATCH(request: Request) {
   const cookieStore = await cookies();

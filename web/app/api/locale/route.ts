@@ -13,7 +13,7 @@ export async function PUT(request: Request) {
     );
   }
 
-  const accessToken = (await cookies()).get("deadlines_access_token")?.value;
+  const accessToken = (await cookies()).get("opensources_access_token")?.value;
   if (!accessToken) {
     return NextResponse.json({ error: { code: "UNAUTHORIZED", message: "Authentication is required." } }, { status: 401 });
   }
