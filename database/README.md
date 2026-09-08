@@ -1,6 +1,6 @@
-# Deadlines Database
+# opensources Database
 
-This directory contains the shared PostgreSQL schema resources for Deadlines. The schema is managed exclusively through versioned Flyway migrations; the application does not create or update tables automatically through an ORM.
+This directory contains the shared PostgreSQL schema resources for opensources. The schema is managed exclusively through versioned Flyway migrations; the application does not create or update tables automatically through an ORM.
 
 ## Structure
 
@@ -33,7 +33,7 @@ docker compose ps postgres
 Connect to the local database with `psql` inside the container:
 
 ```bash
-docker compose exec postgres psql -U deadlines -d deadlines
+docker compose exec postgres psql -U opensources -d opensources
 ```
 
 The default local connection is available only on `127.0.0.1:5432`.
