@@ -22,6 +22,7 @@ data class SessionContext(
 interface AuthOperations {
     suspend fun register(request: RegisterRequest, context: SessionContext): RegistrationResponse
     suspend fun login(request: LoginRequest, context: SessionContext): AuthResponse
+    suspend fun reactivate(request: ReactivateAccountRequest, context: SessionContext): AuthResponse
     suspend fun refresh(refreshToken: String, context: SessionContext): AuthResponse
     suspend fun logout(refreshToken: String)
     suspend fun me(userId: UUID): opensources.identity.users.UserResponse
@@ -71,6 +72,18 @@ class AuthService(
         if (!activeAccounts.isActive(credentials.user.id)) throw InvalidCredentialsException()
 
         return createSession(credentials.user, context)
+    }
+
+    override suspend fun reactivate(request: ReactivateAccountRequest, context: SessionContext): AuthResponse {
+        val credentials = credentials.findByEmail(request.email.trim().lowercase()) ?: throw InvalidCredentialsException()
+        if (!passwordHasher.verify(request.password, credentials.passwordHash)) throw InvalidCredentialsException()
+        val user = credentials.user
+        if (user.status != UserStatus.DISABLED || user.emailVerifiedAt == null) throw InvalidCredentialsException()
+
+        val now = clock.instant()
+        val reactivated = users.update(user.copy(status = UserStatus.ACTIVE, disabledAt = null, updatedAt = now))
+        sessions.revokeAll(user.id, now)
+        return createSession(reactivated, context)
     }
 
     override suspend fun refresh(refreshToken: String, context: SessionContext): AuthResponse {

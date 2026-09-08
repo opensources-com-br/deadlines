@@ -122,6 +122,7 @@ private class FakeAuthOperations : AuthOperations {
 
     override suspend fun register(request: RegisterRequest, context: SessionContext) = RegistrationResponse(user)
     override suspend fun login(request: LoginRequest, context: SessionContext) = response
+    override suspend fun reactivate(request: ReactivateAccountRequest, context: SessionContext) = response
     override suspend fun refresh(refreshToken: String, context: SessionContext) = response
     override suspend fun logout(refreshToken: String) = Unit
     override suspend fun me(userId: UUID) = user
@@ -135,6 +136,8 @@ private class FailingAuthOperations : AuthOperations {
     override suspend fun register(request: RegisterRequest, context: SessionContext): RegistrationResponse = error("not used")
 
     override suspend fun login(request: LoginRequest, context: SessionContext): AuthResponse = throw InvalidCredentialsException()
+
+    override suspend fun reactivate(request: ReactivateAccountRequest, context: SessionContext): AuthResponse = error("not used")
 
     override suspend fun refresh(refreshToken: String, context: SessionContext): AuthResponse = error("not used")
 

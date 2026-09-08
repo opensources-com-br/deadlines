@@ -35,6 +35,12 @@ fun Route.authRoutes(auth: AuthOperations, abuseProtection: AuthenticationAbuseP
                 throw error
             }
         }
+        post("/reactivate") {
+            val request = call.receive<ReactivateAccountRequest>()
+            val context = call.sessionContext()
+            abuseProtection.checkRateLimit("reactivate", context.ipAddress, request.email)
+            call.respond(auth.reactivate(request, context))
+        }
         post("/refresh") {
             val request = call.receive<RefreshTokenRequest>()
             abuseProtection.checkRateLimit("refresh", call.sessionContext().ipAddress)
