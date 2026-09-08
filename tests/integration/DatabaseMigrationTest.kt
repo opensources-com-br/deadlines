@@ -355,7 +355,7 @@ class DatabaseMigrationTest {
                 val query = DatabaseQuery(database.database)
                 val users = ExposedUserRepository(query)
                 val organizations = ExposedOrganizationRepository(query)
-                val now = Instant.now()
+                val now = Instant.now().truncatedTo(ChronoUnit.MICROS)
                 val user = testUser("organization-owner", now)
                 val context = organizationContext(user.id, "acme-${UUID.randomUUID()}", now)
                 users.create(user)
