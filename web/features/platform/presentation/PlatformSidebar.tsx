@@ -57,8 +57,8 @@ export function PlatformSidebar({ activeItem, user, onSignOut, isSigningOut }: P
           aria-label={t("home")}
           className="flex h-8 items-center justify-center gap-2 rounded-md px-2 text-base font-semibold tracking-tight outline-hidden hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:px-0"
         >
-          <Image className="size-6 shrink-0 invert" src="/deadlines-mark.png" alt="Deadlines" width={24} height={24} priority />
-          <span className="group-data-[collapsible=icon]:hidden">Deadlines</span>
+          <Image className="size-6 shrink-0" src="/opensources-mark.png" alt="opensources" width={24} height={24} priority />
+          <span className="group-data-[collapsible=icon]:hidden">opensources</span>
         </Link>
       </SidebarHeader>
       <SidebarContent />
