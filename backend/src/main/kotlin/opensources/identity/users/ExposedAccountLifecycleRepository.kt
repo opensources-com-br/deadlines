@@ -36,7 +36,7 @@ class ExposedAccountLifecycleRepository(
         val updated = LifecycleUsersTable.update({
             (LifecycleUsersTable.id eq userId) and (LifecycleUsersTable.status eq "active")
         }) {
-            it[email] = "deleted-$userId@internal.invalid"
+            it[email] = "deleted-$userId@opensources.invalid"
             it[status] = "deleted"
             it[passwordHash] = null
             it[disabledAt] = timestamp

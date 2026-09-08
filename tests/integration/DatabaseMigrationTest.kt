@@ -79,7 +79,7 @@ class DatabaseMigrationTest {
                 ).use { statement ->
                     statement.executeQuery().use { result ->
                         result.next()
-                        assertEquals(21, result.getInt(1))
+                        assertEquals(22, result.getInt(1))
                     }
                 }
             }
@@ -243,7 +243,7 @@ class DatabaseMigrationTest {
 
             val anonymized = users.findById(deleted.id)
             assertEquals(UserStatus.DELETED, anonymized?.status)
-            assertEquals("deleted-${deleted.id}@internal.invalid", anonymized?.email)
+            assertEquals("deleted-${deleted.id}@opensources.invalid", anonymized?.email)
             assertEquals("Deleted", anonymized?.profile?.firstName)
             assertEquals("User", anonymized?.profile?.lastName)
             assertNull(credentials.findByUserId(deleted.id))
