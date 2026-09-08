@@ -30,6 +30,8 @@ backend/
 
 Each feature keeps its models, DTOs, services, repositories, routes, and errors close together.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the core, optional-module, and product-composition boundaries.
+
 ## Requirements
 
 - Java 21
