@@ -86,12 +86,12 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
       />
       <SidebarInset className="min-h-svh bg-background text-foreground">
       <header className="w-full border-b border-border py-4">
-        <div className="flex w-full items-center px-[30px]">
+        <div className="flex w-full items-center pl-[14px] pr-[30px]">
           <SidebarTrigger variant="ghost" aria-label={tPublic("toggleSidebar")} />
         </div>
       </header>
 
-      <section className="w-full px-[30px] pb-[34px] pt-[22px]">
+      <section className="w-full pl-[14px] pr-[30px] pb-[34px] pt-[22px]">
         <h1 className="sr-only">{t("settings")}</h1>
         <Tabs value={activeGroup.key}>
           <TabsList aria-label={t("settings")}>
