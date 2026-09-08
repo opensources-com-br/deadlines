@@ -20,6 +20,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import java.util.UUID
 
 class UserRoutesTest {
@@ -113,11 +114,10 @@ class UserRoutesTest {
             val response = client.get("/api/v1/users/not-a-uuid")
 
             assertEquals(HttpStatusCode.UnprocessableEntity, response.status)
-            assertEquals(
-                "{\"error\":{\"code\":\"VALIDATION_ERROR\",\"message\":\"Invalid user data\"," +
-                    "\"details\":{\"id\":\"must be a valid UUID\"}}}",
-                response.bodyAsText(),
-            )
+            val error = Json.parseToJsonElement(response.bodyAsText()).jsonObject.getValue("error").jsonObject
+            assertEquals("VALIDATION_ERROR", error.getValue("code").jsonPrimitive.content)
+            assertEquals("must be a valid UUID", error.getValue("fields").jsonObject.getValue("id").jsonPrimitive.content)
+            assertTrue(error.getValue("requestId").jsonPrimitive.content.isNotBlank())
         }
 
     @Test
