@@ -27,8 +27,8 @@ data class AppConfig(
                     jwtSecret = environment.required("JWT_SECRET").also {
                         require(it.length >= 32) { "JWT_SECRET must contain at least 32 characters" }
                     },
-                    jwtIssuer = environment["JWT_ISSUER"] ?: "deadlines",
-                    jwtAudience = environment["JWT_AUDIENCE"] ?: "deadlines-api",
+                    jwtIssuer = environment["JWT_ISSUER"] ?: "opensources",
+                    jwtAudience = environment["JWT_AUDIENCE"] ?: "opensources-api",
                     accessTokenExpirationSeconds =
                         environment.positiveLong("JWT_ACCESS_EXPIRATION_SECONDS", default = 900),
                     refreshTokenExpirationSeconds =
