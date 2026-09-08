@@ -19,6 +19,8 @@ class AppConfigTest {
 
         assertEquals(8080, config.http.port)
         assertEquals(listOf("http://localhost:3000"), config.http.allowedCorsOrigins)
+        assertEquals(30, config.http.requestReadTimeoutSeconds)
+        assertEquals(30, config.http.responseWriteTimeoutSeconds)
         assertEquals(10, config.database.maximumPoolSize)
         assertEquals("filesystem:../database/migrations", config.database.migrationsLocation)
         assertEquals(900, config.auth.accessTokenExpirationSeconds)
@@ -39,6 +41,8 @@ class AppConfigTest {
                     mapOf(
                         "PORT" to "9090",
                         "CORS_ALLOWED_ORIGINS" to "https://app.example.com, https://admin.example.com",
+                        "HTTP_REQUEST_READ_TIMEOUT_SECONDS" to "15",
+                        "HTTP_RESPONSE_WRITE_TIMEOUT_SECONDS" to "20",
                         "DATABASE_POOL_SIZE" to "20",
                         "MIGRATIONS_LOCATION" to "filesystem:/database/migrations",
                         "JWT_ISSUER" to "test-issuer",
@@ -60,6 +64,8 @@ class AppConfigTest {
 
         assertEquals(9090, config.http.port)
         assertEquals(listOf("https://app.example.com", "https://admin.example.com"), config.http.allowedCorsOrigins)
+        assertEquals(15, config.http.requestReadTimeoutSeconds)
+        assertEquals(20, config.http.responseWriteTimeoutSeconds)
         assertEquals(20, config.database.maximumPoolSize)
         assertEquals("filesystem:/database/migrations", config.database.migrationsLocation)
         assertEquals("test-issuer", config.auth.jwtIssuer)
