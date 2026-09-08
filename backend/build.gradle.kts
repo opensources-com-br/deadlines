@@ -16,7 +16,7 @@ kotlin {
 }
 
 application {
-    mainClass = "deadlines.application.ApplicationKt"
+    mainClass = "opensources.application.ApplicationKt"
 }
 
 dependencies {

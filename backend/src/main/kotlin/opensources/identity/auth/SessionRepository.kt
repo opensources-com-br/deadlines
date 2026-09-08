@@ -1,0 +1,174 @@
+package opensources.identity.auth
+
+import opensources.shared.database.DatabaseQuery
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.java.javaUUID
+import org.jetbrains.exposed.v1.javatime.timestampWithTimeZone
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.upsert
+import java.time.Instant
+import java.time.ZoneOffset
+import java.util.UUID
+
+data class Session(
+    val id: UUID,
+    val userId: UUID,
+    val refreshTokenHash: String,
+    val userAgent: String?,
+    val ipAddress: String?,
+    val expiresAt: Instant,
+    val createdAt: Instant,
+    val deviceId: UUID = id,
+    val lastSeenAt: Instant = createdAt,
+)
+
+interface SessionRepository {
+    suspend fun create(session: Session)
+
+    suspend fun findActive(refreshTokenHash: String, now: Instant): Session?
+
+    suspend fun findByDevice(userId: UUID, deviceId: UUID): Session?
+
+    suspend fun rotate(currentHash: String, replacement: Session, now: Instant): Boolean
+
+    suspend fun revoke(refreshTokenHash: String, now: Instant): Boolean
+
+    suspend fun revokeAll(userId: UUID, now: Instant): Int
+
+    suspend fun listActive(userId: UUID, now: Instant): List<Session>
+
+    suspend fun revoke(userId: UUID, sessionId: UUID, now: Instant): Boolean
+}
+
+class ExposedSessionRepository(
+    private val query: DatabaseQuery,
+) : SessionRepository {
+    override suspend fun create(session: Session) {
+        query { insert(session) }
+    }
+
+    override suspend fun findActive(refreshTokenHash: String, now: Instant): Session? =
+        query {
+            SessionsTable.selectAll()
+                .where {
+                    (SessionsTable.refreshTokenHash eq refreshTokenHash) and
+                        SessionsTable.revokedAt.isNull() and
+                        (SessionsTable.expiresAt greater now.atOffset(ZoneOffset.UTC))
+                }
+                .singleOrNull()
+                ?.toSession()
+        }
+
+    override suspend fun findByDevice(userId: UUID, deviceId: UUID): Session? =
+        query {
+            SessionsTable.selectAll()
+                .where { (SessionsTable.userId eq userId) and (SessionsTable.deviceId eq deviceId) }
+                .singleOrNull()
+                ?.toSession()
+        }
+
+    override suspend fun rotate(currentHash: String, replacement: Session, now: Instant): Boolean =
+        query {
+            SessionsTable.update({
+                (SessionsTable.refreshTokenHash eq currentHash) and
+                    SessionsTable.revokedAt.isNull() and
+                    (SessionsTable.expiresAt greater now.atOffset(ZoneOffset.UTC))
+            }) {
+                it[refreshTokenHash] = replacement.refreshTokenHash
+                it[userAgent] = replacement.userAgent
+                it[ipAddress] = replacement.ipAddress
+                it[expiresAt] = replacement.expiresAt.atOffset(ZoneOffset.UTC)
+                it[lastSeenAt] = replacement.lastSeenAt.atOffset(ZoneOffset.UTC)
+            } == 1
+        }
+
+    override suspend fun revoke(refreshTokenHash: String, now: Instant): Boolean =
+        query { revokeActive(refreshTokenHash, now) == 1 }
+
+    override suspend fun revokeAll(userId: UUID, now: Instant): Int =
+        query {
+            SessionsTable.update({ (SessionsTable.userId eq userId) and SessionsTable.revokedAt.isNull() }) {
+                it[revokedAt] = now.atOffset(ZoneOffset.UTC)
+            }
+        }
+
+    override suspend fun listActive(userId: UUID, now: Instant): List<Session> =
+        query {
+            SessionsTable.selectAll()
+                .where {
+                    (SessionsTable.userId eq userId) and
+                        SessionsTable.revokedAt.isNull() and
+                        (SessionsTable.expiresAt greater now.atOffset(ZoneOffset.UTC))
+                }
+                .orderBy(SessionsTable.createdAt to SortOrder.DESC)
+                .map { it.toSession() }
+        }
+
+    override suspend fun revoke(userId: UUID, sessionId: UUID, now: Instant): Boolean =
+        query {
+            SessionsTable.update({
+                (SessionsTable.id eq sessionId) and
+                    (SessionsTable.userId eq userId) and
+                    SessionsTable.revokedAt.isNull()
+            }) {
+                it[revokedAt] = now.atOffset(ZoneOffset.UTC)
+            } == 1
+        }
+
+    private fun revokeActive(refreshTokenHash: String, now: Instant): Int =
+        SessionsTable.update({
+            (SessionsTable.refreshTokenHash eq refreshTokenHash) and SessionsTable.revokedAt.isNull()
+        }) {
+            it[revokedAt] = now.atOffset(ZoneOffset.UTC)
+        }
+
+    private fun insert(session: Session) {
+        SessionsTable.upsert(SessionsTable.userId, SessionsTable.deviceId) {
+            it[id] = session.id
+            it[userId] = session.userId
+            it[refreshTokenHash] = session.refreshTokenHash
+            it[userAgent] = session.userAgent
+            it[ipAddress] = session.ipAddress
+            it[expiresAt] = session.expiresAt.atOffset(ZoneOffset.UTC)
+            it[createdAt] = session.createdAt.atOffset(ZoneOffset.UTC)
+            it[deviceId] = session.deviceId
+            it[lastSeenAt] = session.lastSeenAt.atOffset(ZoneOffset.UTC)
+            it[revokedAt] = null
+        }
+    }
+}
+
+private object SessionsTable : Table("sessions") {
+    val id = javaUUID("id")
+    val userId = javaUUID("user_id")
+    val refreshTokenHash = char("refresh_token_hash", 64)
+    val userAgent = text("user_agent").nullable()
+    val ipAddress = varchar("ip_address", 45).nullable()
+    val expiresAt = timestampWithTimeZone("expires_at")
+    val createdAt = timestampWithTimeZone("created_at")
+    val deviceId = javaUUID("device_id")
+    val lastSeenAt = timestampWithTimeZone("last_seen_at")
+    val revokedAt = timestampWithTimeZone("revoked_at").nullable()
+
+    override val primaryKey = PrimaryKey(id)
+}
+
+private fun org.jetbrains.exposed.v1.core.ResultRow.toSession() =
+    Session(
+        id = this[SessionsTable.id],
+        userId = this[SessionsTable.userId],
+        refreshTokenHash = this[SessionsTable.refreshTokenHash],
+        userAgent = this[SessionsTable.userAgent],
+        ipAddress = this[SessionsTable.ipAddress],
+        expiresAt = this[SessionsTable.expiresAt].toInstant(),
+        createdAt = this[SessionsTable.createdAt].toInstant(),
+        deviceId = this[SessionsTable.deviceId],
+        lastSeenAt = this[SessionsTable.lastSeenAt].toInstant(),
+    )
