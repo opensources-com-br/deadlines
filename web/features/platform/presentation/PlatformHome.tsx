@@ -25,6 +25,7 @@ import type { OrganizationInvitation, OrganizationMember } from "@/features/team
 import { InvitationsCard } from "@/features/team/presentation/InvitationsCard";
 import { MembersCard } from "@/features/team/presentation/MembersCard";
 import { PlansCard } from "@/features/plans/presentation/PlansCard";
+import { billingEnabled } from "@/lib/features";
 
 type PlatformHomeProps = {
   user: UserProfile;
@@ -53,7 +54,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
   };
   const workspaceItems: Array<{ key: SettingsSection; label: string }> = [
     { key: "organization", label: t("general") },
-    { key: "plans", label: t("plans") },
+    ...(billingEnabled ? [{ key: "plans" as const, label: t("plans") }] : []),
     { key: "team", label: t("users") },
   ];
   const accessItems: Array<{ key: SettingsSection; label: string }> = [
@@ -135,7 +136,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{details.description}</p>
         </div>
         {activeSettingsSection === "organization" && organization ? <Can permission={platformPermission.organizationRead}><OrganizationCard organization={organization} /></Can> : null}
-        {activeSettingsSection === "plans" && <Can permission={platformPermission.billingRead}><PlansCard /></Can>}
+        {billingEnabled && activeSettingsSection === "plans" && <Can permission={platformPermission.billingRead}><PlansCard /></Can>}
         {activeSettingsSection === "team" && <Can permission={platformPermission.membersRead}><MembersCard initialMembers={members} roles={roles} /></Can>}
         {activeSettingsSection === "team" && <Can permission={platformPermission.membersInvite}><InvitationsCard initialInvitations={invitations} roles={roles} /></Can>}
         {activeSettingsSection === "access-control" && <Can permission={platformPermission.permissionsRead}><PermissionsCard

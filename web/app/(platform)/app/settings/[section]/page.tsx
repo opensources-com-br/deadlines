@@ -13,6 +13,7 @@ import type { UserProfile } from "@/features/platform/domain/user-profile";
 import { PlatformHome } from "@/features/platform/presentation/PlatformHome";
 import type { SettingsSection } from "@/features/platform/presentation/PlatformSidebar";
 import type { OrganizationInvitation, OrganizationMember, TeamList } from "@/features/team/domain/team";
+import { billingEnabled } from "@/lib/features";
 
 const settingsSections = new Set<SettingsSection>([
   "organization",
@@ -31,6 +32,7 @@ type SettingsSectionPageProps = {
 export default async function SettingsSectionPage({ params }: SettingsSectionPageProps) {
   const { section } = await params;
   if (!settingsSections.has(section as SettingsSection)) notFound();
+  if (!billingEnabled && section === "plans") notFound();
 
   const activeSection = section as SettingsSection;
   const returnTo = `/app/settings/${activeSection}`;

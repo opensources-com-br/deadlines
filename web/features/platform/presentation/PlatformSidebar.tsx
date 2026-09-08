@@ -28,6 +28,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import type { UserProfile } from "@/features/platform/domain/user-profile";
+import { billingEnabled } from "@/lib/features";
 
 type PlatformSidebarProps = {
   activeItem?: PlatformNavigationItem;
@@ -125,10 +126,10 @@ export function PlatformSidebar({ activeItem, user, onSignOut, isSigningOut }: P
                     <CircleUserRound />
                     {t("account")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem render={<Link href="/app/settings/plans" />}>
+                  {billingEnabled ? <DropdownMenuItem render={<Link href="/app/settings/plans" />}>
                     <CreditCard />
                     {t("plans")}
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> : null}
                   <DropdownMenuItem render={<Link href="/app/settings/notifications" />}>
                     <Bell />
                     {t("notifications")}
