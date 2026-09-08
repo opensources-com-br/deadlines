@@ -50,6 +50,7 @@ interface LoginAttemptStore {
     suspend fun record(attempt: LoginAttempt)
     suspend fun recentConsecutiveFailures(emailHash: String, ipHash: String, since: Instant): List<LoginAttempt>
     suspend fun deleteBefore(before: Instant)
+    suspend fun clearFailures(emailHash: String, ipHash: String)
 }
 
 class LocalLoginAttemptStore : LoginAttemptStore {
@@ -68,6 +69,11 @@ class LocalLoginAttemptStore : LoginAttemptStore {
     override suspend fun deleteBefore(before: Instant) = synchronized(attempts) {
         attempts.values.forEach { entries -> while (entries.firstOrNull()?.attemptedAt?.isBefore(before) == true) entries.removeFirst() }
         attempts.entries.removeIf { it.value.isEmpty() }
+        Unit
+    }
+
+    override suspend fun clearFailures(emailHash: String, ipHash: String) = synchronized(attempts) {
+        attempts["$emailHash:$ipHash"]?.removeIf { !it.successful }
         Unit
     }
 }
@@ -105,7 +111,10 @@ class AuthenticationAbuseProtection(
     suspend fun recordLogin(email: String, ipAddress: String?, successful: Boolean) {
         val now = clock.instant()
         loginAttempts.deleteBefore(now.minusSeconds(config.loginLockoutMaxSeconds))
-        loginAttempts.record(LoginAttempt(hash(normalizeEmail(email)), hash(ipAddress.orEmpty()), now, successful))
+        val emailHash = hash(normalizeEmail(email))
+        val ipHash = hash(ipAddress.orEmpty())
+        if (successful) loginAttempts.clearFailures(emailHash, ipHash)
+        else loginAttempts.record(LoginAttempt(emailHash, ipHash, now, successful))
         logger.info("authentication_event action=login outcome={}", if (successful) "success" else "failure")
     }
 

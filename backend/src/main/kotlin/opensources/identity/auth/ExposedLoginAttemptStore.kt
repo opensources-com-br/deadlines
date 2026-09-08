@@ -8,6 +8,7 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.java.javaUUID
@@ -21,6 +22,16 @@ class ExposedLoginAttemptStore(
 ) : LoginAttemptStore {
     override suspend fun deleteBefore(before: Instant) {
         query { AuthenticationLoginAttempts.deleteWhere { attemptedAt less before.atOffset(ZoneOffset.UTC) } }
+    }
+
+    override suspend fun clearFailures(emailHash: String, ipHash: String) {
+        query {
+            AuthenticationLoginAttempts.deleteWhere {
+                (AuthenticationLoginAttempts.emailHash eq emailHash) and
+                    (AuthenticationLoginAttempts.ipHash eq ipHash) and
+                    (AuthenticationLoginAttempts.successful eq false)
+            }
+        }
     }
 
     override suspend fun record(attempt: LoginAttempt) {
