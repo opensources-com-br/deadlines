@@ -18,6 +18,7 @@ class AppConfigTest {
         val config = AppConfig.fromEnvironment(requiredEnvironment)
 
         assertEquals(8080, config.http.port)
+        assertEquals(listOf("http://localhost:3000"), config.http.allowedCorsOrigins)
         assertEquals(10, config.database.maximumPoolSize)
         assertEquals("filesystem:../database/migrations", config.database.migrationsLocation)
         assertEquals(900, config.auth.accessTokenExpirationSeconds)
@@ -35,6 +36,7 @@ class AppConfigTest {
                 requiredEnvironment +
                     mapOf(
                         "PORT" to "9090",
+                        "CORS_ALLOWED_ORIGINS" to "https://app.example.com, https://admin.example.com",
                         "DATABASE_POOL_SIZE" to "20",
                         "MIGRATIONS_LOCATION" to "filesystem:/database/migrations",
                         "JWT_ISSUER" to "test-issuer",
@@ -53,6 +55,7 @@ class AppConfigTest {
             )
 
         assertEquals(9090, config.http.port)
+        assertEquals(listOf("https://app.example.com", "https://admin.example.com"), config.http.allowedCorsOrigins)
         assertEquals(20, config.database.maximumPoolSize)
         assertEquals("filesystem:/database/migrations", config.database.migrationsLocation)
         assertEquals("test-issuer", config.auth.jwtIssuer)

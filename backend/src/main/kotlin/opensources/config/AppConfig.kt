@@ -15,6 +15,7 @@ data class AppConfig(
                     port = environment.positiveInt("PORT", default = 8080).also {
                         require(it <= 65_535) { "PORT must be between 1 and 65535" }
                     },
+                    allowedCorsOrigins = environment.csv("CORS_ALLOWED_ORIGINS", default = listOf("http://localhost:3000")),
                 ),
                 database = DatabaseConfig(
                     url = environment.required("DATABASE_URL"),
@@ -73,6 +74,7 @@ data class AppConfig(
 
 data class HttpConfig(
     val port: Int,
+    val allowedCorsOrigins: List<String> = listOf("http://localhost:3000"),
 )
 
 data class DatabaseConfig(
@@ -168,3 +170,7 @@ private fun Map<String, String>.boolean(name: String, default: Boolean): Boolean
             else -> throw IllegalArgumentException("$name must be true or false")
         }
     } ?: default
+
+private fun Map<String, String>.csv(name: String, default: List<String>): List<String> =
+    get(name)?.split(',')?.map(String::trim)?.filter(String::isNotEmpty)?.distinct()?.takeIf(List<String>::isNotEmpty)
+        ?: default
