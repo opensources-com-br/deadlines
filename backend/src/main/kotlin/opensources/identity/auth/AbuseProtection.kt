@@ -40,7 +40,7 @@ data class LoginAttempt(
 
 interface LoginAttemptStore {
     suspend fun record(attempt: LoginAttempt)
-    suspend fun recentConsecutiveFailures(key: String, since: Instant): List<LoginAttempt>
+    suspend fun recentConsecutiveFailures(emailHash: String, ipHash: String, since: Instant): List<LoginAttempt>
 }
 
 class LocalLoginAttemptStore : LoginAttemptStore {
@@ -50,8 +50,8 @@ class LocalLoginAttemptStore : LoginAttemptStore {
         attempts.computeIfAbsent("${attempt.emailHash}:${attempt.ipHash}") { ArrayDeque() }.addLast(attempt)
     }
 
-    override suspend fun recentConsecutiveFailures(key: String, since: Instant): List<LoginAttempt> = synchronized(attempts) {
-        val entries = attempts[key] ?: return emptyList()
+    override suspend fun recentConsecutiveFailures(emailHash: String, ipHash: String, since: Instant): List<LoginAttempt> = synchronized(attempts) {
+        val entries = attempts["$emailHash:$ipHash"] ?: return emptyList()
         while (entries.firstOrNull()?.attemptedAt?.isBefore(since) == true) entries.removeFirst()
         entries.toList().asReversed().takeWhile { !it.successful }
     }
@@ -65,8 +65,8 @@ class AuthenticationAbuseProtection(
 ) {
     suspend fun checkRateLimit(route: String, ipAddress: String?, email: String? = null) {
         val now = clock.instant()
-        val ipKey = "$route:ip:${hash(ipAddress.orEmpty())}"
-        val emailKey = "$route:email:${hash(normalizeEmail(email).orEmpty())}"
+        val ipKey = rateLimitKey(route, "ip", ipAddress.orEmpty())
+        val emailKey = rateLimitKey(route, "email", normalizeEmail(email))
         if (!rateLimits.consume(ipKey, config.rateLimitMaxRequests, config.rateLimitWindowSeconds, now) ||
             (email != null && !rateLimits.consume(emailKey, config.rateLimitMaxRequests, config.rateLimitWindowSeconds, now))
         ) {
@@ -76,8 +76,9 @@ class AuthenticationAbuseProtection(
 
     suspend fun checkLoginLockout(email: String, ipAddress: String?) {
         val now = clock.instant()
-        val key = loginKey(email, ipAddress)
-        val failures = loginAttempts.recentConsecutiveFailures(key, now.minusSeconds(config.loginLockoutMaxSeconds))
+        val emailHash = hash(normalizeEmail(email))
+        val ipHash = hash(ipAddress.orEmpty())
+        val failures = loginAttempts.recentConsecutiveFailures(emailHash, ipHash, now.minusSeconds(config.loginLockoutMaxSeconds))
         if (failures.size < config.loginFailureThreshold) return
         val lockoutSeconds = (config.loginLockoutBaseSeconds * (1L shl (failures.size - config.loginFailureThreshold).coerceAtMost(30)))
             .coerceAtMost(config.loginLockoutMaxSeconds)
@@ -89,7 +90,7 @@ class AuthenticationAbuseProtection(
         loginAttempts.record(LoginAttempt(hash(normalizeEmail(email)), hash(ipAddress.orEmpty()), now, successful))
     }
 
-    private fun loginKey(email: String, ipAddress: String?) = "${hash(normalizeEmail(email))}:${hash(ipAddress.orEmpty())}"
+    private fun rateLimitKey(route: String, subject: String, value: String) = hash("$route:$subject:${hash(value)}")
 
     private fun normalizeEmail(email: String?) = email?.trim()?.lowercase().orEmpty()
 

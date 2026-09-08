@@ -88,5 +88,5 @@ private class RecordingLoginAttemptStore : LoginAttemptStore {
         this.attempt = attempt
     }
 
-    override suspend fun recentConsecutiveFailures(key: String, since: Instant): List<LoginAttempt> = emptyList()
+    override suspend fun recentConsecutiveFailures(emailHash: String, ipHash: String, since: Instant): List<LoginAttempt> = emptyList()
 }
