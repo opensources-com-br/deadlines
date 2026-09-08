@@ -16,6 +16,7 @@ class RateLimitExceededException : ApiException(
 
 interface RateLimitStore {
     suspend fun consume(key: String, limit: Int, windowSeconds: Long, now: Instant): Boolean
+    suspend fun deleteExpired(before: Instant)
 }
 
 class LocalRateLimitStore : RateLimitStore {
@@ -29,6 +30,12 @@ class LocalRateLimitStore : RateLimitStore {
         entries.addLast(now)
         true
     }
+
+    override suspend fun deleteExpired(before: Instant) = synchronized(timestamps) {
+        timestamps.values.forEach { entries -> while (entries.firstOrNull()?.isBefore(before) == true) entries.removeFirst() }
+        timestamps.entries.removeIf { it.value.isEmpty() }
+        Unit
+    }
 }
 
 data class LoginAttempt(
@@ -41,6 +48,7 @@ data class LoginAttempt(
 interface LoginAttemptStore {
     suspend fun record(attempt: LoginAttempt)
     suspend fun recentConsecutiveFailures(emailHash: String, ipHash: String, since: Instant): List<LoginAttempt>
+    suspend fun deleteBefore(before: Instant)
 }
 
 class LocalLoginAttemptStore : LoginAttemptStore {
@@ -55,6 +63,12 @@ class LocalLoginAttemptStore : LoginAttemptStore {
         while (entries.firstOrNull()?.attemptedAt?.isBefore(since) == true) entries.removeFirst()
         entries.toList().asReversed().takeWhile { !it.successful }
     }
+
+    override suspend fun deleteBefore(before: Instant) = synchronized(attempts) {
+        attempts.values.forEach { entries -> while (entries.firstOrNull()?.attemptedAt?.isBefore(before) == true) entries.removeFirst() }
+        attempts.entries.removeIf { it.value.isEmpty() }
+        Unit
+    }
 }
 
 class AuthenticationAbuseProtection(
@@ -65,6 +79,7 @@ class AuthenticationAbuseProtection(
 ) {
     suspend fun checkRateLimit(route: String, ipAddress: String?, email: String? = null) {
         val now = clock.instant()
+        rateLimits.deleteExpired(now.minusSeconds(config.rateLimitWindowSeconds))
         val ipKey = rateLimitKey(route, "ip", ipAddress.orEmpty())
         val emailKey = rateLimitKey(route, "email", normalizeEmail(email))
         if (!rateLimits.consume(ipKey, config.rateLimitMaxRequests, config.rateLimitWindowSeconds, now) ||
@@ -76,6 +91,7 @@ class AuthenticationAbuseProtection(
 
     suspend fun checkLoginLockout(email: String, ipAddress: String?) {
         val now = clock.instant()
+        loginAttempts.deleteBefore(now.minusSeconds(config.loginLockoutMaxSeconds))
         val emailHash = hash(normalizeEmail(email))
         val ipHash = hash(ipAddress.orEmpty())
         val failures = loginAttempts.recentConsecutiveFailures(emailHash, ipHash, now.minusSeconds(config.loginLockoutMaxSeconds))
@@ -87,6 +103,7 @@ class AuthenticationAbuseProtection(
 
     suspend fun recordLogin(email: String, ipAddress: String?, successful: Boolean) {
         val now = clock.instant()
+        loginAttempts.deleteBefore(now.minusSeconds(config.loginLockoutMaxSeconds))
         loginAttempts.record(LoginAttempt(hash(normalizeEmail(email)), hash(ipAddress.orEmpty()), now, successful))
     }
 
