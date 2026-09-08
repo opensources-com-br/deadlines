@@ -458,7 +458,7 @@ class DatabaseMigrationTest {
                         UUID.randomUUID(),
                         context.organization.id,
                         "opensources.manage",
-                        "Manage deadlines",
+                        "Manage records",
                         null,
                         false,
                         now,

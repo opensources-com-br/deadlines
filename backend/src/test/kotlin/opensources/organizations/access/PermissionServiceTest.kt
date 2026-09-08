@@ -37,8 +37,8 @@ class PermissionServiceTest {
             val id = UUID.randomUUID()
             val service = service(repository = repository, idGenerator = { id })
 
-            val created = service.create(userId, CreatePermissionRequest(" Deadline.Manage ", " Manage deadlines ", "Details"))
-            assertEquals("deadline.manage", created.key)
+            val created = service.create(userId, CreatePermissionRequest(" Records.Manage ", " Manage records ", "Details"))
+            assertEquals("records.manage", created.key)
             assertEquals(id.toString(), created.id)
 
             val updated = service.update(userId, id, UpdatePermissionRequest(name = "Updated permission"))

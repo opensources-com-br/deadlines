@@ -41,11 +41,11 @@ class PermissionRoutesTest {
                 client.post("/api/v1/permissions") {
                     bearerAuth(token)
                     contentType(ContentType.Application.Json)
-                    setBody("""{"key":"deadline.manage","name":"Manage deadlines"}""")
+                    setBody("""{"key":"records.manage","name":"Manage records"}""")
                 }
             assertEquals(HttpStatusCode.Created, created.status)
             assertEquals("/api/v1/permissions/${service.id}", created.headers[HttpHeaders.Location])
-            assertEquals("deadline.manage", service.created?.key)
+            assertEquals("records.manage", service.created?.key)
 
             assertEquals(HttpStatusCode.OK, client.get("/api/v1/permissions/${service.id}") { bearerAuth(token) }.status)
             assertEquals(
@@ -89,5 +89,5 @@ private class FakePermissionOperations : PermissionOperations {
     override suspend fun delete(userId: UUID, permissionId: UUID) = Unit
 
     private fun response() =
-        PermissionResponse(id.toString(), "deadline.manage", "Manage deadlines", null, false, "2026-09-06T18:00:00Z", "2026-09-06T18:00:00Z")
+        PermissionResponse(id.toString(), "records.manage", "Manage records", null, false, "2026-09-06T18:00:00Z", "2026-09-06T18:00:00Z")
 }
