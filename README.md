@@ -1,11 +1,11 @@
-# Deadlines
+# opensources
 
-Deadlines is a multi-tenant SaaS platform that brings CRM and ERP capabilities together in one place. The product is being built incrementally, with each phase validated before the next one begins.
+opensources is a reusable SaaS foundation for identity, one-organization accounts, teams, access control, auditing, preferences, plans, and subscriptions. Product-specific capabilities are intended to be added as independent modules.
 
 ## Project structure
 
 ```text
-deadlines/
+opensources/
 ├── web/         Next.js web application
 ├── mobile/      reserved for the future mobile application
 ├── backend/     Kotlin and Ktor API
@@ -20,7 +20,7 @@ Each directory includes its own README with more specific setup instructions and
 
 - `web/`: Next.js application with authentication and the initial platform experience.
 - `mobile/`: reserved structure; implementation has not started yet.
-- `backend/`: Phase 10, covering identity, organizations, access control, audit logs, plans, and Free subscriptions.
+- `backend/`: identity, organizations, access control, audit logs, plans, and Free subscriptions.
 - `database/`: Flyway migrations for identity, organization isolation, auditing, plans, and subscriptions.
 - `openapi/`: OpenAPI 3.1 contract for the implemented endpoints.
 - `tests/`: unit, HTTP, and PostgreSQL integration tests.
