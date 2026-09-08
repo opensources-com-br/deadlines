@@ -17,6 +17,7 @@ data class AppConfig(
                         require(it <= 65_535) { "PORT must be between 1 and 65535" }
                     },
                     allowedCorsOrigins = environment.csv("CORS_ALLOWED_ORIGINS", default = listOf("http://localhost:3000")),
+                    maxRequestBodyBytes = environment.positiveLong("HTTP_MAX_REQUEST_BODY_BYTES", default = 1_048_576),
                 ),
                 database = DatabaseConfig(
                     url = environment.required("DATABASE_URL"),
@@ -90,6 +91,7 @@ data class AppConfig(
 data class HttpConfig(
     val port: Int,
     val allowedCorsOrigins: List<String> = listOf("http://localhost:3000"),
+    val maxRequestBodyBytes: Long = 1_048_576,
 )
 
 data class DatabaseConfig(
