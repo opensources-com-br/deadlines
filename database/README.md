@@ -82,6 +82,7 @@ The default migration location is `filesystem:../database/migrations` and can be
 | `V018` | `add_membership_lifecycle` | Adds suspension and enforces retained membership and ownership invariants |
 | `V019` | `add_organization_lifecycle` | Adds organization suspension, soft deletion, and lifecycle auditing |
 | `V020` | `add_account_lifecycle` | Adds reversible account deactivation and anonymized deletion state |
+| `V021` | `remove_deadline_catalog_branding` | Removes product-specific plan limits and updates the Free plan copy |
 
 ## Schema areas
 
