@@ -20,6 +20,9 @@ import opensources.identity.email.LoggingEmailService
 import opensources.identity.email.ResendEmailService
 import opensources.identity.email.PasswordResetOperations
 import opensources.identity.email.PasswordResetService
+import opensources.identity.email.EmailChangeOperations
+import opensources.identity.email.EmailChangeService
+import opensources.identity.email.ExposedEmailChangeRepository
 import opensources.identity.users.ExposedUserCredentialsRepository
 import opensources.identity.users.ExposedUserRepository
 import opensources.identity.users.AccountLifecycleService
@@ -97,6 +100,10 @@ fun main() {
                 EmailProvider.RESEND -> ResendEmailService(config.email.resendApiKey!!, config.email.from)
             }
         val emailVerificationService = EmailVerificationService(userRepository, emailTokens, emailService, config.email)
+        val emailChangeService = EmailChangeService(
+            userRepository, AccountPasswordVerifier(credentialsRepository, passwordHasher),
+            ExposedEmailChangeRepository(query), emailService, config.email,
+        )
         val invitationService =
             InvitationService(
                 organizationRepository,
@@ -129,6 +136,7 @@ fun main() {
                 tokenService,
                 emailVerificationService,
                 passwordResetService,
+                emailChangeService,
                 sessionService,
                 organizationService,
                 permissionService,
@@ -155,6 +163,7 @@ fun Application.module(
     tokenService: TokenService? = null,
     emailVerification: EmailVerificationOperations? = null,
     passwordReset: PasswordResetOperations? = null,
+    emailChangeService: EmailChangeOperations? = null,
     sessionService: SessionService? = null,
     organizationService: OrganizationOperations? = null,
     permissionService: PermissionOperations? = null,
@@ -176,6 +185,7 @@ fun Application.module(
         authService,
         emailVerification,
         passwordReset,
+        emailChangeService,
         sessionService,
         organizationService,
         permissionService,

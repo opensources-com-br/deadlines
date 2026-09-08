@@ -5,6 +5,9 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.plugins.origin
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
@@ -31,10 +34,17 @@ data class ResetPasswordRequest(
     val password: String,
 )
 
+@Serializable
+data class RequestEmailChangeRequest(val email: String, val password: String)
+
+@Serializable
+data class ConfirmEmailChangeRequest(val token: String)
+
 fun Route.emailRoutes(
     verification: EmailVerificationOperations,
     passwordReset: PasswordResetOperations,
     abuseProtection: AuthenticationAbuseProtection,
+    emailChanges: EmailChangeOperations? = null,
 ) {
     route("/api/v1/auth") {
         post("/email/verify") {
@@ -59,6 +69,20 @@ fun Route.emailRoutes(
             abuseProtection.checkRateLimit("resend-verification", call.request.origin.remoteHost, request.email)
             verification.resendForEmail(request.email)
             call.respond(HttpStatusCode.NoContent)
+        }
+        if (emailChanges != null) {
+            post("/email/change/confirm") {
+                emailChanges.confirm(call.receive<ConfirmEmailChangeRequest>().token)
+                call.respond(HttpStatusCode.NoContent)
+            }
+            authenticate("auth-jwt") {
+                post("/email/change") {
+                    val request = call.receive<RequestEmailChangeRequest>()
+                    val userId = java.util.UUID.fromString(call.principal<JWTPrincipal>()!!.payload.subject)
+                    emailChanges.request(userId, request.email, request.password)
+                    call.respond(HttpStatusCode.NoContent)
+                }
+            }
         }
     }
 }

@@ -11,6 +11,7 @@ import opensources.identity.auth.SessionService
 import opensources.identity.auth.sessionRoutes
 import opensources.identity.email.EmailVerificationOperations
 import opensources.identity.email.PasswordResetOperations
+import opensources.identity.email.EmailChangeOperations
 import opensources.identity.email.emailRoutes
 import opensources.identity.users.UserService
 import opensources.identity.users.AccountLifecycleOperations
@@ -50,6 +51,7 @@ fun Application.configureRoutes(
     authService: AuthOperations?,
     emailVerification: EmailVerificationOperations? = null,
     passwordReset: PasswordResetOperations? = null,
+    emailChangeService: EmailChangeOperations? = null,
     sessionService: SessionService? = null,
     organizationService: OrganizationOperations? = null,
     permissionService: PermissionOperations? = null,
@@ -91,7 +93,7 @@ fun Application.configureRoutes(
             authRoutes(authService, abuseProtection)
         }
         if (emailVerification != null && passwordReset != null) {
-            emailRoutes(emailVerification, passwordReset, abuseProtection)
+            emailRoutes(emailVerification, passwordReset, abuseProtection, emailChangeService)
         }
         if (sessionService != null) {
             sessionRoutes(sessionService)
