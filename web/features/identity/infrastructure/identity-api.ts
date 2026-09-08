@@ -1,20 +1,4 @@
-type ErrorPayload = {
-  error?: {
-    code?: string;
-    message?: string;
-  };
-};
-
-export class IdentityApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-    readonly code?: string,
-  ) {
-    super(message);
-    this.name = "IdentityApiError";
-  }
-}
+import { apiClient, ApiClientError } from "@/lib/api-client";
 
 type RegisterInput = {
   email: string;
@@ -31,34 +15,8 @@ type LoginInput = {
 
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "");
 
-async function post<TResponse>(path: string, body: unknown, baseUrl = apiBaseUrl): Promise<TResponse | undefined> {
-  let response: Response;
-
-  try {
-    response = await fetch(`${baseUrl}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-  } catch {
-    throw new IdentityApiError("We could not reach the server. Start the local backend and try again.", 0);
-  }
-
-  if (response.ok) {
-    if (response.status === 204) {
-      return undefined;
-    }
-
-    return (await response.json()) as TResponse;
-  }
-
-  const payload = (await response.json().catch(() => ({}))) as ErrorPayload;
-  throw new IdentityApiError(
-    payload.error?.message ?? "Something went wrong. Please try again.",
-    response.status,
-    payload.error?.code,
-  );
-}
+const post = <TResponse>(path: string, body: unknown, baseUrl = apiBaseUrl) =>
+  apiClient.post<TResponse | undefined>(`${baseUrl}${path}`, body);
 
 export const identityApi = {
   register: (input: RegisterInput) => post("/api/v1/auth/register", input),
@@ -70,7 +28,7 @@ export const identityApi = {
 };
 
 export function identityErrorMessage(error: unknown): string {
-  if (error instanceof IdentityApiError) {
+  if (error instanceof ApiClientError) {
     return error.message;
   }
 
