@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import { forwardAccessRequest } from "@/features/access/infrastructure/forward-access-request";
 
-const accessCookieName = "deadlines_access_token";
+const accessCookieName = "opensources_access_token";
 
 export async function PATCH(request: Request) {
   const accessToken = (await cookies()).get(accessCookieName)?.value;

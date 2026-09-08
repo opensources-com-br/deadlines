@@ -8,7 +8,7 @@ import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 type AccessMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
 export async function forwardAccessRequest(path: string, method: AccessMethod, request?: Request) {
-  const accessToken = (await cookies()).get("deadlines_access_token")?.value;
+  const accessToken = (await cookies()).get("opensources_access_token")?.value;
   if (!accessToken) {
     return NextResponse.json(
       { error: { code: "UNAUTHORIZED", message: "Authentication is required" } },

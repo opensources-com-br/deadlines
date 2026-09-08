@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 
-const accessCookieName = "deadlines_access_token";
+const accessCookieName = "opensources_access_token";
 
 export async function GET() {
   const accessToken = (await cookies()).get(accessCookieName)?.value;
