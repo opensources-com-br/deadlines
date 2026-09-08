@@ -55,10 +55,11 @@ export function PlatformSidebar({ activeItem, user, onSignOut, isSigningOut }: P
         <Link
           href="/app"
           aria-label={t("home")}
-          className="flex h-8 items-center justify-center gap-2 rounded-md px-2 text-base font-semibold tracking-tight outline-hidden hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:px-0"
+          className="flex h-8 items-center justify-center rounded-md px-2 outline-hidden hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:px-0"
         >
-          <Image className="size-6 shrink-0" src="/opensources-mark.png" alt="opensources" width={24} height={24} priority />
-          <span className="group-data-[collapsible=icon]:hidden">opensources</span>
+          <span className="flex h-8 w-12 items-center justify-center rounded-md bg-white p-1" aria-hidden="true">
+            <Image className="size-full object-contain" src="/opensources-sidebar-mark.png" alt="" width={40} height={24} priority />
+          </span>
         </Link>
       </SidebarHeader>
       <SidebarContent />
