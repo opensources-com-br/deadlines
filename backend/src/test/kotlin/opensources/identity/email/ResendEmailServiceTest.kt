@@ -13,14 +13,14 @@ class ResendEmailServiceTest {
     fun `sends the Resend payload with the configured sender`() =
         runTest {
             val transport = RecordingTransport(EmailHttpResponse(200))
-            val service = ResendEmailService("re_test", "Deadlines <onboarding@resend.dev>", transport)
+            val service = ResendEmailService("re_test", "opensources <onboarding@resend.dev>", transport)
 
             service.send(EmailMessage("tarik@example.com", "Confirm your email", "Use this link."))
 
             val payload = Json.parseToJsonElement(transport.body).jsonObject
             assertEquals("https://api.resend.com/emails", transport.url)
             assertEquals("Bearer re_test", transport.headers["Authorization"])
-            assertEquals("Deadlines <onboarding@resend.dev>", payload["from"]!!.jsonPrimitive.content)
+            assertEquals("opensources <onboarding@resend.dev>", payload["from"]!!.jsonPrimitive.content)
             assertEquals("tarik@example.com", payload["to"]!!.jsonPrimitive.content)
         }
 

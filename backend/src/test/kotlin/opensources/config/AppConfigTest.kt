@@ -76,13 +76,13 @@ class AppConfigTest {
                 requiredEnvironment +
                     mapOf(
                         "RESEND_API_KEY" to "re_test_key",
-                        "MAIL_FROM" to "Deadlines <onboarding@resend.dev>",
+                        "MAIL_FROM" to "opensources <onboarding@resend.dev>",
                         "APP_WEB_URL" to "http://localhost:3000",
                     ),
             )
 
         assertEquals(EmailProvider.RESEND, config.email.provider)
-        assertEquals("Deadlines <onboarding@resend.dev>", config.email.from)
+        assertEquals("opensources <onboarding@resend.dev>", config.email.from)
     }
 
     @Test
