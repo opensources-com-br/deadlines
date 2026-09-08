@@ -13,12 +13,20 @@ export const preferenceCookies = {
 } as const;
 
 export const invitationCookie = "opensources_invitation_token";
+export const csrfCookie = "opensources_csrf_token";
 
 const isProduction = process.env.NODE_ENV === "production";
 
 export const secureCookieOptions = {
   httpOnly: true,
   sameSite: "lax" as const,
+  secure: isProduction,
+  path: "/",
+};
+
+export const csrfCookieOptions = {
+  httpOnly: false,
+  sameSite: "strict" as const,
   secure: isProduction,
   path: "/",
 };

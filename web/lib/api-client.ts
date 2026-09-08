@@ -65,7 +65,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   let response: Response;
 
   try {
-    response = await fetch(path, options);
+    response = await fetch(path, withCsrfToken(options));
   } catch {
     throw new ApiClientError(0, "BACKEND_UNAVAILABLE", {}, undefined);
   }
@@ -80,6 +80,22 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     window.dispatchEvent(new Event("api:session-expired"));
   }
   throw new ApiClientError(response.status, error?.code, error?.fields ?? {}, error?.requestId);
+}
+
+function withCsrfToken(options: RequestInit): RequestInit {
+  if (typeof document === "undefined" || !options.method || !["POST", "PUT", "PATCH", "DELETE"].includes(options.method)) {
+    return options;
+  }
+
+  const token = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith("opensources_csrf_token="))
+    ?.split("=")[1];
+  if (!token) return options;
+
+  const headers = new Headers(options.headers);
+  headers.set("X-CSRF-Token", decodeURIComponent(token));
+  return { ...options, headers };
 }
 
 function jsonRequest(method: string, body: unknown, options?: RequestInit): RequestInit {
