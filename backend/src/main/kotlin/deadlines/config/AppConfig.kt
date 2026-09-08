@@ -88,11 +88,11 @@ data class AuthConfig(
 )
 
 data class AbuseProtectionConfig(
-    val rateLimitWindowSeconds: Long,
-    val rateLimitMaxRequests: Int,
-    val loginFailureThreshold: Int,
-    val loginLockoutBaseSeconds: Long,
-    val loginLockoutMaxSeconds: Long,
+    val rateLimitWindowSeconds: Long = 60,
+    val rateLimitMaxRequests: Int = 10,
+    val loginFailureThreshold: Int = 5,
+    val loginLockoutBaseSeconds: Long = 60,
+    val loginLockoutMaxSeconds: Long = 900,
 ) {
     init {
         require(loginLockoutMaxSeconds >= loginLockoutBaseSeconds) {

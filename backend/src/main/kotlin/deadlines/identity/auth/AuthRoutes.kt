@@ -15,16 +15,29 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import java.util.UUID
 
-fun Route.authRoutes(auth: AuthOperations) {
+fun Route.authRoutes(auth: AuthOperations, abuseProtection: AuthenticationAbuseProtection) {
     route("/api/v1/auth") {
         post("/register") {
-            call.respond(HttpStatusCode.Created, auth.register(call.receive(), call.sessionContext()))
+            val request = call.receive<RegisterRequest>()
+            abuseProtection.checkRateLimit("register", call.sessionContext().ipAddress, request.email)
+            call.respond(HttpStatusCode.Created, auth.register(request, call.sessionContext()))
         }
         post("/login") {
-            call.respond(auth.login(call.receive(), call.sessionContext()))
+            val request = call.receive<LoginRequest>()
+            val context = call.sessionContext()
+            abuseProtection.checkRateLimit("login", context.ipAddress, request.email)
+            abuseProtection.checkLoginLockout(request.email, context.ipAddress)
+            try {
+                call.respond(auth.login(request, context))
+                abuseProtection.recordLogin(request.email, context.ipAddress, successful = true)
+            } catch (error: InvalidCredentialsException) {
+                abuseProtection.recordLogin(request.email, context.ipAddress, successful = false)
+                throw error
+            }
         }
         post("/refresh") {
             val request = call.receive<RefreshTokenRequest>()
+            abuseProtection.checkRateLimit("refresh", call.sessionContext().ipAddress)
             call.respond(auth.refresh(request.refreshToken, call.sessionContext()))
         }
         post("/logout") {

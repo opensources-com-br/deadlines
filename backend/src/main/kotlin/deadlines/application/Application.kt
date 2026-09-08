@@ -7,6 +7,7 @@ import deadlines.organizations.audits.auditRoutes
 import deadlines.config.AppConfig
 import deadlines.config.EmailProvider
 import deadlines.identity.auth.AuthOperations
+import deadlines.identity.auth.AuthenticationAbuseProtection
 import deadlines.identity.auth.AuthService
 import deadlines.identity.auth.BcryptPasswordHasher
 import deadlines.identity.auth.ExposedSessionRepository
@@ -117,6 +118,7 @@ fun main() {
                 tokenService,
                 emailVerificationService,
             )
+        val abuseProtection = AuthenticationAbuseProtection(config.abuseProtection)
         val passwordResetService =
             PasswordResetService(credentialsRepository, emailTokens, emailService, passwordHasher, sessionRepository, config.email)
 
@@ -139,6 +141,7 @@ fun main() {
                 userPreferenceService,
                 authorizationService,
                 accountLifecycleService,
+                abuseProtection,
             )
         }.start(wait = true)
     }
@@ -162,6 +165,7 @@ fun Application.module(
     userPreferenceService: UserPreferenceOperations? = null,
     authorizationService: AuthorizationOperations? = null,
     accountLifecycleService: deadlines.identity.users.AccountLifecycleOperations? = null,
+    abuseProtection: AuthenticationAbuseProtection = AuthenticationAbuseProtection(deadlines.config.AbuseProtectionConfig()),
 ) {
     configurePlugins(tokenService)
     configureRoutes(
@@ -181,5 +185,6 @@ fun Application.module(
         userPreferenceService,
         authorizationService,
         accountLifecycleService,
+        abuseProtection,
     )
 }

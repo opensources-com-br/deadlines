@@ -1,10 +1,12 @@
 package deadlines.organizations.invitations
 
+import deadlines.identity.auth.AuthenticationAbuseProtection
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
+import io.ktor.server.plugins.origin
 import io.ktor.server.request.receive
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
@@ -15,9 +17,10 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import java.util.UUID
 
-fun Route.invitationRoutes(service: InvitationOperations) {
+fun Route.invitationRoutes(service: InvitationOperations, abuseProtection: AuthenticationAbuseProtection) {
     route("/api/v1/invitations") {
         get("/preview") {
+            abuseProtection.checkRateLimit("invitation-preview", call.request.origin.remoteHost)
             call.respond(service.preview(call.request.queryParameters["token"].orEmpty()))
         }
 

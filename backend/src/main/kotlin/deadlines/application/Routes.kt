@@ -5,6 +5,7 @@ import deadlines.organizations.audits.ExposedAuditRepository
 import deadlines.organizations.audits.auditRoutes
 
 import deadlines.identity.auth.AuthOperations
+import deadlines.identity.auth.AuthenticationAbuseProtection
 import deadlines.identity.auth.authRoutes
 import deadlines.identity.auth.SessionService
 import deadlines.identity.auth.sessionRoutes
@@ -60,6 +61,7 @@ fun Application.configureRoutes(
     userPreferenceService: UserPreferenceOperations? = null,
     authorizationService: AuthorizationOperations? = null,
     accountLifecycleService: AccountLifecycleOperations? = null,
+    abuseProtection: AuthenticationAbuseProtection,
 ) {
     routing {
         if (planService != null) planRoutes(planService)
@@ -75,10 +77,10 @@ fun Application.configureRoutes(
             userRoutes(userService, accountLifecycleService)
         }
         if (authService != null) {
-            authRoutes(authService)
+            authRoutes(authService, abuseProtection)
         }
         if (emailVerification != null && passwordReset != null) {
-            emailRoutes(emailVerification, passwordReset)
+            emailRoutes(emailVerification, passwordReset, abuseProtection)
         }
         if (sessionService != null) {
             sessionRoutes(sessionService)
@@ -96,7 +98,7 @@ fun Application.configureRoutes(
             memberRoutes(memberService)
         }
         if (invitationService != null) {
-            invitationRoutes(invitationService)
+            invitationRoutes(invitationService, abuseProtection)
         }
     }
 }
