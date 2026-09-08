@@ -5,6 +5,7 @@ data class AppConfig(
     val database: DatabaseConfig,
     val auth: AuthConfig,
     val abuseProtection: AbuseProtectionConfig,
+    val features: FeatureConfig,
     val email: EmailConfig,
 ) {
     companion object {
@@ -39,6 +40,9 @@ data class AppConfig(
                     loginFailureThreshold = environment.positiveInt("AUTH_LOGIN_FAILURE_THRESHOLD", default = 5),
                     loginLockoutBaseSeconds = environment.positiveLong("AUTH_LOGIN_LOCKOUT_BASE_SECONDS", default = 60),
                     loginLockoutMaxSeconds = environment.positiveLong("AUTH_LOGIN_LOCKOUT_MAX_SECONDS", default = 900),
+                ),
+                features = FeatureConfig(
+                    billingEnabled = environment.boolean("FEATURE_BILLING_ENABLED", default = true),
                 ),
                 email =
                     EmailConfig(
@@ -101,6 +105,10 @@ data class AbuseProtectionConfig(
     }
 }
 
+data class FeatureConfig(
+    val billingEnabled: Boolean,
+)
+
 data class EmailConfig(
     val from: String,
     val appBaseUrl: String,
@@ -151,3 +159,12 @@ private fun Map<String, String>.positiveLong(name: String, default: Long): Long 
     require(value > 0) { "$name must be greater than zero" }
     return value
 }
+
+private fun Map<String, String>.boolean(name: String, default: Boolean): Boolean =
+    get(name)?.trim()?.lowercase()?.let {
+        when (it) {
+            "true" -> true
+            "false" -> false
+            else -> throw IllegalArgumentException("$name must be true or false")
+        }
+    } ?: default

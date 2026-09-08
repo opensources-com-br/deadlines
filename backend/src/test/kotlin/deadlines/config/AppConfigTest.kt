@@ -22,6 +22,7 @@ class AppConfigTest {
         assertEquals("filesystem:../database/migrations", config.database.migrationsLocation)
         assertEquals(900, config.auth.accessTokenExpirationSeconds)
         assertEquals(2_592_000, config.auth.refreshTokenExpirationSeconds)
+        assertEquals(true, config.features.billingEnabled)
         assertEquals(EmailProvider.LOGGING, config.email.provider)
         assertEquals("http://localhost:3000", config.email.appBaseUrl)
         assertEquals(604_800, config.email.invitationExpirationSeconds)
@@ -47,6 +48,7 @@ class AppConfigTest {
                         "EMAIL_VERIFICATION_EXPIRATION_SECONDS" to "1200",
                         "PASSWORD_RESET_EXPIRATION_SECONDS" to "300",
                         "INVITATION_EXPIRATION_SECONDS" to "600",
+                        "FEATURE_BILLING_ENABLED" to "false",
                     ),
             )
 
@@ -64,6 +66,7 @@ class AppConfigTest {
         assertEquals(1200, config.email.verificationExpirationSeconds)
         assertEquals(300, config.email.passwordResetExpirationSeconds)
         assertEquals(600, config.email.invitationExpirationSeconds)
+        assertEquals(false, config.features.billingEnabled)
     }
 
     @Test
@@ -110,6 +113,13 @@ class AppConfigTest {
     fun `rejects a short JWT secret`() {
         assertFailsWith<IllegalArgumentException> {
             AppConfig.fromEnvironment(requiredEnvironment + ("JWT_SECRET" to "too-short"))
+        }
+    }
+
+    @Test
+    fun `rejects an invalid feature flag`() {
+        assertFailsWith<IllegalArgumentException> {
+            AppConfig.fromEnvironment(requiredEnvironment + ("FEATURE_BILLING_ENABLED" to "enabled"))
         }
     }
 }
