@@ -9,7 +9,7 @@ type VerifyEmailPageProps = {
 export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageProps) {
   const { token } = await searchParams;
   const verificationToken = typeof token === "string" ? token : undefined;
-  const hasInvitation = Boolean((await cookies()).get("deadlines_invitation_token")?.value);
+  const hasInvitation = Boolean((await cookies()).get("opensources_invitation_token")?.value);
 
   return <VerifyEmailScreen token={verificationToken} hasInvitation={hasInvitation} />;
 }

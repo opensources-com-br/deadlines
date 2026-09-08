@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   }
 
   const response = new NextResponse(null, { status: 204 });
-  response.cookies.set("deadlines_invitation_token", payload.token, {
+  response.cookies.set("opensources_invitation_token", payload.token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
