@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { invitationCookie, persistentCookieOptions } from "@/lib/cookies";
+
 export async function POST(request: Request) {
   const payload = (await request.json().catch(() => null)) as { token?: unknown } | null;
   if (typeof payload?.token !== "string" || !payload.token) {
@@ -10,12 +12,6 @@ export async function POST(request: Request) {
   }
 
   const response = new NextResponse(null, { status: 204 });
-  response.cookies.set("opensources_invitation_token", payload.token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  response.cookies.set(invitationCookie, payload.token, persistentCookieOptions(60 * 60 * 24 * 7));
   return response;
 }
