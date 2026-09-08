@@ -137,7 +137,7 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
             </div>
             <div className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-6">
               <dt className="text-sm text-muted-foreground">{t("workspaceUrl")}</dt>
-              <dd className="text-sm font-medium">deadlines.app/{organization.slug}</dd>
+              <dd className="text-sm font-medium">opensources.app/{organization.slug}</dd>
             </div>
             <div className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-6">
               <dt className="text-sm text-muted-foreground">{t("yourRole")}</dt>
