@@ -38,7 +38,7 @@ export function PlansCard() {
         <div className="grid gap-3 sm:grid-cols-3">
           {subscription.plan.limits.map((limit) => <div key={limit.resource} className="rounded-lg border bg-background p-3">
             <p className="text-2xl font-semibold">{limit.value === -1 ? "∞" : limit.value}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{t(limit.resource as "members" | "projects" | "deadlines")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t(limit.resource as "members" | "projects")}</p>
           </div>)}
         </div>
         <p className="mt-4 text-xs text-muted-foreground">{t("usageSoon")}</p>
@@ -60,7 +60,7 @@ export function PlansCard() {
             <p className="mt-2 text-sm text-muted-foreground">{plan.monthlyPriceCents === 0 ? t("free") : t("perMonth", { price: formatCurrency(plan.monthlyPriceCents / 100) })}</p>
             {plan.description ? <p className="mt-3 text-sm text-muted-foreground">{plan.description}</p> : null}
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-              {plan.limits.map((limit) => <li key={limit.resource}>{limit.value === -1 ? t("unlimited") : limit.value} {t(limit.resource as "members" | "projects" | "deadlines")}</li>)}
+              {plan.limits.map((limit) => <li key={limit.resource}>{limit.value === -1 ? t("unlimited") : limit.value} {t(limit.resource as "members" | "projects")}</li>)}
             </ul>
             <Button className="mt-5 w-full" variant={current ? "secondary" : "outline"} disabled>{current ? t("currentButton") : t("comingSoon")}</Button>
           </div>;

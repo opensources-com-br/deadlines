@@ -46,7 +46,7 @@ export function SubscriptionCard() {
                   .map(
                     (limit) =>
                       `${limit.value === -1 ? t("unlimited") : limit.value} ${t(
-                        limit.resource as "members" | "projects" | "deadlines",
+                        limit.resource as "members" | "projects",
                       )}`,
                   )
                   .join(" · "),
