@@ -8,6 +8,7 @@ const compatibilityFiles = new Set([
   "web/lib/cookies.ts",
 ]);
 const textExtensions = /\.(json|kt|kts|md|mjs|sql|ts|tsx|yaml|yml)$/;
+const legacyBrand = new RegExp(["dead", "lines"].join(""), "i");
 const violations = [];
 
 async function inspect(directory) {
@@ -23,7 +24,7 @@ async function inspect(directory) {
     const repositoryPath = relative(repositoryRoot, path);
     if (repositoryPath.startsWith("database/migrations/") || compatibilityFiles.has(repositoryPath)) continue;
     const content = await readFile(path, "utf8");
-    if (/deadlines/i.test(content)) violations.push(repositoryPath);
+    if (legacyBrand.test(content)) violations.push(repositoryPath);
   }
 }
 
