@@ -50,7 +50,7 @@ export default async function PlatformSectionPage({ params, searchParams }: Plat
   const refreshToken = cookieStore.get("deadlines_refresh_token")?.value;
   const recentActivity = cookieStore.get("deadlines_last_activity")?.value;
   const persistentSession = cookieStore.get("deadlines_persistent_session")?.value === "true";
-  const returnTo = `/app/${section}`;
+  const returnTo = `/app/settings/${section}`;
   if (!accessToken) redirect(refreshToken && (recentActivity || persistentSession) ? `/api/auth/refresh?returnTo=${encodeURIComponent(returnTo)}` : "/login");
 
   const authenticatedRequest = {

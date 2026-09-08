@@ -19,7 +19,7 @@ export function SuspendedOrganizationScreen({ organization }: { organization: Or
     setIsReactivating(true);
     try {
       await organizationApi.reactivate();
-      window.location.replace("/app/organization");
+      window.location.replace("/app/settings/organization");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("reactivateError"));
       setIsReactivating(false);

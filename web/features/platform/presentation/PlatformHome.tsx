@@ -98,7 +98,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
         <h1 className="sr-only">{t("settings")}</h1>
         <Tabs value={activeGroup.key} onValueChange={(value) => {
           const nextGroup = settingsNavigation.find((group) => group.key === value);
-          if (nextGroup) router.push(`/app/${nextGroup.items[0].key}`);
+          if (nextGroup) router.push(`/app/settings/${nextGroup.items[0].key}`);
         }}>
           <TabsList aria-label={t("settings")}>
             {settingsNavigation.map((group) => <TabsTrigger key={group.key} value={group.key}>{group.label}</TabsTrigger>)}
@@ -110,7 +110,7 @@ export function PlatformHome({ user, organization, sessions, permissions, roles,
               <p className="text-sm font-medium text-muted-foreground">{t("categoryBreadcrumb", { category: activeGroup.label })}</p>
               <h2 className="mt-1 text-lg font-semibold tracking-tight">{t("categoryTitle", { category: activeGroup.label })}</h2>
             </div>
-            <Tabs value={activeSettingsSection} onValueChange={(value) => router.push(`/app/${value}`)}>
+            <Tabs value={activeSettingsSection} onValueChange={(value) => router.push(`/app/settings/${value}`)}>
               <TabsList aria-label={`${activeGroup.label} settings`}>
                 {activeGroup.items.map((item) => <TabsTrigger key={item.key} value={item.key}>{item.label}</TabsTrigger>)}
               </TabsList>

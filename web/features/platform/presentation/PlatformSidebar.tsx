@@ -65,7 +65,7 @@ export function PlatformSidebar({ activeItem, user, onSignOut, isSigningOut }: P
         <SidebarGroup className="p-0">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton isActive={activeItem === "settings"} tooltip={t("settings")} render={<Link href="/app/organization" />}>
+              <SidebarMenuButton isActive={activeItem === "settings"} tooltip={t("settings")} render={<Link href="/app/settings/organization" />}>
                 <Settings />
                 <span>{t("settings")}</span>
               </SidebarMenuButton>
@@ -121,15 +121,15 @@ export function PlatformSidebar({ activeItem, user, onSignOut, isSigningOut }: P
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem render={<Link href="/app/account" />}>
+                  <DropdownMenuItem render={<Link href="/app/settings/account" />}>
                     <CircleUserRound />
                     {t("account")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem render={<Link href="/app/plans" />}>
+                  <DropdownMenuItem render={<Link href="/app/settings/plans" />}>
                     <CreditCard />
                     {t("plans")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem render={<Link href="/app/notifications" />}>
+                  <DropdownMenuItem render={<Link href="/app/settings/notifications" />}>
                     <Bell />
                     {t("notifications")}
                   </DropdownMenuItem>

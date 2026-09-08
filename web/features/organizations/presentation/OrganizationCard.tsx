@@ -58,7 +58,7 @@ export function OrganizationCard({ organization: initialOrganization }: Organiza
     try {
       await organizationApi.suspend();
       toast.success(t("suspended"));
-      window.location.replace("/app/organization");
+      window.location.replace("/app/settings/organization");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("suspendError"));
       setLifecycleAction(undefined);

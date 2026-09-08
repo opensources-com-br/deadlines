@@ -82,7 +82,7 @@ export function MembersCard({ initialMembers, roles }: MembersCardProps) {
     try {
       await teamApi.leaveOrganization();
       toast.success(t("left"));
-      window.location.replace("/app/organization");
+      window.location.replace("/app/settings/organization");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("leaveError"));
       setBusyMemberId(undefined);

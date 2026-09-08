@@ -36,7 +36,7 @@ Blocked: the settings tabs could not be captured in the running application. The
   Location: `web/components/ui/tabs.tsx`.
   Evidence: the source visual is available; the corresponding local page could not load in the in-app browser.
   Impact: the component cannot receive a visual-fidelity sign-off yet.
-  Fix: run the local application on a browser-reachable port, capture `/app/organization` with the active tab state, and compare the focused tab control against the reference.
+  Fix: run the local application on a browser-reachable port, capture `/app/settings/organization` with the active tab state, and compare the focused tab control against the reference.
 
 ## Implementation Checklist
 
