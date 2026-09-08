@@ -46,6 +46,9 @@ fun Application.configurePlugins(
         val requestId = call.request.headers[REQUEST_ID_HEADER]?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
         call.attributes.put(RequestIdKey, requestId)
         call.response.headers.append(REQUEST_ID_HEADER, requestId)
+        call.response.headers.append("X-Content-Type-Options", "nosniff")
+        call.response.headers.append("X-Frame-Options", "DENY")
+        call.response.headers.append("Referrer-Policy", "strict-origin-when-cross-origin")
         call.attributes.put(RequestStartedAtKey, System.nanoTime())
         val contentLength = call.request.headers[HttpHeaders.ContentLength]?.toLongOrNull()
         if (contentLength != null && contentLength > http.maxRequestBodyBytes) {
