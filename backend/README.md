@@ -124,8 +124,17 @@ All endpoints are versioned under `/api/v1`, except the health check.
 ### Health
 
 ```text
-GET /health
+GET /health/live
+GET /health/ready
 ```
+
+`/health/live` reports whether the process can serve requests. `/health/ready` also verifies the PostgreSQL connection and returns `503` when a required dependency is unavailable. The legacy `/health` endpoint remains a liveness alias.
+
+## Observability
+
+Every response includes `X-Request-Id`. Clients may supply this header; otherwise the API creates a UUID. API error bodies include the same value in `error.requestId`, allowing a reported frontend failure to be located in request logs.
+
+Request logs are structured JSON and include `timestamp`, `level`, `requestId`, `method`, `path`, `status`, `duration`, `userId`, and `organizationId`. Query strings are not logged. Passwords, tokens, cookies, and request bodies must never be added to logs.
 
 ### Authentication and identity
 
