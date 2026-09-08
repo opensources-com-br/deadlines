@@ -4,52 +4,31 @@ import type {
   OrganizationMember,
   TeamList,
 } from "@/features/team/domain/team";
-
-type ErrorPayload = { error?: { message?: string } };
-
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(path, options);
-  if (response.status === 204) return undefined as T;
-  const data = (await response.json().catch(() => ({}))) as T & ErrorPayload;
-  if (!response.ok) {
-    const fallback = response.status === 403
-      ? "Only the organization owner can manage members and invitations."
-      : "Unable to update your team.";
-    throw new Error(data.error?.message ?? fallback);
-  }
-  return data;
-}
-
-const json = (method: string, body: unknown): RequestInit => ({
-  method,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(body),
-});
+import { apiClient } from "@/lib/api-client";
 
 export const teamApi = {
-  listMembers: () => request<TeamList<OrganizationMember>>("/api/members"),
+  listMembers: () => apiClient.get<TeamList<OrganizationMember>>("/api/members"),
   updateMemberRole: (memberId: string, roleId: string) =>
-    request<OrganizationMember>(`/api/members/${memberId}`, json("PATCH", { roleId })),
-  removeMember: (memberId: string) => request<void>(`/api/members/${memberId}`, { method: "DELETE" }),
+    apiClient.patch<OrganizationMember>(`/api/members/${memberId}`, { roleId }),
+  removeMember: (memberId: string) => apiClient.delete<void>(`/api/members/${memberId}`),
   suspendMember: (memberId: string) =>
-    request<OrganizationMember>(`/api/members/${memberId}/suspend`, { method: "POST" }),
+    apiClient.post<OrganizationMember>(`/api/members/${memberId}/suspend`),
   reactivateMember: (memberId: string) =>
-    request<OrganizationMember>(`/api/members/${memberId}/reactivate`, { method: "POST" }),
-  leaveOrganization: () => request<void>("/api/members/me", { method: "DELETE" }),
+    apiClient.post<OrganizationMember>(`/api/members/${memberId}/reactivate`),
+  leaveOrganization: () => apiClient.delete<void>("/api/members/me"),
   transferOwnership: (memberId: string, previousOwnerRoleId: string) =>
-    request<OrganizationMember>(
+    apiClient.post<OrganizationMember>(
       `/api/members/${memberId}/transfer-ownership`,
-      json("POST", { previousOwnerRoleId }),
+      { previousOwnerRoleId },
     ),
-  listInvitations: () => request<TeamList<OrganizationInvitation>>("/api/invitations"),
+  listInvitations: () => apiClient.get<TeamList<OrganizationInvitation>>("/api/invitations"),
   createInvitation: (email: string, roleId: string) =>
-    request<OrganizationInvitation>("/api/invitations", json("POST", { email, roleId })),
+    apiClient.post<OrganizationInvitation>("/api/invitations", { email, roleId }),
   resendInvitation: (invitationId: string) =>
-    request<OrganizationInvitation>(`/api/invitations/${invitationId}/resend`, { method: "POST" }),
-  revokeInvitation: (invitationId: string) =>
-    request<void>(`/api/invitations/${invitationId}`, { method: "DELETE" }),
+    apiClient.post<OrganizationInvitation>(`/api/invitations/${invitationId}/resend`),
+  revokeInvitation: (invitationId: string) => apiClient.delete<void>(`/api/invitations/${invitationId}`),
   previewInvitation: (token: string) =>
-    request<InvitationPreview>(`/api/invitations/preview?token=${encodeURIComponent(token)}`),
+    apiClient.get<InvitationPreview>(`/api/invitations/preview?token=${encodeURIComponent(token)}`),
   acceptInvitation: (token: string) =>
-    request<OrganizationMember>("/api/invitations/accept", json("POST", { token })),
+    apiClient.post<OrganizationMember>("/api/invitations/accept", { token }),
 };
