@@ -20,29 +20,25 @@ interface AccountLifecycleOperations {
 }
 
 class AccountLifecycleService(
-    private val users: UserRepository,
+    users: UserRepository,
     private val organizations: OrganizationRepository,
     private val passwords: AccountPasswordVerifier,
     private val lifecycle: AccountLifecycleRepository,
     private val clock: Clock = Clock.systemUTC(),
 ) : AccountLifecycleOperations {
+    private val activeAccounts = ActiveAccountService(users)
     override suspend fun deactivate(userId: UUID, password: String) = withAuditActor(userId) {
-        requireActiveAccount(userId)
+        activeAccounts.requireActive(userId)
         requireNotOwner(userId)
         passwords.verify(userId, password)
         if (!lifecycle.deactivate(userId, clock.instant())) throw UserNotFoundException()
     }
 
     override suspend fun delete(userId: UUID, password: String) = withAuditActor(userId) {
-        requireActiveAccount(userId)
+        activeAccounts.requireActive(userId)
         requireNotOwner(userId)
         passwords.verify(userId, password)
         if (!lifecycle.delete(userId, clock.instant())) throw UserNotFoundException()
-    }
-
-    private suspend fun requireActiveAccount(userId: UUID) {
-        val user = users.findById(userId) ?: throw UserNotFoundException()
-        if (user.status != UserStatus.ACTIVE) throw AccountNotActiveException()
     }
 
     private suspend fun requireNotOwner(userId: UUID) {

@@ -6,6 +6,8 @@ import opensources.identity.users.UserCredentialsRepository
 import opensources.identity.users.UserProfile
 import opensources.identity.users.UserRepository
 import opensources.identity.users.UserStatus
+import opensources.identity.users.ActiveAccountOperations
+import opensources.identity.users.ActiveAccountService
 import opensources.identity.users.toResponse
 import opensources.identity.email.EmailVerificationOperations
 import java.time.Clock
@@ -35,6 +37,7 @@ class AuthService(
     private val emailVerification: EmailVerificationOperations,
     private val clock: Clock = Clock.systemUTC(),
 ) : AuthOperations {
+    private val activeAccounts: ActiveAccountOperations = ActiveAccountService(users)
     override suspend fun register(request: RegisterRequest, context: SessionContext): RegistrationResponse {
         val email = request.email.trim().lowercase()
         val firstName = request.firstName.trim()
@@ -65,7 +68,7 @@ class AuthService(
         if (credentials == null || !passwordHasher.verify(request.password, credentials.passwordHash)) {
             throw InvalidCredentialsException()
         }
-        if (credentials.user.status != UserStatus.ACTIVE) throw InvalidCredentialsException()
+        if (!activeAccounts.isActive(credentials.user.id)) throw InvalidCredentialsException()
 
         return createSession(credentials.user, context)
     }
@@ -74,8 +77,8 @@ class AuthService(
         val now = clock.instant()
         val currentHash = tokens.hashRefreshToken(refreshToken)
         val current = sessions.findActive(currentHash, now) ?: throw InvalidRefreshTokenException()
-        val user = users.findById(current.userId)
-        if (user == null || user.status != UserStatus.ACTIVE) throw InvalidRefreshTokenException()
+        val user = users.findById(current.userId)?.takeIf { activeAccounts.isActive(it.id) }
+            ?: throw InvalidRefreshTokenException()
 
         val issued = tokens.issue(user.id, current.id)
         val replacement = issued.toSession(
@@ -94,18 +97,22 @@ class AuthService(
     }
 
     override suspend fun me(userId: UUID) =
-        users.findById(userId)
-            ?.takeIf { it.status == UserStatus.ACTIVE }
-            ?.toResponse()
-            ?: throw InvalidCredentialsException()
+        try {
+            activeAccounts.requireActive(userId).toResponse()
+        } catch (_: opensources.identity.users.AccountNotActiveException) {
+            throw InvalidCredentialsException()
+        }
 
     override suspend fun changePassword(userId: UUID, request: ChangePasswordRequest, context: SessionContext): AuthResponse {
         if (request.newPassword.length !in 12..72) {
             throw AuthValidationException(mapOf("newPassword" to "must contain between 12 and 72 characters"))
         }
 
-        val user = users.findById(userId)?.takeIf { it.status == UserStatus.ACTIVE }
-            ?: throw InvalidCredentialsException()
+        val user = try {
+            activeAccounts.requireActive(userId)
+        } catch (_: opensources.identity.users.AccountNotActiveException) {
+            throw InvalidCredentialsException()
+        }
         val current = credentials.findByEmail(user.email) ?: throw InvalidCredentialsException()
         if (!passwordHasher.verify(request.currentPassword, current.passwordHash)) {
             throw InvalidCurrentPasswordException()
