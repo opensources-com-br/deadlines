@@ -1,6 +1,7 @@
 import type { NextResponse } from "next/server";
+import { authCookies } from "@/lib/cookies";
 
-export const deviceCookieName = "deadlines_device_id";
+export const deviceCookieName = authCookies.deviceId;
 
 export function newDeviceId() {
   return crypto.randomUUID();
