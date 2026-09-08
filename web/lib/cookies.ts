@@ -1,0 +1,27 @@
+export const authCookies = {
+  accessToken: "opensources_access_token",
+  refreshToken: "opensources_refresh_token",
+  lastActivity: "opensources_last_activity",
+  persistentSession: "opensources_persistent_session",
+  deviceId: "opensources_device_id",
+} as const;
+
+export const preferenceCookies = {
+  locale: "opensources_locale",
+  theme: "opensources_theme",
+  timezone: "opensources_timezone",
+} as const;
+
+export const invitationCookie = "opensources_invitation_token";
+
+export const legacyCookies = [
+  "deadlines_access_token",
+  "deadlines_refresh_token",
+  "deadlines_last_activity",
+  "deadlines_persistent_session",
+  "deadlines_device_id",
+  "deadlines_locale",
+  "deadlines_theme",
+  "deadlines_timezone",
+  "deadlines_invitation_token",
+] as const;
