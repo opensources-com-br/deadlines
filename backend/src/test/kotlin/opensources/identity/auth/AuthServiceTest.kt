@@ -134,6 +134,20 @@ class AuthServiceTest {
     }
 
     @Test
+    fun `reactivation restores a disabled verified account with a new session`() = runTest {
+        val user = createActiveUser()
+        val disabled = user.copy(status = UserStatus.DISABLED, disabledAt = now, updatedAt = now)
+        users.update(disabled)
+        credentials.values[user.email] = UserCredentials(disabled, "hash:password-123")
+
+        val response = service.reactivate(ReactivateAccountRequest(user.email, "password-123"), context)
+
+        assertEquals("active", response.user.status)
+        assertEquals(UserStatus.ACTIVE, users.findById(user.id)?.status)
+        service.refresh(response.refreshToken, context)
+    }
+
+    @Test
     fun `login requires a device identity`() =
         runTest {
             createActiveUser()
