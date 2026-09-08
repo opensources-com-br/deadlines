@@ -46,6 +46,11 @@ fun Application.configurePlugins(
         call.attributes.put(RequestIdKey, requestId)
         call.response.headers.append(REQUEST_ID_HEADER, requestId)
         call.attributes.put(RequestStartedAtKey, System.nanoTime())
+        val contentLength = call.request.headers[HttpHeaders.ContentLength]?.toLongOrNull()
+        if (contentLength != null && contentLength > http.maxRequestBodyBytes) {
+            call.respond(HttpStatusCode.PayloadTooLarge, call.apiErrorResponse("REQUEST_TOO_LARGE", "Request body exceeds the configured limit"))
+            finish()
+        }
     }
 
     install(ContentNegotiation) {
