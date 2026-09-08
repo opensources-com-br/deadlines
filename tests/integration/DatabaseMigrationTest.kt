@@ -69,7 +69,8 @@ class DatabaseMigrationTest {
                 user = postgres.username,
                 password = postgres.password,
                 maximumPoolSize = 2,
-                migrationsLocation = migrationLocation(),
+                migrationsLocation = migrationLocations().first(),
+                migrationLocations = migrationLocations(),
             )
 
         DatabaseFactory.open(config).use {
@@ -747,7 +748,8 @@ class DatabaseMigrationTest {
             user = postgres.username,
             password = postgres.password,
             maximumPoolSize = 2,
-            migrationsLocation = migrationLocation(),
+            migrationsLocation = migrationLocations().first(),
+            migrationLocations = migrationLocations(),
         )
 
     private fun testUser(prefix: String, now: Instant) =
@@ -777,9 +779,9 @@ class DatabaseMigrationTest {
         )
     }
 
-    private fun migrationLocation(): String {
+    private fun migrationLocations(): List<String> {
         val migrations = Path.of("../database/migrations").toAbsolutePath().normalize()
-        return "filesystem:$migrations"
+        return listOf("filesystem:${migrations.resolve("core")}", "filesystem:${migrations.resolve("billing")}")
     }
 
     companion object {
