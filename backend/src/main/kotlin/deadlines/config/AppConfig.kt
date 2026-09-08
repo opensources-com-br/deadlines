@@ -54,7 +54,7 @@ data class AppConfig(
                         from =
                             environment["EMAIL_FROM"]?.takeIf(String::isNotBlank)
                                 ?: environment["MAIL_FROM"]?.takeIf(String::isNotBlank)
-                                ?: "no-reply@deadlines.local",
+                                ?: "no-reply@opensources.local",
                         resendApiKey = environment["RESEND_API_KEY"]?.takeIf(String::isNotBlank),
                         appBaseUrl =
                             environment["APP_BASE_URL"]?.takeIf(String::isNotBlank)
