@@ -56,8 +56,6 @@ import opensources.organizations.invitations.InvitationService
 import opensources.organizations.members.ExposedMemberRepository
 import opensources.organizations.members.MemberOperations
 import opensources.organizations.members.MemberService
-import opensources.modules.billing.plans.PlanOperations
-import opensources.modules.billing.subscriptions.SubscriptionOperations
 import opensources.modules.billing.billingModule
 import opensources.shared.database.DatabaseFactory
 import opensources.shared.database.DatabaseQuery
@@ -162,8 +160,7 @@ fun main() {
                 memberService,
                 invitationService,
                 auditService,
-                billing?.plans,
-                billing?.subscriptions,
+                billing,
                 userPreferenceService,
                 authorizationService,
                 accountLifecycleService,
@@ -190,8 +187,7 @@ fun Application.module(
     memberService: MemberOperations? = null,
     invitationService: InvitationOperations? = null,
     auditService: AuditService? = null,
-    planService: PlanOperations? = null,
-    subscriptionService: SubscriptionOperations? = null,
+    billing: opensources.modules.billing.BillingModule? = null,
     userPreferenceService: UserPreferenceOperations? = null,
     authorizationService: AuthorizationOperations? = null,
     accountLifecycleService: opensources.identity.users.AccountLifecycleOperations? = null,
@@ -213,8 +209,7 @@ fun Application.module(
         memberService,
         invitationService,
         auditService,
-        planService,
-        subscriptionService,
+        billing,
         userPreferenceService,
         authorizationService,
         accountLifecycleService,

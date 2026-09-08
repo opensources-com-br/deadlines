@@ -30,10 +30,8 @@ import opensources.organizations.invitations.InvitationOperations
 import opensources.organizations.invitations.invitationRoutes
 import opensources.organizations.members.MemberOperations
 import opensources.organizations.members.memberRoutes
-import opensources.modules.billing.plans.PlanOperations
-import opensources.modules.billing.plans.planRoutes
-import opensources.modules.billing.subscriptions.SubscriptionOperations
-import opensources.modules.billing.subscriptions.subscriptionRoutes
+import opensources.modules.billing.BillingModule
+import opensources.modules.billing.billingRoutes
 import opensources.shared.errors.ApiException
 import io.ktor.server.application.Application
 import io.ktor.server.response.respond
@@ -59,8 +57,7 @@ fun Application.configureRoutes(
     memberService: MemberOperations? = null,
     invitationService: InvitationOperations? = null,
     auditService: AuditService? = null,
-    planService: PlanOperations? = null,
-    subscriptionService: SubscriptionOperations? = null,
+    billing: BillingModule? = null,
     userPreferenceService: UserPreferenceOperations? = null,
     authorizationService: AuthorizationOperations? = null,
     accountLifecycleService: AccountLifecycleOperations? = null,
@@ -68,8 +65,7 @@ fun Application.configureRoutes(
     readinessCheck: () -> Boolean,
 ) {
     routing {
-        if (planService != null) planRoutes(planService)
-        if (subscriptionService != null) subscriptionRoutes(subscriptionService)
+        if (billing != null) billingRoutes(billing)
         if (userPreferenceService != null) userPreferenceRoutes(userPreferenceService)
         if (authorizationService != null) authorizationRoutes(authorizationService)
         if (auditService != null) auditRoutes(auditService)

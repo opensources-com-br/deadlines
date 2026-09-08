@@ -8,6 +8,9 @@ import opensources.shared.database.DatabaseQuery
 import opensources.modules.billing.subscriptions.ExposedSubscriptionRepository
 import opensources.modules.billing.subscriptions.SubscriptionOperations
 import opensources.modules.billing.subscriptions.SubscriptionService
+import opensources.modules.billing.plans.planRoutes
+import opensources.modules.billing.subscriptions.subscriptionRoutes
+import io.ktor.server.routing.Route
 
 data class BillingModule(
     val plans: PlanOperations,
@@ -19,3 +22,8 @@ fun billingModule(query: DatabaseQuery, authorization: AuthorizationOperations):
         plans = PlanService(ExposedPlanRepository(query)),
         subscriptions = SubscriptionService(authorization, ExposedSubscriptionRepository(query)),
     )
+
+fun Route.billingRoutes(module: BillingModule) {
+    planRoutes(module.plans)
+    subscriptionRoutes(module.subscriptions)
+}

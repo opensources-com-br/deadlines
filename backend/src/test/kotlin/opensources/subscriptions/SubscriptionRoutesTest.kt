@@ -3,6 +3,9 @@ package opensources.modules.billing.subscriptions
 import opensources.application.module
 import opensources.config.AuthConfig
 import opensources.identity.auth.TokenService
+import opensources.modules.billing.BillingModule
+import opensources.modules.billing.plans.PlanListResponse
+import opensources.modules.billing.plans.PlanOperations
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
@@ -18,7 +21,17 @@ class SubscriptionRoutesTest {
     fun `current subscription requires authentication and uses the current user`() = testApplication {
         val service = RouteSubscriptions()
         val userId = UUID.randomUUID()
-        application { module(tokenService = tokenService, subscriptionService = service) }
+        application {
+            module(
+                tokenService = tokenService,
+                billing = BillingModule(
+                    plans = object : PlanOperations {
+                        override suspend fun list(): PlanListResponse = error("not used")
+                    },
+                    subscriptions = service,
+                ),
+            )
+        }
 
         assertEquals(HttpStatusCode.Unauthorized, client.get("/api/v1/subscriptions/current").status)
         assertEquals(

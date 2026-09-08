@@ -58,7 +58,7 @@ class RoutesTest {
     @Test
     fun `does not register billing routes without the optional module`() =
         testApplication {
-            application { module(planService = null, subscriptionService = null) }
+            application { module(billing = null) }
 
             assertEquals(HttpStatusCode.NotFound, client.get("/api/v1/plans").status)
             assertEquals(HttpStatusCode.NotFound, client.get("/api/v1/subscriptions/current").status)
