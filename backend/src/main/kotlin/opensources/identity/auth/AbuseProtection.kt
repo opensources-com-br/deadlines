@@ -15,13 +15,13 @@ class RateLimitExceededException : ApiException(
 )
 
 interface RateLimitStore {
-    fun consume(key: String, limit: Int, windowSeconds: Long, now: Instant): Boolean
+    suspend fun consume(key: String, limit: Int, windowSeconds: Long, now: Instant): Boolean
 }
 
 class LocalRateLimitStore : RateLimitStore {
     private val timestamps = ConcurrentHashMap<String, ArrayDeque<Instant>>()
 
-    override fun consume(key: String, limit: Int, windowSeconds: Long, now: Instant): Boolean = synchronized(timestamps) {
+    override suspend fun consume(key: String, limit: Int, windowSeconds: Long, now: Instant): Boolean = synchronized(timestamps) {
         val entries = timestamps.computeIfAbsent(key) { ArrayDeque() }
         val threshold = now.minusSeconds(windowSeconds)
         while (entries.firstOrNull()?.isBefore(threshold) == true) entries.removeFirst()
@@ -39,18 +39,18 @@ data class LoginAttempt(
 )
 
 interface LoginAttemptStore {
-    fun record(attempt: LoginAttempt)
-    fun recentConsecutiveFailures(key: String, since: Instant): List<LoginAttempt>
+    suspend fun record(attempt: LoginAttempt)
+    suspend fun recentConsecutiveFailures(key: String, since: Instant): List<LoginAttempt>
 }
 
 class LocalLoginAttemptStore : LoginAttemptStore {
     private val attempts = ConcurrentHashMap<String, ArrayDeque<LoginAttempt>>()
 
-    override fun record(attempt: LoginAttempt) = synchronized(attempts) {
+    override suspend fun record(attempt: LoginAttempt) = synchronized(attempts) {
         attempts.computeIfAbsent("${attempt.emailHash}:${attempt.ipHash}") { ArrayDeque() }.addLast(attempt)
     }
 
-    override fun recentConsecutiveFailures(key: String, since: Instant): List<LoginAttempt> = synchronized(attempts) {
+    override suspend fun recentConsecutiveFailures(key: String, since: Instant): List<LoginAttempt> = synchronized(attempts) {
         val entries = attempts[key] ?: return emptyList()
         while (entries.firstOrNull()?.attemptedAt?.isBefore(since) == true) entries.removeFirst()
         entries.toList().asReversed().takeWhile { !it.successful }
@@ -63,7 +63,7 @@ class AuthenticationAbuseProtection(
     private val loginAttempts: LoginAttemptStore = LocalLoginAttemptStore(),
     private val clock: Clock = Clock.systemUTC(),
 ) {
-    fun checkRateLimit(route: String, ipAddress: String?, email: String? = null) {
+    suspend fun checkRateLimit(route: String, ipAddress: String?, email: String? = null) {
         val now = clock.instant()
         val ipKey = "$route:ip:${hash(ipAddress.orEmpty())}"
         val emailKey = "$route:email:${hash(normalizeEmail(email).orEmpty())}"
@@ -74,7 +74,7 @@ class AuthenticationAbuseProtection(
         }
     }
 
-    fun checkLoginLockout(email: String, ipAddress: String?) {
+    suspend fun checkLoginLockout(email: String, ipAddress: String?) {
         val now = clock.instant()
         val key = loginKey(email, ipAddress)
         val failures = loginAttempts.recentConsecutiveFailures(key, now.minusSeconds(config.loginLockoutMaxSeconds))
@@ -84,7 +84,7 @@ class AuthenticationAbuseProtection(
         if (failures.first().attemptedAt.plusSeconds(lockoutSeconds).isAfter(now)) throw RateLimitExceededException()
     }
 
-    fun recordLogin(email: String, ipAddress: String?, successful: Boolean) {
+    suspend fun recordLogin(email: String, ipAddress: String?, successful: Boolean) {
         val now = clock.instant()
         loginAttempts.record(LoginAttempt(hash(normalizeEmail(email)), hash(ipAddress.orEmpty()), now, successful))
     }

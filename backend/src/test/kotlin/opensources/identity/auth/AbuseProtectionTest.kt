@@ -9,10 +9,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import kotlinx.coroutines.test.runTest
 
 class AbuseProtectionTest {
     @Test
-    fun `limits requests by IP and normalized email`() {
+    fun `limits requests by IP and normalized email`() = runTest {
         val protection = AuthenticationAbuseProtection(config(rateLimitMaxRequests = 2))
 
         protection.checkRateLimit("register", "127.0.0.1", "USER@example.com")
@@ -24,7 +25,7 @@ class AbuseProtectionTest {
     }
 
     @Test
-    fun `locks repeated failed logins progressively`() {
+    fun `locks repeated failed logins progressively`() = runTest {
         val clock = MutableClock(Instant.parse("2026-09-08T12:00:00Z"))
         val protection = AuthenticationAbuseProtection(config(loginFailureThreshold = 2), clock = clock)
 
@@ -42,7 +43,7 @@ class AbuseProtectionTest {
     }
 
     @Test
-    fun `stores only hashes in login attempts`() {
+    fun `stores only hashes in login attempts`() = runTest {
         val store = RecordingLoginAttemptStore()
         val protection = AuthenticationAbuseProtection(config(), loginAttempts = store)
 
@@ -83,9 +84,9 @@ private class MutableClock(
 private class RecordingLoginAttemptStore : LoginAttemptStore {
     lateinit var attempt: LoginAttempt
 
-    override fun record(attempt: LoginAttempt) {
+    override suspend fun record(attempt: LoginAttempt) {
         this.attempt = attempt
     }
 
-    override fun recentConsecutiveFailures(key: String, since: Instant): List<LoginAttempt> = emptyList()
+    override suspend fun recentConsecutiveFailures(key: String, since: Instant): List<LoginAttempt> = emptyList()
 }
