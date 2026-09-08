@@ -10,8 +10,22 @@ data class AppConfig(
     val product: ProductConfig,
 ) {
     companion object {
-        fun fromEnvironment(environment: Map<String, String> = System.getenv()): AppConfig =
-            AppConfig(
+        fun fromEnvironment(environment: Map<String, String> = System.getenv()): AppConfig {
+            val enabledModules = environment.csv(
+                "PRODUCT_ENABLED_MODULES",
+                default = if (environment.boolean("FEATURE_BILLING_ENABLED", default = true)) listOf("billing") else emptyList(),
+            ).toSet()
+            val coreMigrationsLocation = environment["CORE_MIGRATIONS_LOCATION"]
+                ?: environment["MIGRATIONS_LOCATION"]
+                ?: "filesystem:../database/migrations/core"
+            val migrationLocations = buildList {
+                add(coreMigrationsLocation)
+                if ("billing" in enabledModules) {
+                    add(environment["BILLING_MIGRATIONS_LOCATION"] ?: "filesystem:../database/migrations/billing")
+                }
+            }
+
+            return AppConfig(
                 http = HttpConfig(
                     port = environment.positiveInt("PORT", default = 8080).also {
                         require(it <= 65_535) { "PORT must be between 1 and 65535" }
@@ -27,7 +41,8 @@ data class AppConfig(
                     user = environment.required("DATABASE_USER"),
                     password = environment.required("DATABASE_PASSWORD"),
                     maximumPoolSize = environment.positiveInt("DATABASE_POOL_SIZE", default = 10),
-                    migrationsLocation = environment["MIGRATIONS_LOCATION"] ?: "filesystem:../database/migrations",
+                    migrationsLocation = coreMigrationsLocation,
+                    migrationLocations = migrationLocations,
                 ),
                 auth = AuthConfig(
                     jwtSecret = environment.required("JWT_SECRET").also {
@@ -82,12 +97,10 @@ data class AppConfig(
                     supportEmail = environment["PRODUCT_SUPPORT_EMAIL"]?.takeIf(String::isNotBlank) ?: "support@opensources.local",
                     applicationUrl = environment["PRODUCT_APPLICATION_URL"]?.takeIf(String::isNotBlank)
                         ?: environment["APP_BASE_URL"]?.takeIf(String::isNotBlank) ?: "http://localhost:3000",
-                    enabledModules = environment.csv(
-                        "PRODUCT_ENABLED_MODULES",
-                        default = if (environment.boolean("FEATURE_BILLING_ENABLED", default = true)) listOf("billing") else emptyList(),
-                    ).toSet(),
+                    enabledModules = enabledModules,
                 ),
             )
+        }
     }
 }
 
@@ -106,6 +119,7 @@ data class DatabaseConfig(
     val password: String,
     val maximumPoolSize: Int,
     val migrationsLocation: String,
+    val migrationLocations: List<String> = listOf(migrationsLocation),
 )
 
 data class AuthConfig(

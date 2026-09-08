@@ -22,7 +22,11 @@ class AppConfigTest {
         assertEquals(30, config.http.requestReadTimeoutSeconds)
         assertEquals(30, config.http.responseWriteTimeoutSeconds)
         assertEquals(10, config.database.maximumPoolSize)
-        assertEquals("filesystem:../database/migrations", config.database.migrationsLocation)
+        assertEquals("filesystem:../database/migrations/core", config.database.migrationsLocation)
+        assertEquals(
+            listOf("filesystem:../database/migrations/core", "filesystem:../database/migrations/billing"),
+            config.database.migrationLocations,
+        )
         assertEquals(900, config.auth.accessTokenExpirationSeconds)
         assertEquals(2_592_000, config.auth.refreshTokenExpirationSeconds)
         assertEquals(true, config.features.billingEnabled)
@@ -44,7 +48,8 @@ class AppConfigTest {
                         "HTTP_REQUEST_READ_TIMEOUT_SECONDS" to "15",
                         "HTTP_RESPONSE_WRITE_TIMEOUT_SECONDS" to "20",
                         "DATABASE_POOL_SIZE" to "20",
-                        "MIGRATIONS_LOCATION" to "filesystem:/database/migrations",
+                        "CORE_MIGRATIONS_LOCATION" to "filesystem:/database/migrations/core",
+                        "BILLING_MIGRATIONS_LOCATION" to "filesystem:/database/migrations/billing",
                         "JWT_ISSUER" to "test-issuer",
                         "JWT_AUDIENCE" to "test-audience",
                         "JWT_ACCESS_EXPIRATION_SECONDS" to "300",
@@ -58,7 +63,7 @@ class AppConfigTest {
                         "INVITATION_EXPIRATION_SECONDS" to "600",
                         "FEATURE_BILLING_ENABLED" to "false",
                         "PRODUCT_NAME" to "Example",
-                        "PRODUCT_ENABLED_MODULES" to "reports, exports",
+                        "PRODUCT_ENABLED_MODULES" to "billing, reports, exports",
                     ),
             )
 
@@ -67,7 +72,11 @@ class AppConfigTest {
         assertEquals(15, config.http.requestReadTimeoutSeconds)
         assertEquals(20, config.http.responseWriteTimeoutSeconds)
         assertEquals(20, config.database.maximumPoolSize)
-        assertEquals("filesystem:/database/migrations", config.database.migrationsLocation)
+        assertEquals("filesystem:/database/migrations/core", config.database.migrationsLocation)
+        assertEquals(
+            listOf("filesystem:/database/migrations/core", "filesystem:/database/migrations/billing"),
+            config.database.migrationLocations,
+        )
         assertEquals("test-issuer", config.auth.jwtIssuer)
         assertEquals("test-audience", config.auth.jwtAudience)
         assertEquals(300, config.auth.accessTokenExpirationSeconds)
@@ -81,7 +90,7 @@ class AppConfigTest {
         assertEquals(600, config.email.invitationExpirationSeconds)
         assertEquals(false, config.features.billingEnabled)
         assertEquals("Example", config.product.name)
-        assertEquals(false, config.product.isModuleEnabled("billing"))
+        assertEquals(true, config.product.isModuleEnabled("billing"))
     }
 
     @Test
@@ -105,6 +114,14 @@ class AppConfigTest {
         val config = AppConfig.fromEnvironment(requiredEnvironment + ("EMAIL_PROVIDER" to " "))
 
         assertEquals(EmailProvider.LOGGING, config.email.provider)
+    }
+
+    @Test
+    fun `excludes billing migrations when the billing module is disabled`() {
+        val config = AppConfig.fromEnvironment(requiredEnvironment + ("PRODUCT_ENABLED_MODULES" to "reports"))
+
+        assertEquals(listOf("filesystem:../database/migrations/core"), config.database.migrationLocations)
+        assertEquals(false, config.product.isModuleEnabled("billing"))
     }
 
     @Test

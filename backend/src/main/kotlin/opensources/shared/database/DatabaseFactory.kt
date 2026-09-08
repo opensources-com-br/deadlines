@@ -23,7 +23,7 @@ object DatabaseFactory {
         val dataSource = HikariDataSource(config.toHikariConfig())
 
         return try {
-            migrate(dataSource, config.migrationsLocation)
+            migrate(dataSource, config.migrationLocations)
             DatabaseHandle(
                 database = Database.connect(dataSource),
                 dataSource = dataSource,
@@ -34,10 +34,10 @@ object DatabaseFactory {
         }
     }
 
-    private fun migrate(dataSource: HikariDataSource, location: String) {
+    private fun migrate(dataSource: HikariDataSource, locations: List<String>) {
         Flyway.configure()
             .dataSource(dataSource)
-            .locations(location)
+            .locations(*locations.toTypedArray())
             .load()
             .migrate()
     }
