@@ -1,18 +1,18 @@
-name: deadlines
+name: opensources
 
 services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ${DATABASE_NAME:-deadlines}
-      POSTGRES_USER: ${DATABASE_USER:-deadlines}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-deadlines}
+      POSTGRES_DB: ${DATABASE_NAME:-opensources}
+      POSTGRES_USER: ${DATABASE_USER:-opensources}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-opensources}
     ports:
       - "127.0.0.1:${DATABASE_PORT:-5432}:5432"
     volumes:
       - database-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-deadlines} -d ${DATABASE_NAME:-deadlines}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-opensources} -d ${DATABASE_NAME:-opensources}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -23,14 +23,14 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
-      DATABASE_URL: jdbc:postgresql://postgres:5432/${DATABASE_NAME:-deadlines}
-      DATABASE_USER: ${DATABASE_USER:-deadlines}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-deadlines}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${DATABASE_NAME:-opensources}
+      DATABASE_USER: ${DATABASE_USER:-opensources}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-opensources}
       DATABASE_POOL_SIZE: ${DATABASE_POOL_SIZE:-10}
       PORT: 8080
       JWT_SECRET: ${JWT_SECRET:-local-development-secret-change-me-now}
-      JWT_ISSUER: ${JWT_ISSUER:-deadlines}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-deadlines-api}
+      JWT_ISSUER: ${JWT_ISSUER:-opensources}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-opensources-api}
       JWT_ACCESS_EXPIRATION_SECONDS: ${JWT_ACCESS_EXPIRATION_SECONDS:-900}
       JWT_REFRESH_EXPIRATION_SECONDS: ${JWT_REFRESH_EXPIRATION_SECONDS:-2592000}
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-}
