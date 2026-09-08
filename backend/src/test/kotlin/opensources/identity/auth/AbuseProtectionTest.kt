@@ -54,6 +54,19 @@ class AbuseProtectionTest {
         assertEquals(false, store.attempt.successful)
     }
 
+    @Test
+    fun `shares limits across protection instances using the same store`() = runTest {
+        val store = LocalRateLimitStore()
+        val first = AuthenticationAbuseProtection(config(rateLimitMaxRequests = 1), rateLimits = store)
+        val second = AuthenticationAbuseProtection(config(rateLimitMaxRequests = 1), rateLimits = store)
+
+        first.checkRateLimit("login", "127.0.0.1", "user@example.com")
+
+        assertFailsWith<RateLimitExceededException> {
+            second.checkRateLimit("login", "127.0.0.1", "user@example.com")
+        }
+    }
+
     private fun config(
         rateLimitMaxRequests: Int = 10,
         loginFailureThreshold: Int = 5,
