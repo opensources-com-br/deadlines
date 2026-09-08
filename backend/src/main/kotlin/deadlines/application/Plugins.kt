@@ -9,6 +9,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
 import io.ktor.server.application.log
 import io.ktor.server.auth.Authentication
@@ -66,7 +67,7 @@ fun Application.configurePlugins(tokenService: TokenService? = null) {
                 challenge { _, _ ->
                     call.respond(
                         HttpStatusCode.Unauthorized,
-                        ApiErrorResponse(ApiErrorBody("UNAUTHORIZED", "Authentication is required")),
+                        call.apiErrorResponse("UNAUTHORIZED", "Authentication is required"),
                     )
                 }
             }
@@ -77,37 +78,21 @@ fun Application.configurePlugins(tokenService: TokenService? = null) {
         status(HttpStatusCode.NotFound) { call, status ->
             call.respond(
                 status,
-                ApiErrorResponse(
-                    error = ApiErrorBody(
-                        code = "NOT_FOUND",
-                        message = "Resource not found",
-                    ),
-                ),
+                call.apiErrorResponse("NOT_FOUND", "Resource not found"),
             )
         }
 
         exception<BadRequestException> { call, _ ->
             call.respond(
                 HttpStatusCode.BadRequest,
-                ApiErrorResponse(
-                    error = ApiErrorBody(
-                        code = "INVALID_REQUEST",
-                        message = "Request body is invalid",
-                    ),
-                ),
+                call.apiErrorResponse("INVALID_REQUEST", "Request body is invalid"),
             )
         }
 
         exception<ApiException> { call, cause ->
             call.respond(
                 HttpStatusCode.fromValue(cause.status),
-                ApiErrorResponse(
-                    error = ApiErrorBody(
-                        code = cause.code,
-                        message = cause.message,
-                        details = cause.details,
-                    ),
-                ),
+                call.apiErrorResponse(cause.code, cause.message, cause.details),
             )
         }
 
@@ -115,13 +100,18 @@ fun Application.configurePlugins(tokenService: TokenService? = null) {
             call.application.log.error("Unhandled request failure", cause)
             call.respond(
                 HttpStatusCode.InternalServerError,
-                ApiErrorResponse(
-                    error = ApiErrorBody(
-                        code = "INTERNAL_ERROR",
-                        message = "An unexpected error occurred",
-                    ),
-                ),
+                call.apiErrorResponse("INTERNAL_ERROR", "An unexpected error occurred"),
             )
         }
     }
+}
+
+private fun ApplicationCall.apiErrorResponse(
+    code: String,
+    message: String,
+    fields: Map<String, String> = emptyMap(),
+): ApiErrorResponse {
+    val requestId = request.headers["X-Request-Id"]?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
+    response.headers.append("X-Request-Id", requestId)
+    return ApiErrorResponse(ApiErrorBody(code, message, fields, requestId))
 }

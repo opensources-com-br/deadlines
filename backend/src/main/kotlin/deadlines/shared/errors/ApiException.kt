@@ -18,5 +18,6 @@ data class ApiErrorResponse(
 data class ApiErrorBody(
     val code: String,
     val message: String,
-    val details: Map<String, String> = emptyMap(),
+    val fields: Map<String, String> = emptyMap(),
+    val requestId: String,
 )

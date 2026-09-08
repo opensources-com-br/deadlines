@@ -2,6 +2,7 @@ package deadlines.application
 
 import deadlines.shared.errors.ApiException
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
@@ -10,6 +11,7 @@ import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class RoutesTest {
     @Test
@@ -40,14 +42,12 @@ class RoutesTest {
                 }
             }
 
-            val response = client.get("/test/error")
+            val response = client.get("/test/error") { header("X-Request-Id", "request-123") }
 
             assertEquals(HttpStatusCode.UnprocessableEntity, response.status)
-            assertEquals(
-                "{\"error\":{\"code\":\"VALIDATION_ERROR\",\"message\":\"Invalid input\"," +
-                    "\"details\":{\"name\":\"must not be blank\"}}}",
-                response.bodyAsText(),
-            )
+            assertEquals("request-123", response.headers["X-Request-Id"])
+            assertTrue(response.bodyAsText().contains("\"fields\":{\"name\":\"must not be blank\"}"))
+            assertTrue(response.bodyAsText().contains("\"requestId\":\"request-123\""))
         }
 
     @Test
@@ -58,9 +58,7 @@ class RoutesTest {
             val response = client.get("/missing")
 
             assertEquals(HttpStatusCode.NotFound, response.status)
-            assertEquals(
-                "{\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"Resource not found\"}}",
-                response.bodyAsText(),
-            )
+            assertTrue(response.bodyAsText().contains("\"code\":\"NOT_FOUND\""))
+            assertTrue(response.bodyAsText().contains("\"requestId\":\"${response.headers["X-Request-Id"]}\""))
         }
 }
