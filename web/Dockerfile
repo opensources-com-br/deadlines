@@ -14,11 +14,11 @@ RUN npm run build
 FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-RUN addgroup -S deadlines && adduser -S -G deadlines deadlines
+RUN addgroup -S opensources && adduser -S -G opensources opensources
 COPY --from=build /app/public ./public
-COPY --from=build --chown=deadlines:deadlines /app/.next/standalone ./
-COPY --from=build --chown=deadlines:deadlines /app/.next/static ./.next/static
-USER deadlines
+COPY --from=build --chown=opensources:opensources /app/.next/standalone ./
+COPY --from=build --chown=opensources:opensources /app/.next/static ./.next/static
+USER opensources
 EXPOSE 3000
 ENV PORT=3000 HOSTNAME=0.0.0.0
 CMD ["node", "server.js"]
