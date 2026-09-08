@@ -25,6 +25,7 @@ export const identityApi = {
   requestPasswordReset: (email: string) => post("/api/v1/auth/forgot-password", { email }),
   resetPassword: (token: string, password: string) => post("/api/v1/auth/reset-password", { token, password }),
   verifyEmail: (token: string) => post("/api/v1/auth/email/verify", { token }),
+  confirmEmailChange: (token: string) => post("/api/v1/auth/email/change/confirm", { token }),
 };
 
 export function identityErrorMessage(error: unknown): string {
