@@ -12,4 +12,4 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "deadlines-backend"
+rootProject.name = "opensources-backend"

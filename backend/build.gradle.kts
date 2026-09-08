@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-group = "com.deadlines"
+group = "com.opensources"
 version = "0.1.0"
 
 kotlin {
