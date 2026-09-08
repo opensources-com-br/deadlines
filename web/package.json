@@ -8,7 +8,9 @@
     "brand:check": "node scripts/check-branding.mjs",
     "i18n:check": "node scripts/check-translations.mjs",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
