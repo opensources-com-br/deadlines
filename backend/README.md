@@ -1,6 +1,6 @@
 # opensources Backend
 
-The opensources backend is a Kotlin and Ktor API for identity, organizations, access control, audit history, plans, and subscriptions.
+The opensources backend is a Kotlin and Ktor API for identity, organizations, access control, audit history, and optional modules.
 
 ## Technology
 
@@ -86,7 +86,9 @@ The application reads its configuration from environment variables.
 | `DATABASE_USER` | Yes | — | Database user |
 | `DATABASE_PASSWORD` | Yes | — | Database password |
 | `DATABASE_POOL_SIZE` | No | `10` | Maximum connection pool size |
-| `MIGRATIONS_LOCATION` | No | `filesystem:../database/migrations` | Flyway migration location |
+| `CORE_MIGRATIONS_LOCATION` | No | `filesystem:../database/migrations/core` | Required Flyway migrations |
+| `BILLING_MIGRATIONS_LOCATION` | No | `filesystem:../database/migrations/billing` | Billing migrations when billing is enabled |
+| `PRODUCT_ENABLED_MODULES` | No | `billing` | Comma-separated optional modules |
 | `PORT` | No | `8080` | HTTP server port |
 | `JWT_SECRET` | Yes | — | JWT signing secret with at least 32 characters |
 | `JWT_ISSUER` | No | `opensources` | JWT issuer |
@@ -105,7 +107,7 @@ See [`.env.example`](../.env.example) for a complete local configuration.
 
 ## Database migrations
 
-Flyway applies the migrations from [`database/migrations`](../database/migrations) when the application starts. The schema covers users, credentials, sessions, organizations, memberships, roles, permissions, invitations, audit logs, plans, and subscriptions.
+Flyway always applies [`database/migrations/core`](../database/migrations/core). It also applies an optional module's directory only when that module is enabled. Billing's plans, subscriptions, permissions, and provisioning trigger therefore do not exist in a new core-only installation.
 
 Migration files are immutable after they have been applied. Add a new numbered migration for every schema change.
 
@@ -247,7 +249,7 @@ Audit history requires `audit.read` and supports `offset`, `limit`, `action`, `r
 
 Audit metadata intentionally excludes names, descriptions, email addresses, passwords, and tokens. Historical events cannot be updated, deleted, or truncated through normal database operations.
 
-### Plans and subscriptions
+### Optional billing
 
 ```text
 GET /api/v1/plans
@@ -256,7 +258,7 @@ GET /api/v1/subscriptions/current
 
 The public plan catalog returns active plans and their resource limits. A limit value of `-1` means unlimited. The Free plan is currently the only active option.
 
-Every organization has one active subscription. Checkout, billing, upgrades, downgrades, cancellations, trials, and usage-limit enforcement are reserved for future phases.
+These routes exist only when billing is enabled. Checkout, billing, upgrades, downgrades, cancellations, trials, and usage-limit enforcement are reserved for future phases.
 
 ## Email delivery
 

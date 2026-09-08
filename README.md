@@ -1,6 +1,6 @@
 # opensources
 
-opensources is a reusable SaaS foundation for identity, one-organization accounts, teams, access control, auditing, preferences, plans, and subscriptions. Product-specific capabilities are intended to be added as independent modules.
+opensources is a reusable SaaS foundation for identity, one-organization accounts, teams, access control, auditing, and preferences. Product-specific capabilities are independent optional modules.
 
 ## Project structure
 
@@ -20,8 +20,8 @@ Each directory includes its own README with more specific setup instructions and
 
 - `web/`: Next.js application with authentication and the initial platform experience.
 - `mobile/`: reserved structure; implementation has not started yet.
-- `backend/`: identity, organizations, access control, audit logs, plans, and Free subscriptions.
-- `database/`: Flyway migrations for identity, organization isolation, auditing, plans, and subscriptions.
+- `backend/`: core identity and organization foundation plus optional-module composition.
+- `database/`: core and optional-module Flyway migrations.
 - `openapi/`: OpenAPI 3.1 contract for the implemented endpoints.
 - `tests/`: unit, HTTP, and PostgreSQL integration tests.
 
@@ -53,3 +53,5 @@ npm run dev
 The web application is available at [http://localhost:3000](http://localhost:3000).
 
 See the README inside each directory for component-specific instructions. The complete API contract is available in [`openapi/openapi.yaml`](openapi/openapi.yaml).
+
+See [extension contracts](docs/EXTENDING.md) to configure a product, add a module, permission, migration, or application area.

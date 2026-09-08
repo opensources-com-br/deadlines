@@ -6,7 +6,7 @@ This directory contains the shared PostgreSQL schema resources for opensources. 
 
 ```text
 database/
-├── migrations/   versioned schema and data migrations
+├── migrations/   core/ and optional-module versioned migrations
 └── seed/          explicit development or bootstrap data
 ```
 
@@ -56,7 +56,7 @@ set +a
 ./gradlew run
 ```
 
-The default migration location is `filesystem:../database/migrations` and can be changed with `MIGRATIONS_LOCATION`.
+The required location is `filesystem:../database/migrations/core`. Optional modules add their own migration directory; billing uses `filesystem:../database/migrations/billing` when enabled.
 
 ## Migration history
 
@@ -108,15 +108,15 @@ Organization changes are recorded by database triggers in `organization_audit_lo
 
 Normal `UPDATE`, `DELETE`, and `TRUNCATE` operations against the audit table are blocked to preserve history.
 
-### Plans and subscriptions
+### Optional billing
 
 The plan catalog stores pricing metadata and resource limits. A limit value of `-1` represents unlimited usage. Free, Pro, and Business plans exist in the catalog, but only Free is currently active.
 
-Every organization receives an active Free subscription. Existing organizations were backfilled when the subscription schema was introduced, and new organizations are provisioned through a trigger.
+When billing is enabled, every organization receives an active Free subscription. Core-only products do not create billing tables or the provisioning trigger.
 
 ## Creating a migration
 
-Add migrations to `database/migrations` using Flyway's versioned naming format:
+Add migrations to `database/migrations/core` or the owning module directory using Flyway's versioned naming format:
 
 ```text
 V015__describe_the_change.sql
