@@ -78,7 +78,10 @@ data class AppConfig(
                     supportEmail = environment["PRODUCT_SUPPORT_EMAIL"]?.takeIf(String::isNotBlank) ?: "support@opensources.local",
                     applicationUrl = environment["PRODUCT_APPLICATION_URL"]?.takeIf(String::isNotBlank)
                         ?: environment["APP_BASE_URL"]?.takeIf(String::isNotBlank) ?: "http://localhost:3000",
-                    enabledModules = environment.csv("PRODUCT_ENABLED_MODULES", default = listOf("billing")).toSet(),
+                    enabledModules = environment.csv(
+                        "PRODUCT_ENABLED_MODULES",
+                        default = if (environment.boolean("FEATURE_BILLING_ENABLED", default = true)) listOf("billing") else emptyList(),
+                    ).toSet(),
                 ),
             )
     }

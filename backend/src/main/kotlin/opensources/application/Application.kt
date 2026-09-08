@@ -79,7 +79,7 @@ fun main() {
         val sessionService = SessionService(sessionRepository)
         val organizationRepository = ExposedOrganizationRepository(query)
         val authorizationService = AuthorizationService(ExposedAuthorizationRepository(query))
-        val billing = config.features.takeIf { it.billingEnabled }?.let { billingModule(query, authorizationService) }
+        val billing = config.product.takeIf { it.isModuleEnabled("billing") }?.let { billingModule(query, authorizationService) }
         val auditService = AuditService(authorizationService, ExposedAuditRepository(query))
         val organizationService = OrganizationService(organizationRepository, authorizationService)
         val permissionRepository = ExposedPermissionRepository(query)
