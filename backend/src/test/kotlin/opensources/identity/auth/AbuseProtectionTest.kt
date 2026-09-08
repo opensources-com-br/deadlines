@@ -67,6 +67,15 @@ class AbuseProtectionTest {
         }
     }
 
+    @Test
+    fun `successful login clears earlier failures`() = runTest {
+        val protection = AuthenticationAbuseProtection(config(loginFailureThreshold = 2))
+        protection.recordLogin("user@example.com", "127.0.0.1", successful = false)
+        protection.recordLogin("user@example.com", "127.0.0.1", successful = true)
+
+        protection.checkLoginLockout("user@example.com", "127.0.0.1")
+    }
+
     private fun config(
         rateLimitMaxRequests: Int = 10,
         loginFailureThreshold: Int = 5,
