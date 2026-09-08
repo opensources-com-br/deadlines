@@ -15,6 +15,7 @@ import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.application.log
 import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.principal
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.plugins.calllogging.CallLogging
@@ -23,10 +24,13 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.httpMethod
+import io.ktor.server.request.path
 import io.ktor.server.response.respond
 import io.ktor.util.AttributeKey
 import io.ktor.util.pipeline.intercept
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import org.slf4j.event.Level
 import java.util.UUID
 
@@ -50,8 +54,16 @@ fun Application.configurePlugins(tokenService: TokenService? = null) {
     install(CallLogging) {
         level = Level.INFO
         format { call ->
-            val status = call.response.status()?.value ?: "pending"
-            "${call.request.httpMethod.value} status=$status"
+            structuredLogJson.encodeToString(
+                RequestLog(
+                    requestId = call.requestId(),
+                    method = call.request.httpMethod.value,
+                    path = call.request.path(),
+                    status = call.response.status()?.value,
+                    duration = call.requestDurationMillis(),
+                    userId = call.principal<JWTPrincipal>()?.payload?.subject,
+                ),
+            )
         }
     }
 
@@ -110,7 +122,7 @@ fun Application.configurePlugins(tokenService: TokenService? = null) {
         }
 
         exception<Throwable> { call, cause ->
-            call.application.log.error("Unhandled request failure", cause)
+            call.application.log.error("Unhandled request failure requestId={}", call.requestId(), cause)
             call.respond(
                 HttpStatusCode.InternalServerError,
                 call.apiErrorResponse("INTERNAL_ERROR", "An unexpected error occurred"),
@@ -135,3 +147,17 @@ internal fun ApplicationCall.requestDurationMillis(): Long =
 private const val REQUEST_ID_HEADER = "X-Request-Id"
 private val RequestIdKey = AttributeKey<String>("request-id")
 private val RequestStartedAtKey = AttributeKey<Long>("request-started-at")
+private val structuredLogJson = Json { encodeDefaults = true; explicitNulls = true }
+
+@Serializable
+private data class RequestLog(
+    val timestamp: String = java.time.Instant.now().toString(),
+    val level: String = "INFO",
+    val requestId: String,
+    val method: String,
+    val path: String,
+    val status: Int?,
+    val duration: Long,
+    val userId: String?,
+    val organizationId: String? = null,
+)
