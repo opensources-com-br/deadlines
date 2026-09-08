@@ -1,6 +1,6 @@
-# Deadlines Web
+# opensources Web
 
-The Deadlines web application provides the public site, authentication flows, organization onboarding, and the initial authenticated platform experience.
+The opensources web application provides the public site, authentication flows, organization onboarding, and the initial authenticated platform experience.
 
 ## Technology
 
@@ -15,7 +15,7 @@ The Deadlines web application provides the public site, authentication flows, or
 
 - Node.js 22 or newer
 - npm
-- The Deadlines backend running locally on port `8080`
+- The opensources backend running locally on port `8080`
 
 ## Local development
 
