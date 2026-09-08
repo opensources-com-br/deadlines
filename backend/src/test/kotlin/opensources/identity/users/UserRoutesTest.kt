@@ -76,6 +76,21 @@ class UserRoutesTest {
         }
 
     @Test
+    fun `deleted accounts cannot use previously issued access tokens`() =
+        testApplication {
+            val repository = InMemoryUserRepository()
+            val service = UserService(repository)
+            val user = service.create(CreateUserRequest("user@example.com", "User", "Name"))
+            repository.update(user.copy(status = UserStatus.DELETED, disabledAt = user.createdAt, deletedAt = user.createdAt))
+            application { module(userService = service, userRepository = repository, tokenService = tokenService) }
+
+            assertEquals(
+                HttpStatusCode.Unauthorized,
+                client.get("/api/v1/users/me") { bearerAuth(tokenService.issue(user.id).accessToken) }.status,
+            )
+        }
+
+    @Test
     fun `technical user management endpoints are not public`() =
         testApplication {
             application { module(UserService(InMemoryUserRepository()), tokenService = tokenService) }
