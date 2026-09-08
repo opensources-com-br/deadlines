@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "6aee26e6-8f56-4f29-94ea-72448c23e7ad",
-    "name": "Deadlines API",
+    "name": "opensources API",
     "description": "Collection local para Health, autenticação, organizações, auditoria e catálogo de planos. Execute as pastas na ordem apresentada.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -290,7 +290,7 @@
           "event": [
             { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
               "if (!pm.collectionVariables.get('permissionKey')) {",
-              "  pm.collectionVariables.set('permissionKey', `deadlines.${pm.variables.replaceIn('{{$randomUUID}}')}`);",
+              "  pm.collectionVariables.set('permissionKey', `records.${pm.variables.replaceIn('{{$randomUUID}}')}`);",
               "}"
             ] } },
             { "listen": "test", "script": { "type": "text/javascript", "exec": [
@@ -302,7 +302,7 @@
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"key\": \"{{permissionKey}}\",\n  \"name\": \"Manage deadlines\",\n  \"description\": \"Manage organization deadlines.\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"key\": \"{{permissionKey}}\",\n  \"name\": \"Manage records\",\n  \"description\": \"Manage organization records.\"\n}" },
             "url": "{{baseUrl}}/api/v1/permissions"
           }
         },
@@ -321,7 +321,7 @@
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Manage all deadlines\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Manage all records\"\n}" },
             "url": "{{baseUrl}}/api/v1/permissions/{{permissionId}}"
           }
         },
@@ -367,7 +367,7 @@
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"key\": \"{{roleKey}}\",\n  \"name\": \"Manager\",\n  \"description\": \"Manages deadlines and team workflows.\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"key\": \"{{roleKey}}\",\n  \"name\": \"Manager\",\n  \"description\": \"Manages records and team workflows.\"\n}" },
             "url": "{{baseUrl}}/api/v1/roles"
           }
         },
