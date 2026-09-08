@@ -23,6 +23,17 @@ class RoutesTest {
 
             assertEquals(HttpStatusCode.OK, response.status)
             assertEquals("{\"status\":\"ok\"}", response.bodyAsText())
+            assertTrue(response.headers["X-Request-Id"]?.isNotBlank() == true)
+        }
+
+    @Test
+    fun `preserves a caller supplied request ID`() =
+        testApplication {
+            application { module() }
+
+            val response = client.get("/health") { header("X-Request-Id", "request-123") }
+
+            assertEquals("request-123", response.headers["X-Request-Id"])
         }
 
     @Test

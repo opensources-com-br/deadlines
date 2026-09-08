@@ -10,6 +10,8 @@ import io.ktor.http.HttpMethod
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.ApplicationCallPipeline
+import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.application.log
 import io.ktor.server.auth.Authentication
@@ -22,11 +24,20 @@ import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.httpMethod
 import io.ktor.server.response.respond
+import io.ktor.util.AttributeKey
+import io.ktor.util.pipeline.intercept
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 import java.util.UUID
 
 fun Application.configurePlugins(tokenService: TokenService? = null) {
+    intercept(ApplicationCallPipeline.Setup) {
+        val requestId = call.request.headers[REQUEST_ID_HEADER]?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
+        call.attributes.put(RequestIdKey, requestId)
+        call.response.headers.append(REQUEST_ID_HEADER, requestId)
+        call.attributes.put(RequestStartedAtKey, System.nanoTime())
+    }
+
     install(ContentNegotiation) {
         json(
             Json {
@@ -50,6 +61,8 @@ fun Application.configurePlugins(tokenService: TokenService? = null) {
         allowMethod(HttpMethod.Post)
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.Authorization)
+        allowHeader(REQUEST_ID_HEADER)
+        exposeHeader(REQUEST_ID_HEADER)
     }
 
     if (tokenService != null) {
@@ -111,7 +124,14 @@ private fun ApplicationCall.apiErrorResponse(
     message: String,
     fields: Map<String, String> = emptyMap(),
 ): ApiErrorResponse {
-    val requestId = request.headers["X-Request-Id"]?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
-    response.headers.append("X-Request-Id", requestId)
-    return ApiErrorResponse(ApiErrorBody(code, message, fields, requestId))
+    return ApiErrorResponse(ApiErrorBody(code, message, fields, requestId()))
 }
+
+internal fun ApplicationCall.requestId(): String = attributes[RequestIdKey]
+
+internal fun ApplicationCall.requestDurationMillis(): Long =
+    (System.nanoTime() - attributes[RequestStartedAtKey]) / 1_000_000
+
+private const val REQUEST_ID_HEADER = "X-Request-Id"
+private val RequestIdKey = AttributeKey<String>("request-id")
+private val RequestStartedAtKey = AttributeKey<Long>("request-started-at")
