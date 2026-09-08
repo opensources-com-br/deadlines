@@ -12,15 +12,15 @@ RUN ./gradlew installDist --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
-RUN addgroup -S deadlines && adduser -S -G deadlines deadlines
+RUN addgroup -S opensources && adduser -S -G opensources opensources
 
 WORKDIR /app/backend
 
-COPY --from=build --chown=deadlines:deadlines /workspace/backend/build/install/deadlines-backend ./
-COPY --chown=deadlines:deadlines database/migrations /app/database/migrations
+COPY --from=build --chown=opensources:opensources /workspace/backend/build/install/opensources-backend ./
+COPY --chown=opensources:opensources database/migrations /app/database/migrations
 
-USER deadlines
+USER opensources
 
 EXPOSE 8080
 
-ENTRYPOINT ["./bin/deadlines-backend"]
+ENTRYPOINT ["./bin/opensources-backend"]
