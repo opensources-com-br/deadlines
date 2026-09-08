@@ -7,8 +7,8 @@ import kotlin.test.assertFailsWith
 class AppConfigTest {
     private val requiredEnvironment =
         mapOf(
-            "DATABASE_URL" to "jdbc:postgresql://localhost:5432/deadlines",
-            "DATABASE_USER" to "deadlines",
+            "DATABASE_URL" to "jdbc:postgresql://localhost:5432/opensources",
+            "DATABASE_USER" to "opensources",
             "DATABASE_PASSWORD" to "secret",
             "JWT_SECRET" to "a-local-test-secret-with-32-characters",
         )
