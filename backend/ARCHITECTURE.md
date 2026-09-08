@@ -13,10 +13,10 @@ modules
 └── billing           plans and subscriptions
 
 product
-└── deadlines         runtime composition in application/
+└── application       runtime composition root
 ```
 
-The current source folders retain their established names while the composition boundary is introduced incrementally. `identity`, `organizations`, and `shared` are core code; `modules/billing` is optional; `application` is the product composition root.
+`identity`, `organizations`, and `shared` are core code; `modules/billing` is optional; `application` is the product composition root.
 
 Dependency rules:
 
