@@ -29,7 +29,6 @@ class AppConfigTest {
         )
         assertEquals(900, config.auth.accessTokenExpirationSeconds)
         assertEquals(2_592_000, config.auth.refreshTokenExpirationSeconds)
-        assertEquals(true, config.features.billingEnabled)
         assertEquals(EmailProvider.LOGGING, config.email.provider)
         assertEquals("http://localhost:3000", config.email.appBaseUrl)
         assertEquals("opensources", config.product.name)
@@ -61,7 +60,6 @@ class AppConfigTest {
                         "EMAIL_VERIFICATION_EXPIRATION_SECONDS" to "1200",
                         "PASSWORD_RESET_EXPIRATION_SECONDS" to "300",
                         "INVITATION_EXPIRATION_SECONDS" to "600",
-                        "FEATURE_BILLING_ENABLED" to "false",
                         "PRODUCT_NAME" to "Example",
                         "PRODUCT_ENABLED_MODULES" to "billing, reports, exports",
                     ),
@@ -88,7 +86,6 @@ class AppConfigTest {
         assertEquals(1200, config.email.verificationExpirationSeconds)
         assertEquals(300, config.email.passwordResetExpirationSeconds)
         assertEquals(600, config.email.invitationExpirationSeconds)
-        assertEquals(false, config.features.billingEnabled)
         assertEquals("Example", config.product.name)
         assertEquals(true, config.product.isModuleEnabled("billing"))
     }
@@ -148,10 +145,4 @@ class AppConfigTest {
         }
     }
 
-    @Test
-    fun `rejects an invalid feature flag`() {
-        assertFailsWith<IllegalArgumentException> {
-            AppConfig.fromEnvironment(requiredEnvironment + ("FEATURE_BILLING_ENABLED" to "enabled"))
-        }
-    }
 }

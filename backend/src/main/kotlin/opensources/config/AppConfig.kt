@@ -5,7 +5,6 @@ data class AppConfig(
     val database: DatabaseConfig,
     val auth: AuthConfig,
     val abuseProtection: AbuseProtectionConfig,
-    val features: FeatureConfig,
     val email: EmailConfig,
     val product: ProductConfig,
 ) {
@@ -13,7 +12,7 @@ data class AppConfig(
         fun fromEnvironment(environment: Map<String, String> = System.getenv()): AppConfig {
             val enabledModules = environment.csv(
                 "PRODUCT_ENABLED_MODULES",
-                default = if (environment.boolean("FEATURE_BILLING_ENABLED", default = true)) listOf("billing") else emptyList(),
+                default = listOf("billing"),
             ).toSet()
             val coreMigrationsLocation = environment["CORE_MIGRATIONS_LOCATION"]
                 ?: environment["MIGRATIONS_LOCATION"]
@@ -61,9 +60,6 @@ data class AppConfig(
                     loginFailureThreshold = environment.positiveInt("AUTH_LOGIN_FAILURE_THRESHOLD", default = 5),
                     loginLockoutBaseSeconds = environment.positiveLong("AUTH_LOGIN_LOCKOUT_BASE_SECONDS", default = 60),
                     loginLockoutMaxSeconds = environment.positiveLong("AUTH_LOGIN_LOCKOUT_MAX_SECONDS", default = 900),
-                ),
-                features = FeatureConfig(
-                    billingEnabled = environment.boolean("FEATURE_BILLING_ENABLED", default = true),
                 ),
                 email =
                     EmailConfig(
@@ -143,10 +139,6 @@ data class AbuseProtectionConfig(
         }
     }
 }
-
-data class FeatureConfig(
-    val billingEnabled: Boolean,
-)
 
 data class EmailConfig(
     val from: String,

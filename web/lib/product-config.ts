@@ -1,8 +1,6 @@
-const legacyBillingEnabled = process.env.NEXT_PUBLIC_FEATURE_BILLING_ENABLED !== "false";
-
 function configuredModules(): ReadonlySet<string> {
   const configured = process.env.NEXT_PUBLIC_PRODUCT_ENABLED_MODULES;
-  if (!configured) return new Set(legacyBillingEnabled ? ["billing"] : []);
+  if (!configured) return new Set(["billing"]);
   return new Set(configured.split(",").map((value) => value.trim()).filter(Boolean));
 }
 
