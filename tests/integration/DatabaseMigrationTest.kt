@@ -295,7 +295,7 @@ class DatabaseMigrationTest {
                 val query = DatabaseQuery(database.database)
                 val users = ExposedUserRepository(query)
                 val sessions = ExposedSessionRepository(query)
-                val now = Instant.now()
+                val now = Instant.now().truncatedTo(ChronoUnit.MICROS)
                 val user =
                     User(
                         id = UUID.randomUUID(),
