@@ -113,7 +113,7 @@ export function AccountSettings({ user }: { user: UserProfile }) {
             <FieldLabel>{tLocale("timezone")}</FieldLabel>
             <Select value={preferences.timezone} disabled={isChangingLocale} onValueChange={(value) => value && void changePreference({ timezone: value })}>
               <SelectTrigger className="w-full" aria-label={tLocale("timezone")}><SelectValue /></SelectTrigger>
-              <SelectContent align="start">
+              <SelectContent align="start" className="max-h-80">
                 {!timezones.includes(preferences.timezone) ? <SelectItem value={preferences.timezone}>{preferences.timezone}</SelectItem> : null}
                 {timezones.map((timezone) => <SelectItem key={timezone} value={timezone}>{timezone.replaceAll("_", " ")}</SelectItem>)}
               </SelectContent>
