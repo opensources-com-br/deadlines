@@ -27,6 +27,7 @@ fun Route.invitationRoutes(service: InvitationOperations, abuseProtection: Authe
         authenticate("auth-jwt") {
             post("/accept") {
                 val request = call.receive<AcceptInvitationRequest>()
+                abuseProtection.checkRateLimit("invitation-accept", call.request.origin.remoteHost)
                 call.respond(service.accept(call.invitationUserId(), request.token))
             }
 
