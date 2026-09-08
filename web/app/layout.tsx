@@ -6,6 +6,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
+import { productConfig } from "@/lib/product-config";
 
 import "./globals.css";
 
@@ -21,7 +22,7 @@ const geistMono = Geist_Mono({
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Public");
-  return { title: "opensources", description: t("description") };
+  return { title: productConfig.name, description: productConfig.description || t("description") };
 }
 
 export const viewport: Viewport = {

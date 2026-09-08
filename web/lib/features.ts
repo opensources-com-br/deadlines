@@ -1,1 +1,3 @@
-export const billingEnabled = process.env.NEXT_PUBLIC_FEATURE_BILLING_ENABLED !== "false";
+import { isModuleEnabled } from "@/lib/product-config";
+
+export const billingEnabled = isModuleEnabled("billing");
