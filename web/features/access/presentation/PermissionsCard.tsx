@@ -111,7 +111,7 @@ export function PermissionsCard({ initialPermissions, onPermissionsChange }: Per
                   value={key}
                   onChange={(event) => setKey(event.target.value.toLowerCase())}
                   maxLength={100}
-                  placeholder="deadlines.manage"
+                  placeholder="records.manage"
                   required
                 />
               </Field>
