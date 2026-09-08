@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import type { AuditPage } from "@/features/audits/domain/audit";
 import type { OrganizationMember } from "@/features/team/domain/team";
 import { useLocalizedFormatters } from "@/features/platform/presentation/useLocalizedFormatters";
+import { apiClient } from "@/lib/api-client";
 
 const actions: Record<string, string> = {
   "organization.updated": "Organization updated",
@@ -115,14 +116,7 @@ export function AuditsCard({ members }: { members: OrganizationMember[] }) {
       for (const [key, value] of Object.entries(nextFilters)) {
         if (value) params.set(key, key === "from" || key === "to" ? new Date(value).toISOString() : value.trim());
       }
-      const response = await fetch(`/api/audits?${params}`, { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error(response.status === 403 ? t("ownerOnly")
-          : response.status === 401 ? t("sessionExpired")
-          : response.status === 422 ? t("invalidFilters")
-          : t("historyError"));
-      }
-      setPage(await response.json() as AuditPage);
+      setPage(await apiClient.get<AuditPage>(`/api/audits?${params}`, { cache: "no-store" }));
       setAppliedFilters(nextFilters);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("historyError"));
