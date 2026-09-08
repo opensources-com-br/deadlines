@@ -1,6 +1,6 @@
-# Deadlines Backend
+# opensources Backend
 
-The Deadlines backend is a Kotlin and Ktor API for identity, organizations, access control, audit history, plans, and subscriptions.
+The opensources backend is a Kotlin and Ktor API for identity, organizations, access control, audit history, plans, and subscriptions.
 
 ## Technology
 
@@ -16,7 +16,7 @@ The Deadlines backend is a Kotlin and Ktor API for identity, organizations, acce
 
 ```text
 backend/
-├── src/main/kotlin/deadlines/
+├── src/main/kotlin/opensources/
 │   ├── application/     application bootstrap, plugins, and route registration
 │   ├── config/          typed environment configuration
 │   ├── identity/        authentication, users, email verification, and sessions
@@ -89,12 +89,12 @@ The application reads its configuration from environment variables.
 | `MIGRATIONS_LOCATION` | No | `filesystem:../database/migrations` | Flyway migration location |
 | `PORT` | No | `8080` | HTTP server port |
 | `JWT_SECRET` | Yes | — | JWT signing secret with at least 32 characters |
-| `JWT_ISSUER` | No | `deadlines` | JWT issuer |
-| `JWT_AUDIENCE` | No | `deadlines-api` | JWT audience |
+| `JWT_ISSUER` | No | `opensources` | JWT issuer |
+| `JWT_AUDIENCE` | No | `opensources-api` | JWT audience |
 | `JWT_ACCESS_EXPIRATION_SECONDS` | No | `900` | Access-token lifetime |
 | `JWT_REFRESH_EXPIRATION_SECONDS` | No | `2592000` | Refresh-token lifetime |
 | `EMAIL_PROVIDER` | No | `logging` | Email provider: `logging` or `resend` |
-| `EMAIL_FROM` | No | `no-reply@deadlines.local` | Sender address |
+| `EMAIL_FROM` | No | `no-reply@opensources.local` | Sender address |
 | `RESEND_API_KEY` | For Resend | — | Resend API key |
 | `APP_BASE_URL` | No | `http://localhost:3000` | Base URL used in email links |
 | `EMAIL_VERIFICATION_EXPIRATION_SECONDS` | No | `86400` | Email-verification token lifetime |
