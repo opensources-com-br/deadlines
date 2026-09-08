@@ -55,8 +55,8 @@ export function CreateOrganizationScreen() {
   return (
     <main className="relative flex min-h-svh items-center justify-center bg-muted/30 p-6 text-foreground md:p-10">
       <div className="absolute left-6 top-6 flex items-center gap-2 text-lg font-semibold md:left-10 md:top-10">
-        <Image className="size-8 invert" src="/deadlines-mark.png" alt="" width={32} height={32} priority />
-        Deadlines
+        <Image className="size-8" src="/opensources-mark.png" alt="" width={32} height={32} priority />
+        opensources
       </div>
       <Button
         className="absolute right-6 top-6 md:right-10 md:top-10"
@@ -108,7 +108,7 @@ export function CreateOrganizationScreen() {
                   placeholder="acme-inc"
                   required
                 />
-                <FieldDescription>deadlines.app/{slug || t("slugFallback")}</FieldDescription>
+                <FieldDescription>opensources.app/{slug || t("slugFallback")}</FieldDescription>
               </Field>
               <Field>
                 <Button className="w-full" type="submit" disabled={isSubmitting}>
