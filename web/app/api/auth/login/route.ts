@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import { deviceCookieName, newDeviceId, setDeviceCookie } from "@/features/identity/infrastructure/device-session";
 import { isAppLocale, localeCookieName } from "@/i18n/config";
-import { authCookies, preferenceCookies } from "@/lib/cookies";
+import { authCookies, clearLegacyCookies, preferenceCookies } from "@/lib/cookies";
 
 const accessCookieName = authCookies.accessToken;
 const refreshCookieName = authCookies.refreshToken;
@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
     cache: "no-store",
   }).then((result) => result.ok ? result.json() as Promise<{ locale?: unknown; timezone?: string; theme?: string }> : undefined).catch(() => undefined);
   const response = NextResponse.json({ user: auth.user });
+  clearLegacyCookies(response);
   const secure = process.env.NODE_ENV === "production";
   const keepSignedIn = payload.keepSignedIn === true;
   setDeviceCookie(response, deviceId);

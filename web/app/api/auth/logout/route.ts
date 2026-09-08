@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { after, NextResponse } from "next/server";
 
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
-import { authCookies } from "@/lib/cookies";
+import { authCookies, clearLegacyCookies } from "@/lib/cookies";
 
 const accessCookieName = authCookies.accessToken;
 const refreshCookieName = authCookies.refreshToken;
@@ -28,6 +28,7 @@ function clearSessionCookies(response: NextResponse) {
   response.cookies.delete(refreshCookieName);
   response.cookies.delete(activityCookieName);
   response.cookies.delete(persistentCookieName);
+  clearLegacyCookies(response);
   response.headers.set("Cache-Control", "private, no-store, no-cache, must-revalidate, max-age=0");
   return response;
 }

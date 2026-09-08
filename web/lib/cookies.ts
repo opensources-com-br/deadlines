@@ -25,3 +25,7 @@ export const legacyCookies = [
   "deadlines_timezone",
   "deadlines_invitation_token",
 ] as const;
+
+export function clearLegacyCookies(response: { cookies: { delete(name: string): unknown } }) {
+  for (const cookieName of legacyCookies) response.cookies.delete(cookieName);
+}
