@@ -4,6 +4,7 @@ data class AppConfig(
     val http: HttpConfig,
     val database: DatabaseConfig,
     val auth: AuthConfig,
+    val abuseProtection: AbuseProtectionConfig,
     val email: EmailConfig,
 ) {
     companion object {
@@ -31,6 +32,13 @@ data class AppConfig(
                         environment.positiveLong("JWT_ACCESS_EXPIRATION_SECONDS", default = 900),
                     refreshTokenExpirationSeconds =
                         environment.positiveLong("JWT_REFRESH_EXPIRATION_SECONDS", default = 2_592_000),
+                ),
+                abuseProtection = AbuseProtectionConfig(
+                    rateLimitWindowSeconds = environment.positiveLong("AUTH_RATE_LIMIT_WINDOW_SECONDS", default = 60),
+                    rateLimitMaxRequests = environment.positiveInt("AUTH_RATE_LIMIT_MAX_REQUESTS", default = 10),
+                    loginFailureThreshold = environment.positiveInt("AUTH_LOGIN_FAILURE_THRESHOLD", default = 5),
+                    loginLockoutBaseSeconds = environment.positiveLong("AUTH_LOGIN_LOCKOUT_BASE_SECONDS", default = 60),
+                    loginLockoutMaxSeconds = environment.positiveLong("AUTH_LOGIN_LOCKOUT_MAX_SECONDS", default = 900),
                 ),
                 email =
                     EmailConfig(
@@ -78,6 +86,20 @@ data class AuthConfig(
     val accessTokenExpirationSeconds: Long,
     val refreshTokenExpirationSeconds: Long,
 )
+
+data class AbuseProtectionConfig(
+    val rateLimitWindowSeconds: Long,
+    val rateLimitMaxRequests: Int,
+    val loginFailureThreshold: Int,
+    val loginLockoutBaseSeconds: Long,
+    val loginLockoutMaxSeconds: Long,
+) {
+    init {
+        require(loginLockoutMaxSeconds >= loginLockoutBaseSeconds) {
+            "AUTH_LOGIN_LOCKOUT_MAX_SECONDS must be greater than or equal to AUTH_LOGIN_LOCKOUT_BASE_SECONDS"
+        }
+    }
+}
 
 data class EmailConfig(
     val from: String,
