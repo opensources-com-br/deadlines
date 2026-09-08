@@ -22,7 +22,7 @@ data class OrganizationResponse(
     val role: String,
     val createdAt: String,
     val updatedAt: String,
-    val status: String = "active",
+    val status: String,
 )
 
 fun OrganizationContext.toResponse() =

@@ -23,7 +23,7 @@ data class MemberResponse(
     val lastName: String,
     val role: RoleResponse,
     val joinedAt: String,
-    val status: String = "active",
+    val status: String,
 )
 
 @Serializable

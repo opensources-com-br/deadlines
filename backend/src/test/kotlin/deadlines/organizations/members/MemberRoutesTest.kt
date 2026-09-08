@@ -87,5 +87,6 @@ private class FakeMemberOperations : MemberOperations {
             "Member",
             RoleResponse(roleId.toString(), "member", "Member", null, true, "2026-09-06T18:00:00Z", "2026-09-06T18:00:00Z"),
             "2026-09-06T18:00:00Z",
+            "active",
         )
 }

@@ -130,5 +130,6 @@ private class FakeOrganizationOperations : OrganizationOperations {
             role = "owner",
             createdAt = "2026-09-06T18:00:00Z",
             updatedAt = "2026-09-06T18:00:00Z",
+            status = "active",
         )
 }

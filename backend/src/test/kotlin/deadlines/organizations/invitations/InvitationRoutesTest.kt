@@ -94,6 +94,7 @@ private class FakeInvitationOperations : InvitationOperations {
             "User",
             role(),
             "2026-09-06T18:00:00Z",
+            "active",
         )
 
     private fun role() =
