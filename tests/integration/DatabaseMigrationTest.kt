@@ -52,6 +52,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer
 import java.nio.file.Path
 import java.sql.DriverManager
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -258,7 +259,7 @@ class DatabaseMigrationTest {
                 val query = DatabaseQuery(database.database)
                 val users = ExposedUserRepository(query)
                 val sessions = ExposedSessionRepository(query)
-                val now = Instant.now()
+                val now = Instant.now().truncatedTo(ChronoUnit.MICROS)
                 val user =
                     User(
                         id = UUID.randomUUID(),
