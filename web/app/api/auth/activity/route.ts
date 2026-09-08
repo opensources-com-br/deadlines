@@ -1,8 +1,10 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-const accessCookieName = "deadlines_access_token";
-const activityCookieName = "deadlines_last_activity";
+import { authCookies } from "@/lib/cookies";
+
+const accessCookieName = authCookies.accessToken;
+const activityCookieName = authCookies.lastActivity;
 const activityWindowSeconds = 15 * 60;
 
 export async function POST() {

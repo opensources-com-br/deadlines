@@ -3,11 +3,12 @@ import { NextResponse } from "next/server";
 
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import { deviceCookieName, newDeviceId, setDeviceCookie } from "@/features/identity/infrastructure/device-session";
+import { authCookies } from "@/lib/cookies";
 
-const accessCookieName = "deadlines_access_token";
-const refreshCookieName = "deadlines_refresh_token";
-const activityCookieName = "deadlines_last_activity";
-const persistentCookieName = "deadlines_persistent_session";
+const accessCookieName = authCookies.accessToken;
+const refreshCookieName = authCookies.refreshToken;
+const activityCookieName = authCookies.lastActivity;
+const persistentCookieName = authCookies.persistentSession;
 
 type RefreshResponse = { accessToken: string; refreshToken: string; expiresIn: number };
 

@@ -3,11 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import { deviceCookieName, newDeviceId, setDeviceCookie } from "@/features/identity/infrastructure/device-session";
 import { isAppLocale, localeCookieName } from "@/i18n/config";
+import { authCookies, preferenceCookies } from "@/lib/cookies";
 
-const accessCookieName = "deadlines_access_token";
-const refreshCookieName = "deadlines_refresh_token";
-const activityCookieName = "deadlines_last_activity";
-const persistentCookieName = "deadlines_persistent_session";
+const accessCookieName = authCookies.accessToken;
+const refreshCookieName = authCookies.refreshToken;
+const activityCookieName = authCookies.lastActivity;
+const persistentCookieName = authCookies.persistentSession;
 
 type AuthResponse = {
   accessToken: string;
@@ -74,8 +75,8 @@ export async function POST(request: NextRequest) {
     });
   }
   const preferenceCookieOptions = { httpOnly: true, sameSite: "lax" as const, secure, path: "/", maxAge: 60 * 60 * 24 * 365 };
-  if (preferences?.timezone) response.cookies.set("deadlines_timezone", preferences.timezone, preferenceCookieOptions);
-  if (preferences?.theme) response.cookies.set("deadlines_theme", preferences.theme, preferenceCookieOptions);
+  if (preferences?.timezone) response.cookies.set(preferenceCookies.timezone, preferences.timezone, preferenceCookieOptions);
+  if (preferences?.theme) response.cookies.set(preferenceCookies.theme, preferences.theme, preferenceCookieOptions);
   response.cookies.set(accessCookieName, auth.accessToken, {
     httpOnly: true,
     sameSite: "lax",
