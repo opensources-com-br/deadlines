@@ -37,6 +37,25 @@ class RoutesTest {
         }
 
     @Test
+    fun `readiness health check reports unavailable dependencies`() =
+        testApplication {
+            application { module(readinessCheck = { false }) }
+
+            val response = client.get("/health/ready")
+
+            assertEquals(HttpStatusCode.ServiceUnavailable, response.status)
+            assertTrue(response.bodyAsText().contains("\"code\":\"NOT_READY\""))
+        }
+
+    @Test
+    fun `liveness health check does not depend on external services`() =
+        testApplication {
+            application { module(readinessCheck = { false }) }
+
+            assertEquals(HttpStatusCode.OK, client.get("/health/live").status)
+        }
+
+    @Test
     fun `known errors use the shared error contract`() =
         testApplication {
             application {

@@ -142,6 +142,7 @@ fun main() {
                 authorizationService,
                 accountLifecycleService,
                 abuseProtection,
+                { database.isReady() },
             )
         }.start(wait = true)
     }
@@ -166,6 +167,7 @@ fun Application.module(
     authorizationService: AuthorizationOperations? = null,
     accountLifecycleService: deadlines.identity.users.AccountLifecycleOperations? = null,
     abuseProtection: AuthenticationAbuseProtection = AuthenticationAbuseProtection(deadlines.config.AbuseProtectionConfig()),
+    readinessCheck: () -> Boolean = { true },
 ) {
     configurePlugins(tokenService)
     configureRoutes(
@@ -186,5 +188,6 @@ fun Application.module(
         authorizationService,
         accountLifecycleService,
         abuseProtection,
+        readinessCheck,
     )
 }

@@ -33,6 +33,7 @@ import deadlines.plans.PlanOperations
 import deadlines.plans.planRoutes
 import deadlines.subscriptions.SubscriptionOperations
 import deadlines.subscriptions.subscriptionRoutes
+import deadlines.shared.errors.ApiException
 import io.ktor.server.application.Application
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -62,6 +63,7 @@ fun Application.configureRoutes(
     authorizationService: AuthorizationOperations? = null,
     accountLifecycleService: AccountLifecycleOperations? = null,
     abuseProtection: AuthenticationAbuseProtection,
+    readinessCheck: () -> Boolean,
 ) {
     routing {
         if (planService != null) planRoutes(planService)
@@ -70,6 +72,15 @@ fun Application.configureRoutes(
         if (authorizationService != null) authorizationRoutes(authorizationService)
         if (auditService != null) auditRoutes(auditService)
         get("/health") {
+            call.respond(HealthResponse(status = "ok"))
+        }
+        get("/health/live") {
+            call.respond(HealthResponse(status = "ok"))
+        }
+        get("/health/ready") {
+            if (!readinessCheck()) {
+                throw ApiException(503, "NOT_READY", "Required dependencies are unavailable")
+            }
             call.respond(HealthResponse(status = "ok"))
         }
 

@@ -10,6 +10,11 @@ class DatabaseHandle internal constructor(
     val database: Database,
     private val dataSource: HikariDataSource,
 ) : AutoCloseable {
+    fun isReady(): Boolean =
+        runCatching {
+            dataSource.connection.use { connection -> connection.isValid(2) }
+        }.getOrDefault(false)
+
     override fun close() = dataSource.close()
 }
 
