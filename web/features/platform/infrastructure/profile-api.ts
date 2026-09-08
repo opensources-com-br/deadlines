@@ -15,6 +15,10 @@ export async function changePassword(currentPassword: string, newPassword: strin
   await apiClient.patch("/api/profile/password", { currentPassword, newPassword });
 }
 
+export async function requestEmailChange(email: string, password: string): Promise<void> {
+  await apiClient.post("/api/profile/email", { email, password });
+}
+
 async function accountAction(path: string, method: "POST" | "DELETE", password: string): Promise<void> {
   try {
     if (method === "POST") await apiClient.post(path, { password });
