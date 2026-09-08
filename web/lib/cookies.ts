@@ -14,6 +14,19 @@ export const preferenceCookies = {
 
 export const invitationCookie = "opensources_invitation_token";
 
+const isProduction = process.env.NODE_ENV === "production";
+
+export const secureCookieOptions = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: isProduction,
+  path: "/",
+};
+
+export function persistentCookieOptions(maxAge: number) {
+  return { ...secureCookieOptions, maxAge };
+}
+
 export const legacyCookies = [
   "deadlines_access_token",
   "deadlines_refresh_token",

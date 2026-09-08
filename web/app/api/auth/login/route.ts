@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import { deviceCookieName, newDeviceId, setDeviceCookie } from "@/features/identity/infrastructure/device-session";
 import { isAppLocale, localeCookieName } from "@/i18n/config";
-import { authCookies, clearLegacyCookies, preferenceCookies } from "@/lib/cookies";
+import { authCookies, clearLegacyCookies, persistentCookieOptions, preferenceCookies, secureCookieOptions } from "@/lib/cookies";
 
 const accessCookieName = authCookies.accessToken;
 const refreshCookieName = authCookies.refreshToken;
@@ -63,44 +63,19 @@ export async function POST(request: NextRequest) {
   }).then((result) => result.ok ? result.json() as Promise<{ locale?: unknown; timezone?: string; theme?: string }> : undefined).catch(() => undefined);
   const response = NextResponse.json({ user: auth.user });
   clearLegacyCookies(response);
-  const secure = process.env.NODE_ENV === "production";
   const keepSignedIn = payload.keepSignedIn === true;
   setDeviceCookie(response, deviceId);
   if (isAppLocale(preferences?.locale)) {
-    response.cookies.set(localeCookieName, preferences.locale, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure,
-      path: "/",
-      maxAge: 60 * 60 * 24 * 365,
-    });
+    response.cookies.set(localeCookieName, preferences.locale, persistentCookieOptions(60 * 60 * 24 * 365));
   }
-  const preferenceCookieOptions = { httpOnly: true, sameSite: "lax" as const, secure, path: "/", maxAge: 60 * 60 * 24 * 365 };
+  const preferenceCookieOptions = persistentCookieOptions(60 * 60 * 24 * 365);
   if (preferences?.timezone) response.cookies.set(preferenceCookies.timezone, preferences.timezone, preferenceCookieOptions);
   if (preferences?.theme) response.cookies.set(preferenceCookies.theme, preferences.theme, preferenceCookieOptions);
-  response.cookies.set(accessCookieName, auth.accessToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure,
-    path: "/",
-    maxAge: auth.expiresIn,
-  });
-  response.cookies.set(refreshCookieName, auth.refreshToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure,
-    path: "/",
-    ...(keepSignedIn ? { maxAge: 60 * 60 * 24 * 30 } : {}),
-  });
-  response.cookies.set(activityCookieName, "active", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure,
-    path: "/",
-    maxAge: auth.expiresIn,
-  });
+  response.cookies.set(accessCookieName, auth.accessToken, persistentCookieOptions(auth.expiresIn));
+  response.cookies.set(refreshCookieName, auth.refreshToken, keepSignedIn ? persistentCookieOptions(60 * 60 * 24 * 30) : secureCookieOptions);
+  response.cookies.set(activityCookieName, "active", persistentCookieOptions(auth.expiresIn));
   if (keepSignedIn) {
-    response.cookies.set(persistentCookieName, "true", { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: 60 * 60 * 24 * 30 });
+    response.cookies.set(persistentCookieName, "true", persistentCookieOptions(60 * 60 * 24 * 30));
   } else {
     response.cookies.delete(persistentCookieName);
   }
