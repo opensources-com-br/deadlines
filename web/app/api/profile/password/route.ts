@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 
 import { backendApiUrl } from "@/features/identity/infrastructure/backend-api";
 import { deviceCookieName, newDeviceId, setDeviceCookie } from "@/features/identity/infrastructure/device-session";
+import { authCookies, persistentCookieOptions, secureCookieOptions } from "@/lib/cookies";
 
-const accessCookieName = "opensources_access_token";
-const refreshCookieName = "opensources_refresh_token";
-const persistentCookieName = "opensources_persistent_session";
+const accessCookieName = authCookies.accessToken;
+const refreshCookieName = authCookies.refreshToken;
+const persistentCookieName = authCookies.persistentSession;
 
 export async function PATCH(request: Request) {
   const cookieStore = await cookies();
@@ -58,21 +59,8 @@ export async function PATCH(request: Request) {
 
   const auth = data as { accessToken: string; refreshToken: string; expiresIn: number };
   const response = new NextResponse(null, { status: 204 });
-  const secure = process.env.NODE_ENV === "production";
-  response.cookies.set(accessCookieName, auth.accessToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure,
-    path: "/",
-    maxAge: auth.expiresIn,
-  });
-  response.cookies.set(refreshCookieName, auth.refreshToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure,
-    path: "/",
-    ...(persistentSession ? { maxAge: 60 * 60 * 24 * 30 } : {}),
-  });
+  response.cookies.set(accessCookieName, auth.accessToken, persistentCookieOptions(auth.expiresIn));
+  response.cookies.set(refreshCookieName, auth.refreshToken, persistentSession ? persistentCookieOptions(60 * 60 * 24 * 30) : secureCookieOptions);
   setDeviceCookie(response, deviceId);
   return response;
 }
